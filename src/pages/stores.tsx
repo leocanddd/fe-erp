@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { isAuthenticated, getStoredUser } from '@/lib/auth';
@@ -130,13 +130,7 @@ export default function Stores() {
     }
   }, [router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchStores();
-    }
-  }, [user, currentPage, search]);
-
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getStores(currentPage, 10, search);
@@ -153,7 +147,13 @@ export default function Stores() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, search]);
+
+  useEffect(() => {
+    if (user) {
+      fetchStores();
+    }
+  }, [user, fetchStores]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1002,7 +1002,7 @@ export default function Stores() {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Apakah Anda yakin ingin menghapus toko "{storeToDelete?.name}"? Tindakan ini tidak dapat dibatalkan.
+                        Apakah Anda yakin ingin menghapus toko &quot;{storeToDelete?.name}&quot;? Tindakan ini tidak dapat dibatalkan.
                       </p>
                     </div>
                   </div>

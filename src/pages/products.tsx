@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { isAuthenticated, getStoredUser } from '@/lib/auth';
@@ -129,13 +129,7 @@ export default function Products() {
     }
   }, [router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchProducts();
-    }
-  }, [user, currentPage, search]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getProducts(currentPage, 10, search);
@@ -152,7 +146,13 @@ export default function Products() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, search]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProducts();
+    }
+  }, [user, fetchProducts]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -959,7 +959,7 @@ export default function Products() {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Apakah Anda yakin ingin menghapus "{productToDelete?.name}"? Tindakan ini tidak dapat dibatalkan.
+                        Apakah Anda yakin ingin menghapus &quot;{productToDelete?.name}&quot;? Tindakan ini tidak dapat dibatalkan.
                       </p>
                     </div>
                   </div>
