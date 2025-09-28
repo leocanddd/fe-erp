@@ -73,6 +73,10 @@ export default function Orders() {
 		});
 
 	const [user, setUser] = useState<User | null>(null);
+	const [showDescModal, setShowDescModal] = useState(false);
+	const [descModalType, setDescModalType] = useState<'isProcessed' | 'isFinished' | 'isCancelled' | 'isApproved' | 'isRejected' | 'isPriceApproved' | null>(null);
+	const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+	const [description, setDescription] = useState('');
 
 	useEffect(() => {
 		const userData = getStoredUser();
@@ -104,7 +108,7 @@ export default function Orders() {
 						'Failed to fetch orders'
 				);
 			}
-		} catch (err) {
+		} catch {
 			setError(
 				'Failed to fetch orders'
 			);
@@ -125,12 +129,12 @@ export default function Orders() {
 		fetchOrders();
 	};
 
-	const handleDelete = async (
-		order: Order
-	) => {
-		setOrderToDelete(order);
-		setShowDeleteModal(true);
-	};
+	// const handleDelete = async (
+	//	order: Order
+	// ) => {
+	//	setOrderToDelete(order);
+	//	setShowDeleteModal(true);
+	// };
 
 	const confirmDelete = async () => {
 		if (!orderToDelete) return;
@@ -150,7 +154,7 @@ export default function Orders() {
 						'Failed to delete order'
 				);
 			}
-		} catch (err) {
+		} catch {
 			setError(
 				'Failed to delete order'
 			);
@@ -273,7 +277,7 @@ export default function Orders() {
 						'Gagal menambah pesanan'
 				);
 			}
-		} catch (err) {
+		} catch {
 			setError(
 				'Gagal menambah pesanan'
 			);
@@ -282,18 +286,18 @@ export default function Orders() {
 		}
 	};
 
-	const handleEdit = (order: Order) => {
-		setEditingOrder(order);
-		setFormData({
-			customer: order.customer,
-			contact: order.contact,
-			orderDate:
-				order.orderDate.split('T')[0], // Convert to YYYY-MM-DD format
-			shipmentTime: order.shipmentTime,
-			products: order.products,
-		});
-		setShowEditModal(true);
-	};
+	// const handleEdit = (order: Order) => {
+	//	setEditingOrder(order);
+	//	setFormData({
+	//		customer: order.customer,
+	//		contact: order.contact,
+	//		orderDate:
+	//			order.orderDate.split('T')[0], // Convert to YYYY-MM-DD format
+	//		shipmentTime: order.shipmentTime,
+	//		products: order.products,
+	//	});
+	//	setShowEditModal(true);
+	// };
 
 	const handleUpdateOrder = async (
 		e: React.FormEvent
@@ -341,7 +345,7 @@ export default function Orders() {
 						'Gagal mengubah pesanan'
 				);
 			}
-		} catch (err) {
+		} catch {
 			setError(
 				'Gagal mengubah pesanan'
 			);
@@ -350,23 +354,64 @@ export default function Orders() {
 		}
 	};
 
-	const toggleOrderStatus = async (
+	const toggleOrderStatus = (
 		order: Order,
 		field:
 			| 'isProcessed'
 			| 'isFinished'
 			| 'isCancelled'
+			| 'isApproved'
+			| 'isRejected'
+			| 'isPriceApproved'
 	) => {
+		setSelectedOrder(order);
+		setDescModalType(field);
+		setDescription('');
+		setShowDescModal(true);
+	};
+
+	const handleDescriptionSubmit = async () => {
+		if (!selectedOrder || !descModalType || !user) return;
+
 		try {
-			const updateData = {
-				[field]: !order[field],
+			const currentUserName = `${user.firstName} ${user.lastName}`;
+
+			const getStatusField = (type: string) => {
+				switch (type) {
+					case 'isProcessed': return 'processed';
+					case 'isFinished': return 'finished';
+					case 'isCancelled': return 'cancelled';
+					case 'isApproved': return 'approved';
+					case 'isRejected': return 'rejected';
+					case 'isPriceApproved': return 'priceApproved';
+					default: return '';
+				}
 			};
-			const response =
-				await updateOrder(
-					order.id!,
-					updateData
-				);
+
+			const statusField = getStatusField(descModalType);
+			const currentStatus = selectedOrder[statusField as keyof Order] as { isActive?: boolean };
+			const isCurrentlyActive = currentStatus?.isActive || selectedOrder[descModalType as keyof Order];
+
+			const updateData = {
+				customer: selectedOrder.customer,
+				contact: selectedOrder.contact,
+				products: selectedOrder.products,
+				orderDate: selectedOrder.orderDate,
+				shipmentTime: selectedOrder.shipmentTime,
+				createdBy: selectedOrder.createdBy,
+				[statusField]: {
+					isActive: !isCurrentlyActive,
+					description: description,
+					actionBy: currentUserName
+				}
+			};
+
+			const response = await updateOrder(selectedOrder.id!, updateData);
 			if (response.statusCode === 200) {
+				setShowDescModal(false);
+				setSelectedOrder(null);
+				setDescModalType(null);
+				setDescription('');
 				fetchOrders();
 			} else {
 				setError(
@@ -374,7 +419,7 @@ export default function Orders() {
 						'Gagal mengubah status pesanan'
 				);
 			}
-		} catch (err) {
+		} catch {
 			setError(
 				'Gagal mengubah status pesanan'
 			);
@@ -384,24 +429,45 @@ export default function Orders() {
 	const getStatusBadge = (
 		order: Order
 	) => {
-		if (order.isCancelled) {
+		if (order.cancelled?.isActive || order.isCancelled) {
 			return (
 				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
 					Dibatalkan
 				</span>
 			);
 		}
-		if (order.isFinished) {
+		if (order.finished?.isActive || order.isFinished) {
 			return (
 				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
 					Selesai
 				</span>
 			);
 		}
-		if (order.isProcessed) {
+		if (order.processed?.isActive || order.isProcessed) {
 			return (
 				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
 					Diproses
+				</span>
+			);
+		}
+		if (order.approved?.isActive || order.isApproved) {
+			return (
+				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+					Disetujui
+				</span>
+			);
+		}
+		if (order.priceApproved?.isActive) {
+			return (
+				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
+					Harga Disetujui
+				</span>
+			);
+		}
+		if (order.rejected?.isActive || order.isRejected) {
+			return (
+				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+					Ditolak
 				</span>
 			);
 		}
@@ -478,7 +544,7 @@ export default function Orders() {
 						)}
 
 						{/* Orders table */}
-						<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
+						<div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
 							{loading ? (
 								<div className="p-8 text-center">
 									<div className="inline-flex items-center space-x-3">
@@ -497,50 +563,52 @@ export default function Orders() {
 							) : (
 								<>
 									<div className="overflow-x-auto">
-										<table className="min-w-full divide-y divide-gray-200">
-											<thead className="bg-gray-50">
+										<table className="min-w-full">
+											<thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
 												<tr>
-													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-														Customer
+													<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+														Order ID
 													</th>
-													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+													<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+														Total Value
+													</th>
+													<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
 														Tanggal
 													</th>
-													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+													<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
 														Produk
 													</th>
-													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-														Total Nilai
+													<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+														Sales
 													</th>
-													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+													<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
 														Status
 													</th>
-													<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-														Aksi
+													<th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+														Detail
+													</th>
+													<th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+														Actions
 													</th>
 												</tr>
 											</thead>
-											<tbody className="bg-white divide-y divide-gray-200">
+											<tbody className="bg-white divide-y divide-gray-100">
 												{orders.map(
 													(order) => (
 														<tr
 															key={
 																order.id
 															}
-															className="hover:bg-gray-50"
+															className="hover:bg-blue-50/50 transition-colors duration-200"
 														>
 															<td className="px-6 py-4 whitespace-nowrap">
-																<div>
-																	<div className="text-sm font-medium text-gray-900">
-																		{
-																			order.customer
-																		}
-																	</div>
-																	<div className="text-sm text-gray-500">
-																		{
-																			order.contact
-																		}
-																	</div>
+																<div className="text-sm font-semibold text-gray-900">
+																	{order.orderId || 'N/A'}
+																</div>
+															</td>
+															<td className="px-6 py-4 whitespace-nowrap">
+																<div className="text-sm font-semibold text-gray-900">
+																	Rp {order.totalValue.toLocaleString('id-ID')}
 																</div>
 															</td>
 															<td className="px-6 py-4 whitespace-nowrap">
@@ -551,100 +619,108 @@ export default function Orders() {
 																		'id-ID'
 																	)}
 																</div>
-																<div className="text-xs text-gray-500">
-																	Kirim:{' '}
-																	{
-																		order.shipmentTime
-																	}
+																{order.shipmentTime && (
+																	<div className="text-xs text-gray-500">
+																		{order.shipmentTime}
+																	</div>
+																)}
+															</td>
+															<td className="px-6 py-4 whitespace-nowrap">
+																<div className="text-sm text-gray-900">
+																	{order?.products?.length || 0} item{(order?.products?.length || 0) !== 1 ? '' : ''}
 																</div>
 															</td>
 															<td className="px-6 py-4 whitespace-nowrap">
 																<div className="text-sm text-gray-900">
-																	{
-																		order
-																			?.products
-																			?.length
-																	}{' '}
-																	item(s)
+																	{order.createdBy}
 																</div>
-																<div className="text-xs text-gray-500 truncate max-w-xs">
-																	{order?.products
-																		?.map(
-																			(
-																				p
-																			) =>
-																				p.product
-																		)
-																		.join(
-																			', '
-																		) ??
-																		''}
-																</div>
-															</td>
-															<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-																Rp{' '}
-																{order.totalValue.toLocaleString(
-																	'id-ID'
-																)}
 															</td>
 															<td className="px-6 py-4 whitespace-nowrap">
 																{getStatusBadge(
 																	order
 																)}
 															</td>
-															<td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-																<div className="flex items-center justify-end space-x-2">
-																	{!order.isCancelled &&
-																		!order.isFinished && (
+															{/* Detail Column */}
+															<td className="px-6 py-4 whitespace-nowrap text-center">
+																<button
+																	onClick={() => window.location.href = `/orders/${order.orderId}`}
+																	className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 transition-colors duration-200"
+																	title="Lihat detail pesanan"
+																>
+																	<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+																		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+																	</svg>
+																</button>
+															</td>
+
+															{/* Actions Column */}
+															<td className="px-6 py-4 whitespace-nowrap text-center">
+																<div className="flex items-center justify-center space-x-2">
+																	{/* Price Approval Button - Role 7 (Pricing) */}
+																	{user?.role === 7 && !order.priceApproved?.isActive && !(order.cancelled?.isActive || order.isCancelled) && !(order.finished?.isActive || order.isFinished) && (
+																		<button
+																			onClick={() =>
+																				toggleOrderStatus(
+																					order,
+																					'isPriceApproved'
+																				)
+																			}
+																			className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+																		>
+																			Setujui Harga
+																		</button>
+																	)}
+
+																	{/* General Approval Buttons - Role 6 (Approver) */}
+																	{user?.role === 6 && order.priceApproved?.isActive && !(order.approved?.isActive || order.isApproved) && !(order.rejected?.isActive || order.isRejected) && !(order.cancelled?.isActive || order.isCancelled) && !(order.finished?.isActive || order.isFinished) && (
+																		<>
 																			<button
 																				onClick={() =>
 																					toggleOrderStatus(
 																						order,
-																						'isProcessed'
+																						'isApproved'
 																					)
 																				}
-																				className={`p-1 rounded text-xs px-2 py-1 ${
-																					order.isProcessed
-																						? 'bg-blue-100 text-blue-800'
-																						: 'bg-gray-100 text-gray-600'
-																				}`}
-																				title={
-																					order.isProcessed
-																						? 'Batalkan proses'
-																						: 'Proses pesanan'
-																				}
+																				className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
 																			>
-																				{order.isProcessed
-																					? 'Diproses'
-																					: 'Proses'}
+																				Setujui
 																			</button>
-																		)}
-																	{order.isProcessed &&
-																		!order.isCancelled && (
 																			<button
 																				onClick={() =>
 																					toggleOrderStatus(
 																						order,
-																						'isFinished'
+																						'isRejected'
 																					)
 																				}
-																				className={`p-1 rounded text-xs px-2 py-1 ${
-																					order.isFinished
-																						? 'bg-green-100 text-green-800'
-																						: 'bg-gray-100 text-gray-600'
-																				}`}
-																				title={
-																					order.isFinished
-																						? 'Batalkan selesai'
-																						: 'Selesaikan pesanan'
-																				}
+																				className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-orange-100 text-orange-700 hover:bg-orange-200"
 																			>
-																				{order.isFinished
-																					? 'Selesai'
-																					: 'Selesaikan'}
+																				Tolak
 																			</button>
-																		)}
-																	{!order.isFinished && (
+																		</>
+																	)}
+
+																	{/* Processing Buttons - Role 3 (Admin) */}
+																	{user?.role === 3 && (order.approved?.isActive || order.isApproved) && !(order.cancelled?.isActive || order.isCancelled) && !(order.finished?.isActive || order.isFinished) && (
+																		<button
+																			onClick={() =>
+																				toggleOrderStatus(
+																					order,
+																					'isProcessed'
+																				)
+																			}
+																			className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
+																				(order.processed?.isActive || order.isProcessed)
+																					? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+																					: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+																			}`}
+																		>
+																			{(order.processed?.isActive || order.isProcessed) ? 'Batal Proses' : 'Proses'}
+																		</button>
+																	)}
+
+																	{/* Cancel Button - Available to all roles when appropriate */}
+																	{!(order.finished?.isActive || order.isFinished) && (
 																		<button
 																			onClick={() =>
 																				toggleOrderStatus(
@@ -652,72 +728,15 @@ export default function Orders() {
 																					'isCancelled'
 																				)
 																			}
-																			className={`p-1 rounded text-xs px-2 py-1 ${
-																				order.isCancelled
-																					? 'bg-red-100 text-red-800'
-																					: 'bg-gray-100 text-gray-600'
+																			className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
+																				(order.cancelled?.isActive || order.isCancelled)
+																					? 'bg-red-100 text-red-700 hover:bg-red-200'
+																					: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
 																			}`}
-																			title={
-																				order.isCancelled
-																					? 'Batalkan pembatalan'
-																					: 'Batalkan pesanan'
-																			}
 																		>
-																			{order.isCancelled
-																				? 'Dibatalkan'
-																				: 'Batalkan'}
+																			{(order.cancelled?.isActive || order.isCancelled) ? 'Batal Pembatalan' : 'Batalkan'}
 																		</button>
 																	)}
-																	<button
-																		onClick={() =>
-																			handleEdit(
-																				order
-																			)
-																		}
-																		className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
-																		title="Edit pesanan"
-																	>
-																		<svg
-																			className="w-4 h-4"
-																			fill="none"
-																			stroke="currentColor"
-																			viewBox="0 0 24 24"
-																		>
-																			<path
-																				strokeLinecap="round"
-																				strokeLinejoin="round"
-																				strokeWidth={
-																					2
-																				}
-																				d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																			/>
-																		</svg>
-																	</button>
-																	<button
-																		onClick={() =>
-																			handleDelete(
-																				order
-																			)
-																		}
-																		className="text-red-600 hover:text-red-900 p-1 rounded"
-																		title="Hapus pesanan"
-																	>
-																		<svg
-																			className="w-4 h-4"
-																			fill="none"
-																			stroke="currentColor"
-																			viewBox="0 0 24 24"
-																		>
-																			<path
-																				strokeLinecap="round"
-																				strokeLinejoin="round"
-																				strokeWidth={
-																					2
-																				}
-																				d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																			/>
-																		</svg>
-																	</button>
 																</div>
 															</td>
 														</tr>
@@ -1622,6 +1641,79 @@ export default function Orders() {
 										setOrderToDelete(
 											null
 										);
+									}}
+									className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+								>
+									Batal
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Description Modal */}
+			{showDescModal && selectedOrder && descModalType && (
+				<div className="fixed inset-0 z-[60] overflow-y-auto">
+					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+						<div
+							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+							onClick={() => {
+								setShowDescModal(false);
+								setSelectedOrder(null);
+								setDescModalType(null);
+								setDescription('');
+							}}
+						></div>
+						<span className="hidden sm:inline-block sm:align-middle sm:h-screen">
+							&#8203;
+						</span>
+						<div className="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+							<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+								<div className="sm:flex sm:items-start">
+									<div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+										<h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+											{descModalType === 'isProcessed' && 'Proses Pesanan'}
+											{descModalType === 'isFinished' && 'Selesaikan Pesanan'}
+											{descModalType === 'isCancelled' && 'Batalkan Pesanan'}
+											{descModalType === 'isApproved' && 'Setujui Pesanan'}
+											{descModalType === 'isRejected' && 'Tolak Pesanan'}
+											{descModalType === 'isPriceApproved' && 'Setujui Harga'}
+										</h3>
+										<div className="mt-2">
+											<p className="text-sm text-gray-500 mb-4">
+												Berikan deskripsi untuk tindakan ini:
+											</p>
+											<textarea
+												value={description}
+												onChange={(e) => setDescription(e.target.value)}
+												placeholder="Masukkan deskripsi..."
+												rows={4}
+												className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 resize-none"
+											/>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+								<button
+									onClick={handleDescriptionSubmit}
+									disabled={!description.trim()}
+									className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									{descModalType === 'isProcessed' && ((selectedOrder.processed?.isActive || selectedOrder.isProcessed) ? 'Batalkan Proses' : 'Proses')}
+									{descModalType === 'isFinished' && ((selectedOrder.finished?.isActive || selectedOrder.isFinished) ? 'Batalkan Selesai' : 'Selesaikan')}
+									{descModalType === 'isCancelled' && ((selectedOrder.cancelled?.isActive || selectedOrder.isCancelled) ? 'Batalkan Pembatalan' : 'Batalkan')}
+									{descModalType === 'isApproved' && 'Setujui'}
+									{descModalType === 'isRejected' && 'Tolak'}
+									{descModalType === 'isPriceApproved' && 'Setujui Harga'}
+								</button>
+								<button
+									onClick={() => {
+										setShowDescModal(false);
+										setSelectedOrder(null);
+										setDescModalType(null);
+										setDescription('');
 									}}
 									className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
 								>

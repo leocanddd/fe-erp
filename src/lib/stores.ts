@@ -64,7 +64,7 @@ export const createStore = async (store: StoreCreateRequest): Promise<StoreRespo
 
     const data: StoreResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -92,7 +92,7 @@ export const getStores = async (
 
     const data: StoresListResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -117,7 +117,7 @@ export const getStore = async (id: string): Promise<StoreResponse> => {
 
     const data: StoreResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -136,7 +136,7 @@ export const updateStore = async (id: string, store: Partial<StoreCreateRequest>
 
     const data: StoreResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -154,7 +154,7 @@ export const deleteStore = async (id: string): Promise<StoreResponse> => {
 
     const data: StoreResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -172,7 +172,7 @@ export const getTop10Stores = async (): Promise<StoresListResponse> => {
 
     const data: StoresListResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,

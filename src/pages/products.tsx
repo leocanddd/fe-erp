@@ -141,7 +141,7 @@ export default function Products() {
       } else {
         setError(response.error || 'Failed to fetch products');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to fetch products');
     } finally {
       setLoading(false);
@@ -177,7 +177,7 @@ export default function Products() {
       } else {
         setError(response.error || 'Failed to delete product');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to delete product');
     }
   };
@@ -224,7 +224,7 @@ export default function Products() {
       } else {
         setError(response.error || 'Gagal menambah produk');
       }
-    } catch (err) {
+    } catch {
       setError('Gagal menambah produk');
     } finally {
       setIsSubmitting(false);
@@ -270,7 +270,7 @@ export default function Products() {
       } else {
         setError(response.error || 'Gagal mengubah produk');
       }
-    } catch (err) {
+    } catch {
       setError('Gagal mengubah produk');
     } finally {
       setIsSubmitting(false);
@@ -447,7 +447,7 @@ export default function Products() {
                     <span className="text-gray-600">Memuat produk...</span>
                   </div>
                 </div>
-              ) : products.length === 0 ? (
+              ) : !products || products.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   Tidak ada produk yang ditemukan
                 </div>

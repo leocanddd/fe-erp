@@ -4,20 +4,40 @@ interface OrderProduct {
   value: number;
 }
 
+interface OrderStatus {
+  isActive: boolean;
+  description: string;
+  actionBy: string;
+  actionAt?: string;
+}
+
 interface Order {
   id?: string;
+  orderId?: string;
   customer: string;
   contact: string;
   products: OrderProduct[];
   orderDate: string;
   totalValue: number;
-  isProcessed: boolean;
-  isFinished: boolean;
-  isCancelled: boolean;
+  processed: OrderStatus;
+  finished: OrderStatus;
+  cancelled: OrderStatus;
+  approved: OrderStatus;
+  rejected: OrderStatus;
+  shipment: OrderStatus;
+  priceApproved: OrderStatus;
   shipmentTime: string;
   createdBy: string;
+  username?: string;
   createdAt?: string;
   updatedAt?: string;
+  // Legacy fields for backward compatibility
+  isProcessed?: boolean;
+  isFinished?: boolean;
+  isCancelled?: boolean;
+  isApproved?: boolean;
+  isRejected?: boolean;
+  isShipment?: boolean;
 }
 
 interface OrderCreateRequest {
@@ -72,7 +92,7 @@ export const createOrder = async (order: OrderCreateRequest): Promise<OrderRespo
 
     const data: OrderResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -100,7 +120,7 @@ export const getOrders = async (
 
     const data: OrdersListResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -125,7 +145,39 @@ export const getOrder = async (id: string): Promise<OrderResponse> => {
 
     const data: OrderResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
+    return {
+      status: 'error',
+      statusCode: 500,
+      error: 'Network error occurred',
+    };
+  }
+};
+
+export const getOrderByOrderId = async (orderId: string): Promise<OrderResponse> => {
+  try {
+    const response = await fetch(`${getApiUrl()}/api/orders/by-order-id/${orderId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    const data = await response.json();
+
+    // The API now returns the order directly in data, not as an array
+    if (data.status === 'success' && data.data) {
+      return {
+        status: data.status,
+        statusCode: data.statusCode,
+        data: data.data, // Get the order directly
+      };
+    } else {
+      return {
+        status: 'error',
+        statusCode: 404,
+        error: 'Order not found',
+      };
+    }
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -135,9 +187,13 @@ export const getOrder = async (id: string): Promise<OrderResponse> => {
 };
 
 export const updateOrder = async (id: string, order: Partial<OrderCreateRequest & {
-  isProcessed?: boolean;
-  isFinished?: boolean;
-  isCancelled?: boolean;
+  processed?: OrderStatus;
+  finished?: OrderStatus;
+  cancelled?: OrderStatus;
+  approved?: OrderStatus;
+  rejected?: OrderStatus;
+  shipment?: OrderStatus;
+  priceApproved?: OrderStatus;
 }>): Promise<OrderResponse> => {
   try {
     const response = await fetch(`${getApiUrl()}/api/orders/${id}`, {
@@ -148,7 +204,7 @@ export const updateOrder = async (id: string, order: Partial<OrderCreateRequest 
 
     const data: OrderResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -166,7 +222,7 @@ export const deleteOrder = async (id: string): Promise<OrderResponse> => {
 
     const data: OrderResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,

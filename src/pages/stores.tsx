@@ -142,7 +142,7 @@ export default function Stores() {
       } else {
         setError(response.error || 'Failed to fetch stores');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to fetch stores');
     } finally {
       setLoading(false);
@@ -178,7 +178,7 @@ export default function Stores() {
       } else {
         setError(response.error || 'Failed to delete store');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to delete store');
     }
   };
@@ -227,7 +227,7 @@ export default function Stores() {
       } else {
         setError(response.error || 'Gagal menambah toko');
       }
-    } catch (err) {
+    } catch {
       setError('Gagal menambah toko');
     } finally {
       setIsSubmitting(false);
@@ -275,7 +275,7 @@ export default function Stores() {
       } else {
         setError(response.error || 'Gagal mengubah toko');
       }
-    } catch (err) {
+    } catch {
       setError('Gagal mengubah toko');
     } finally {
       setIsSubmitting(false);

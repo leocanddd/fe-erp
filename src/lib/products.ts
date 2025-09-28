@@ -62,7 +62,7 @@ export const createProduct = async (product: ProductCreateRequest): Promise<Prod
 
     const data: ProductResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -90,7 +90,7 @@ export const getProducts = async (
 
     const data: ProductsListResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -115,7 +115,7 @@ export const getProduct = async (id: string): Promise<ProductResponse> => {
 
     const data: ProductResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -134,7 +134,7 @@ export const updateProduct = async (id: string, product: Partial<ProductCreateRe
 
     const data: ProductResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
@@ -152,7 +152,7 @@ export const deleteProduct = async (id: string): Promise<ProductResponse> => {
 
     const data: ProductResponse = await response.json();
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,

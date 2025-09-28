@@ -42,7 +42,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
     }
 
     return data;
-  } catch (error) {
+  } catch {
     return {
       status: 'error',
       statusCode: 500,
