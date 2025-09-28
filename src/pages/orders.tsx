@@ -74,7 +74,7 @@ export default function Orders() {
 
 	const [user, setUser] = useState<User | null>(null);
 	const [showDescModal, setShowDescModal] = useState(false);
-	const [descModalType, setDescModalType] = useState<'isProcessed' | 'isFinished' | 'isCancelled' | 'isApproved' | 'isRejected' | 'isPriceApproved' | null>(null);
+	const [descModalType, setDescModalType] = useState<'isProcessed' | 'isFinished' | 'isCancelled' | 'isApproved' | 'isRejected' | 'isPriceApproved' | 'isShipment' | null>(null);
 	const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 	const [description, setDescription] = useState('');
 
@@ -363,6 +363,7 @@ export default function Orders() {
 			| 'isApproved'
 			| 'isRejected'
 			| 'isPriceApproved'
+			| 'isShipment'
 	) => {
 		setSelectedOrder(order);
 		setDescModalType(field);
@@ -384,6 +385,7 @@ export default function Orders() {
 					case 'isApproved': return 'approved';
 					case 'isRejected': return 'rejected';
 					case 'isPriceApproved': return 'priceApproved';
+					case 'isShipment': return 'shipment';
 					default: return '';
 				}
 			};
@@ -440,6 +442,13 @@ export default function Orders() {
 			return (
 				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
 					Selesai
+				</span>
+			);
+		}
+		if (order.shipment?.isActive) {
+			return (
+				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-teal-100 text-teal-800">
+					Dikirim
 				</span>
 			);
 		}
@@ -717,6 +726,37 @@ export default function Orders() {
 																		>
 																			{(order.processed?.isActive || order.isProcessed) ? 'Batal Proses' : 'Proses'}
 																		</button>
+																	)}
+
+																	{/* Shipment and Finish Buttons - Role 8 (Gudang) */}
+																	{user?.role === 8 && (order.approved?.isActive || order.isApproved) && !(order.cancelled?.isActive || order.isCancelled) && !(order.finished?.isActive || order.isFinished) && (
+																		<>
+																			{!order.shipment?.isActive ? (
+																				<button
+																					onClick={() =>
+																						toggleOrderStatus(
+																							order,
+																							'isShipment'
+																						)
+																					}
+																					className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
+																				>
+																					Kirim
+																				</button>
+																			) : (
+																				<button
+																					onClick={() =>
+																						toggleOrderStatus(
+																							order,
+																							'isFinished'
+																						)
+																					}
+																					className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-green-100 text-green-700 hover:bg-green-200"
+																				>
+																					Selesai
+																				</button>
+																			)}
+																		</>
 																	)}
 
 																	{/* Cancel Button - Available to all roles when appropriate */}
@@ -1679,6 +1719,7 @@ export default function Orders() {
 											{descModalType === 'isApproved' && 'Setujui Pesanan'}
 											{descModalType === 'isRejected' && 'Tolak Pesanan'}
 											{descModalType === 'isPriceApproved' && 'Setujui Harga'}
+											{descModalType === 'isShipment' && 'Kirim Pesanan'}
 										</h3>
 										<div className="mt-2">
 											<p className="text-sm text-gray-500 mb-4">
@@ -1707,6 +1748,7 @@ export default function Orders() {
 									{descModalType === 'isApproved' && 'Setujui'}
 									{descModalType === 'isRejected' && 'Tolak'}
 									{descModalType === 'isPriceApproved' && 'Setujui Harga'}
+									{descModalType === 'isShipment' && (selectedOrder.shipment?.isActive ? 'Batalkan Pengiriman' : 'Kirim')}
 								</button>
 								<button
 									onClick={() => {

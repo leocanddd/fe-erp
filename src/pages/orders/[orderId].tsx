@@ -48,6 +48,13 @@ export default function OrderDetail() {
 				</span>
 			);
 		}
+		if (order.shipment?.isActive) {
+			return (
+				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-teal-100 text-teal-800">
+					Dikirim
+				</span>
+			);
+		}
 		if (order.processed?.isActive || order.isProcessed) {
 			return (
 				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
@@ -356,6 +363,29 @@ export default function OrderDetail() {
 									</div>
 								)}
 
+								{/* Shipment */}
+								{order.shipment?.isActive && (
+									<div className="relative flex items-start">
+										<div className="flex-shrink-0 w-12 h-12 bg-teal-600 rounded-full flex items-center justify-center shadow-lg">
+											<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+											</svg>
+										</div>
+										<div className="ml-6 flex-1">
+											<div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+												<div className="flex items-center justify-between mb-2">
+													<h4 className="font-semibold text-teal-600">Pesanan Dikirim</h4>
+													<span className="text-xs text-gray-500">
+														{order.shipment.actionAt ? new Date(order.shipment.actionAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false, hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' WIB' : '-'}
+													</span>
+												</div>
+												<p className="text-sm text-gray-600">{order.shipment.description || 'Pesanan telah dikirim ke alamat tujuan'}</p>
+												<p className="text-xs text-gray-500 mt-2">Oleh: {order.shipment.actionBy}</p>
+											</div>
+										</div>
+									</div>
+								)}
+
 								{/* Finished */}
 								{order.finished?.isActive && (
 									<div className="relative flex items-start">
@@ -404,7 +434,7 @@ export default function OrderDetail() {
 							</div>
 
 							{/* If no status updates */}
-							{!order.priceApproved?.isActive && !order.processed?.isActive && !order.approved?.isActive && !order.rejected?.isActive && !order.finished?.isActive && !order.cancelled?.isActive && (
+							{!order.priceApproved?.isActive && !order.processed?.isActive && !order.approved?.isActive && !order.rejected?.isActive && !order.finished?.isActive && !order.cancelled?.isActive && !order.shipment?.isActive && (
 								<div className="relative flex items-start mt-8">
 									<div className="flex-shrink-0 w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center shadow-lg">
 										<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
