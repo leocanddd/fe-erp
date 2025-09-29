@@ -94,6 +94,38 @@ export const getVisits = async (filters: VisitFilters = {}): Promise<ApiResponse
 	}
 };
 
+export const getVisitById = async (id: string): Promise<ApiResponse<Visit>> => {
+	try {
+		const url = `${API_BASE_URL}/api/visits/${id}`;
+
+		const response = await fetch(url, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+
+		const data = await response.json();
+
+		if (data.status === 'success' && data.statusCode === 200) {
+			return {
+				statusCode: 200,
+				data: data.data,
+			};
+		} else {
+			return {
+				statusCode: data.statusCode || response.status,
+				error: data.message || `HTTP error! status: ${response.status}`,
+			};
+		}
+	} catch {
+		return {
+			statusCode: 500,
+			error: 'Failed to fetch visit details',
+		};
+	}
+};
+
 export const formatDate = (dateString: string): string => {
 	const date = new Date(dateString);
 	return date.toLocaleDateString('id-ID', {
@@ -133,6 +165,34 @@ export const formatVisitDate = (visit: Visit): string => {
 		return `${dateStr}, ${startTime} - ${endTime}`;
 	} else {
 		return `${dateStr}, ${startTime} - Ongoing`;
+	}
+};
+
+export const formatVisitDateOnly = (visit: Visit): string => {
+	const startDate = new Date(visit.startTime);
+	return startDate.toLocaleDateString('id-ID', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+	});
+};
+
+export const formatVisitTimeOnly = (visit: Visit): string => {
+	const startDate = new Date(visit.startTime);
+	const startTime = startDate.toLocaleTimeString('id-ID', {
+		hour: '2-digit',
+		minute: '2-digit',
+	});
+
+	if (visit.endTime) {
+		const endDate = new Date(visit.endTime);
+		const endTime = endDate.toLocaleTimeString('id-ID', {
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+		return `${startTime} - ${endTime}`;
+	} else {
+		return `${startTime} - Ongoing`;
 	}
 };
 
