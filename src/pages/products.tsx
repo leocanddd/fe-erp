@@ -191,13 +191,14 @@ export default function Products() {
   };
 
   const resetForm = () => {
+    const today = new Date().toISOString().split('T')[0];
     setFormData({
       brand: '',
       name: '',
       code: '',
       stock: '',
       price: '',
-      entryDate: ''
+      entryDate: today
     });
   };
 
