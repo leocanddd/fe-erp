@@ -1,9 +1,5 @@
 import MainLayout from '@/components/MainLayout';
 import {
-	getUsers,
-	User,
-} from '@/lib/users';
-import {
 	formatProjectVisitDateOnly,
 	formatProjectVisitTimeOnly,
 	getProjectVisitId,
@@ -12,15 +8,20 @@ import {
 	ProjectVisitFilters,
 } from '@/lib/projectvisits';
 import {
+	getUsers,
+	User,
+} from '@/lib/users';
+import {
 	useCallback,
 	useEffect,
 	useState,
 } from 'react';
 
 export default function ReportsProject() {
-	const [projectVisits, setProjectVisits] = useState<
-		ProjectVisit[]
-	>([]);
+	const [
+		projectVisits,
+		setProjectVisits,
+	] = useState<ProjectVisit[]>([]);
 	const [users, setUsers] = useState<
 		User[]
 	>([]);
@@ -76,7 +77,9 @@ export default function ReportsProject() {
 			setLoading(true);
 			try {
 				const response =
-					await getProjectVisits(filters);
+					await getProjectVisits(
+						filters
+					);
 				if (
 					response.statusCode === 200 &&
 					response.data
@@ -133,7 +136,12 @@ export default function ReportsProject() {
 		setFilters((prev) => ({
 			...prev,
 			[key]: value,
-			page: key !== 'page' ? 1 : (typeof value === 'number' ? value : 1), // Reset to page 1 when changing filters except pagination
+			page:
+				key !== 'page'
+					? 1
+					: typeof value === 'number'
+					? value
+					: 1, // Reset to page 1 when changing filters except pagination
 		}));
 	};
 
@@ -235,7 +243,8 @@ export default function ReportsProject() {
 						currentPage * itemsPerPage,
 						totalItems
 					)}{' '}
-					dari {totalItems} kunjungan project
+					dari {totalItems} kunjungan
+					project
 				</div>
 				<div className="flex items-center space-x-2">
 					<button
@@ -277,8 +286,8 @@ export default function ReportsProject() {
 						Laporan Project
 					</h2>
 					<p className="text-gray-600">
-						Data kunjungan project dengan
-						filter dan pagination
+						Data kunjungan project
+						dengan filter dan pagination
 					</p>
 				</div>
 
@@ -445,15 +454,16 @@ export default function ReportsProject() {
 							<div className="inline-flex items-center space-x-3">
 								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
 								<span className="text-gray-600">
-									Memuat data
-									kunjungan project...
+									Memuat data kunjungan
+									project...
 								</span>
 							</div>
 						</div>
-					) : projectVisits.length === 0 ? (
+					) : projectVisits.length ===
+					  0 ? (
 						<div className="p-8 text-center text-gray-500">
-							Tidak ada data kunjungan project
-							yang ditemukan
+							Tidak ada data kunjungan
+							project yang ditemukan
 						</div>
 					) : (
 						<div className="overflow-x-auto">
@@ -464,7 +474,7 @@ export default function ReportsProject() {
 											Sales
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Toko
+											Project
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Lokasi
@@ -494,14 +504,22 @@ export default function ReportsProject() {
 														<div className="w-8 h-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center">
 															<span className="text-white font-semibold text-xs">
 																{visit.name
-																	.split(' ')[0]
-																	.charAt(0)
+																	.split(
+																		' '
+																	)[0]
+																	.charAt(
+																		0
+																	)
 																	.toUpperCase()}
 															</span>
 														</div>
 														<div className="ml-3">
 															<div className="text-sm font-medium text-gray-900">
-																{visit.name.split(' ')[0]}
+																{
+																	visit.name.split(
+																		' '
+																	)[0]
+																}
 															</div>
 														</div>
 													</div>
@@ -509,7 +527,7 @@ export default function ReportsProject() {
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900 font-medium">
 														{
-															visit.store
+															visit.projectName
 														}
 													</div>
 												</td>

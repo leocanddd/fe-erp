@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL =
+	process.env.NEXT_PUBLIC_API_URL ||
+	'http://localhost:3001';
 
 export interface ProjectVisit {
 	id: string;
@@ -12,6 +14,7 @@ export interface ProjectVisit {
 	orderId: string;
 	createdAt: string;
 	updatedAt: string;
+	projectName: string;
 }
 
 export interface ProjectVisitFilters {
@@ -40,130 +43,220 @@ interface ApiResponse<T> {
 	error?: string;
 }
 
-export const getProjectVisits = async (filters: ProjectVisitFilters = {}): Promise<ApiResponse<ProjectVisitsResponse>> => {
+export const getProjectVisits = async (
+	filters: ProjectVisitFilters = {}
+): Promise<
+	ApiResponse<ProjectVisitsResponse>
+> => {
 	try {
-		const params = new URLSearchParams();
+		const params =
+			new URLSearchParams();
 
 		// Add filters to query parameters
-		if (filters.page) params.append('page', filters.page.toString());
-		if (filters.limit) params.append('limit', filters.limit.toString());
-		if (filters.username) params.append('username', filters.username);
-		if (filters.startDate) params.append('startDate', filters.startDate);
-		if (filters.endDate) params.append('endDate', filters.endDate);
+		if (filters.page)
+			params.append(
+				'page',
+				filters.page.toString()
+			);
+		if (filters.limit)
+			params.append(
+				'limit',
+				filters.limit.toString()
+			);
+		if (filters.username)
+			params.append(
+				'username',
+				filters.username
+			);
+		if (filters.startDate)
+			params.append(
+				'startDate',
+				filters.startDate
+			);
+		if (filters.endDate)
+			params.append(
+				'endDate',
+				filters.endDate
+			);
 
-		const queryString = params.toString();
-		const url = `${API_BASE_URL}/api/projectvisits${queryString ? `?${queryString}` : ''}`;
+		const queryString =
+			params.toString();
+		const url = `${API_BASE_URL}/api/projectvisits${
+			queryString
+				? `?${queryString}`
+				: ''
+		}`;
 
 		const response = await fetch(url, {
 			method: 'GET',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type':
+					'application/json',
 			},
 		});
 
 		const data = await response.json();
 
-		if (data.status === 'success' && data.statusCode === 200) {
+		if (
+			data.status === 'success' &&
+			data.statusCode === 200
+		) {
 			return {
 				statusCode: 200,
 				data: {
-					projectVisits: data.data || [],
-					pagination: data.pagination || {
-						currentPage: 1,
-						totalPages: 1,
-						totalItems: 0,
-						itemsPerPage: 10,
-					},
+					projectVisits:
+						data.data || [],
+					pagination:
+						data.pagination || {
+							currentPage: 1,
+							totalPages: 1,
+							totalItems: 0,
+							itemsPerPage: 10,
+						},
 				},
 			};
 		} else {
 			return {
-				statusCode: data.statusCode || response.status,
-				error: data.message || `HTTP error! status: ${response.status}`,
+				statusCode:
+					data.statusCode ||
+					response.status,
+				error:
+					data.message ||
+					`HTTP error! status: ${response.status}`,
 			};
 		}
 	} catch {
 		return {
 			statusCode: 500,
-			error: 'Failed to fetch project visits',
+			error:
+				'Failed to fetch project visits',
 		};
 	}
 };
 
-export const formatDate = (dateString: string): string => {
+export const formatDate = (
+	dateString: string
+): string => {
 	const date = new Date(dateString);
-	return date.toLocaleDateString('id-ID', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-		hour: '2-digit',
-		minute: '2-digit',
-	});
-};
-
-export const formatDateInput = (dateString: string): string => {
-	const date = new Date(dateString);
-	return date.toISOString().split('T')[0];
-};
-
-export const formatProjectVisitDate = (visit: ProjectVisit): string => {
-	const startDate = new Date(visit.startTime);
-
-	const dateStr = startDate.toLocaleDateString('id-ID', {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-	});
-
-	const startTime = startDate.toLocaleTimeString('id-ID', {
-		hour: '2-digit',
-		minute: '2-digit',
-	});
-
-	if (visit.endTime) {
-		const endDate = new Date(visit.endTime);
-		const endTime = endDate.toLocaleTimeString('id-ID', {
+	return date.toLocaleDateString(
+		'id-ID',
+		{
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
 			hour: '2-digit',
 			minute: '2-digit',
-		});
+		}
+	);
+};
+
+export const formatDateInput = (
+	dateString: string
+): string => {
+	const date = new Date(dateString);
+	return date
+		.toISOString()
+		.split('T')[0];
+};
+
+export const formatProjectVisitDate = (
+	visit: ProjectVisit
+): string => {
+	const startDate = new Date(
+		visit.startTime
+	);
+
+	const dateStr =
+		startDate.toLocaleDateString(
+			'id-ID',
+			{
+				year: 'numeric',
+				month: 'short',
+				day: 'numeric',
+			}
+		);
+
+	const startTime =
+		startDate.toLocaleTimeString(
+			'id-ID',
+			{
+				hour: '2-digit',
+				minute: '2-digit',
+			}
+		);
+
+	if (visit.endTime) {
+		const endDate = new Date(
+			visit.endTime
+		);
+		const endTime =
+			endDate.toLocaleTimeString(
+				'id-ID',
+				{
+					hour: '2-digit',
+					minute: '2-digit',
+				}
+			);
 		return `${dateStr}, ${startTime} - ${endTime}`;
 	} else {
 		return `${dateStr}, ${startTime} - Ongoing`;
 	}
 };
 
-export const formatProjectVisitDateOnly = (visit: ProjectVisit): string => {
-	const startDate = new Date(visit.startTime);
-	return startDate.toLocaleDateString('id-ID', {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-	});
-};
+export const formatProjectVisitDateOnly =
+	(visit: ProjectVisit): string => {
+		const startDate = new Date(
+			visit.startTime
+		);
+		return startDate.toLocaleDateString(
+			'id-ID',
+			{
+				year: 'numeric',
+				month: 'short',
+				day: 'numeric',
+			}
+		);
+	};
 
-export const formatProjectVisitTimeOnly = (visit: ProjectVisit): string => {
-	const startDate = new Date(visit.startTime);
-	const startTime = startDate.toLocaleTimeString('id-ID', {
-		hour: '2-digit',
-		minute: '2-digit',
-	});
+export const formatProjectVisitTimeOnly =
+	(visit: ProjectVisit): string => {
+		const startDate = new Date(
+			visit.startTime
+		);
+		const startTime =
+			startDate.toLocaleTimeString(
+				'id-ID',
+				{
+					hour: '2-digit',
+					minute: '2-digit',
+				}
+			);
 
-	if (visit.endTime) {
-		const endDate = new Date(visit.endTime);
-		const endTime = endDate.toLocaleTimeString('id-ID', {
-			hour: '2-digit',
-			minute: '2-digit',
-		});
-		return `${startTime} - ${endTime}`;
-	} else {
-		return `${startTime} - Ongoing`;
-	}
-};
+		if (visit.endTime) {
+			const endDate = new Date(
+				visit.endTime
+			);
+			const endTime =
+				endDate.toLocaleTimeString(
+					'id-ID',
+					{
+						hour: '2-digit',
+						minute: '2-digit',
+					}
+				);
+			return `${startTime} - ${endTime}`;
+		} else {
+			return `${startTime} - Ongoing`;
+		}
+	};
 
-export const getProjectVisitId = (visit: ProjectVisit): string => {
+export const getProjectVisitId = (
+	visit: ProjectVisit
+): string => {
 	return visit.id;
 };
 
-export const getProjectVisitCreatedAt = (visit: ProjectVisit): string => {
-	return visit.createdAt;
-};
+export const getProjectVisitCreatedAt =
+	(visit: ProjectVisit): string => {
+		return visit.createdAt;
+	};
