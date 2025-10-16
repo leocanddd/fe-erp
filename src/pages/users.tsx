@@ -327,6 +327,12 @@ export default function Users() {
 										<option value={9}>
 											Manager Project
 										</option>
+										<option value={10}>
+											HRD
+										</option>
+										<option value={11}>
+											Kolektor
+										</option>
 									</select>
 								</div>
 								<div className="flex items-end space-x-2">
@@ -704,6 +710,9 @@ export default function Users() {
 									<option value={10}>
 										HRD
 									</option>
+									<option value={11}>
+										Kolektor
+									</option>
 								</select>
 							</div>
 							<div>
@@ -939,6 +948,9 @@ export default function Users() {
 									</option>
 									<option value={10}>
 										HRD
+									</option>
+									<option value={11}>
+										Kolektor
 									</option>
 								</select>
 							</div>
