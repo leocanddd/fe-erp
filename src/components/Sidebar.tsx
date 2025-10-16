@@ -21,10 +21,11 @@ export default function Sidebar({
 }: SidebarProps) {
 	const router = useRouter();
 
-	const navigationItems = [
+	const allNavigationItems = [
 		{
 			name: 'Beranda',
 			href: '/dashboard',
+			roles: [3, 4, 5, 6, 7, 8, 9, 10], // All roles
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -50,6 +51,7 @@ export default function Sidebar({
 		{
 			name: 'Produk',
 			href: '/products',
+			roles: [3, 5, 6, 7, 8], // Admin, Superadmin, Approver, Pricing, Gudang
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -69,6 +71,7 @@ export default function Sidebar({
 		{
 			name: 'Toko',
 			href: '/stores',
+			roles: [5], // Only Superadmin
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -88,6 +91,7 @@ export default function Sidebar({
 		{
 			name: 'Pesanan',
 			href: '/orders',
+			roles: [3, 4, 5, 6, 7, 8], // Admin, Manager Retail, Superadmin, Approver, Pricing, Gudang
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -113,6 +117,7 @@ export default function Sidebar({
 		{
 			name: 'Analitik',
 			href: '/analytics',
+			roles: [5], // Only Superadmin
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -132,6 +137,7 @@ export default function Sidebar({
 		{
 			name: 'Pengguna',
 			href: '/users',
+			roles: [5], // Only Superadmin
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -151,6 +157,7 @@ export default function Sidebar({
 		{
 			name: 'Profil',
 			href: '/profile',
+			roles: [5], // Only Superadmin
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -170,6 +177,7 @@ export default function Sidebar({
 		{
 			name: 'Pengaturan',
 			href: '/settings',
+			roles: [5], // Only Superadmin
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -195,6 +203,7 @@ export default function Sidebar({
 		{
 			name: 'Laporan',
 			href: '/reports',
+			roles: [4, 5, 10], // Manager Retail, Superadmin, HRD
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -214,6 +223,7 @@ export default function Sidebar({
 		{
 			name: 'Laporan Project',
 			href: '/reports-project',
+			roles: [5, 9, 10], // Superadmin, Manager Project, HRD
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -233,6 +243,7 @@ export default function Sidebar({
 		{
 			name: 'Demo',
 			href: '/demo',
+			roles: [4, 5], // Manager Retail, Superadmin
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -250,6 +261,11 @@ export default function Sidebar({
 			),
 		},
 	];
+
+	// Filter navigation items based on user role
+	const navigationItems = allNavigationItems.filter((item) =>
+		item.roles.includes(user.role)
+	);
 
 	return (
 		<div
