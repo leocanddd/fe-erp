@@ -7,7 +7,8 @@ import {
 	updateOrder,
 } from '@/lib/orders';
 import { getStoredUser } from '@/lib/auth';
-import { useEffect, useState, useCallback } from 'react';
+import { getProducts, Product } from '@/lib/products';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import MainLayout from '@/components/MainLayout';
 
 interface User {
@@ -61,7 +62,6 @@ export default function Orders() {
 		useState({
 			customer: '',
 			contact: '',
-			orderDate: '',
 			shipmentTime: '',
 			products: [
 				{
@@ -77,6 +77,10 @@ export default function Orders() {
 	const [descModalType, setDescModalType] = useState<'isProcessed' | 'isFinished' | 'isCancelled' | 'isApproved' | 'isRejected' | 'isPriceApproved' | 'isShipment' | null>(null);
 	const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 	const [description, setDescription] = useState('');
+	const [products, setProducts] = useState<Product[]>([]);
+	const [productSearch, setProductSearch] = useState<string[]>([]);
+	const [showProductDropdown, setShowProductDropdown] = useState<number | null>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		const userData = getStoredUser();
@@ -84,6 +88,38 @@ export default function Orders() {
 			setUser(userData);
 		}
 	}, []);
+
+	// Close dropdown when clicking outside
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+				setShowProductDropdown(null);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, []);
+
+	const fetchProducts = useCallback(async () => {
+		try {
+			const response = await getProducts(1, 100, ''); // Fetch first 100 products
+			if (response.statusCode === 200) {
+				setProducts(response.data || []);
+			}
+		} catch {
+			console.error('Failed to fetch products');
+		}
+	}, []);
+
+	useEffect(() => {
+		if (showAddModal || showEditModal) {
+			fetchProducts();
+			setProductSearch(formData.products.map(() => ''));
+		}
+	}, [showAddModal, showEditModal, fetchProducts]);
 
 	const fetchOrders = useCallback(async () => {
 		setLoading(true);
@@ -204,6 +240,46 @@ export default function Orders() {
 				},
 			],
 		}));
+		setProductSearch([...productSearch, '']);
+	};
+
+	const handleProductSelect = (index: number, product: Product) => {
+		const updatedProducts = [...formData.products];
+		updatedProducts[index] = {
+			...updatedProducts[index],
+			product: product.name,
+			value: product.price,
+		};
+		setFormData((prev) => ({
+			...prev,
+			products: updatedProducts,
+		}));
+
+		const updatedSearch = [...productSearch];
+		updatedSearch[index] = product.name;
+		setProductSearch(updatedSearch);
+		setShowProductDropdown(null);
+	};
+
+	const handleProductSearchChange = (index: number, value: string) => {
+		const updatedSearch = [...productSearch];
+		updatedSearch[index] = value;
+		setProductSearch(updatedSearch);
+		setShowProductDropdown(index);
+
+		// Update the product name in form data
+		handleProductChange(index, 'product', value);
+	};
+
+	const getFilteredProducts = (index: number) => {
+		const searchTerm = productSearch[index]?.toLowerCase() || '';
+		if (!searchTerm) return products;
+		return products.filter(
+			(p) =>
+				p.name.toLowerCase().includes(searchTerm) ||
+				p.brand.toLowerCase().includes(searchTerm) ||
+				p.code.toLowerCase().includes(searchTerm)
+		);
 	};
 
 	const removeProduct = (
@@ -225,7 +301,6 @@ export default function Orders() {
 		setFormData({
 			customer: '',
 			contact: '',
-			orderDate: '',
 			shipmentTime: '',
 			products: [
 				{
@@ -250,7 +325,7 @@ export default function Orders() {
 					formData.customer.trim(),
 				contact:
 					formData.contact.trim(),
-				orderDate: formData.orderDate,
+				orderDate: new Date().toISOString(),
 				shipmentTime:
 					formData.shipmentTime,
 				products: formData.products.map(
@@ -262,7 +337,8 @@ export default function Orders() {
 						value: Number(p.value),
 					})
 				),
-				createdBy: user!.username,
+				createdBy: `${user!.firstName} ${user!.lastName}`,
+				username: user!.username,
 			};
 
 			const response =
@@ -314,7 +390,7 @@ export default function Orders() {
 					formData.customer.trim(),
 				contact:
 					formData.contact.trim(),
-				orderDate: formData.orderDate,
+				orderDate: editingOrder.orderDate,
 				shipmentTime:
 					formData.shipmentTime,
 				products: formData.products.map(
@@ -326,7 +402,8 @@ export default function Orders() {
 						value: Number(p.value),
 					})
 				),
-				createdBy: user!.username,
+				createdBy: `${user!.firstName} ${user!.lastName}`,
+				username: user!.username,
 			};
 
 			const response =
@@ -401,6 +478,7 @@ export default function Orders() {
 				orderDate: selectedOrder.orderDate,
 				shipmentTime: selectedOrder.shipmentTime,
 				createdBy: selectedOrder.createdBy,
+				username: selectedOrder.username || user.username,
 				[statusField]: {
 					isActive: !isCurrentlyActive,
 					description: description,
@@ -963,104 +1041,8 @@ export default function Orders() {
 												</div>
 											)}
 
-											<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-												<div>
-													<label
-														htmlFor="customer"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Nama
-														Customer *
-													</label>
-													<input
-														type="text"
-														id="customer"
-														name="customer"
-														required
-														value={
-															formData.customer
-														}
-														onChange={
-															handleInputChange
-														}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														placeholder="Masukkan nama customer"
-													/>
-												</div>
-
-												<div>
-													<label
-														htmlFor="contact"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Kontak *
-													</label>
-													<input
-														type="text"
-														id="contact"
-														name="contact"
-														required
-														value={
-															formData.contact
-														}
-														onChange={
-															handleInputChange
-														}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														placeholder="Masukkan nomor telepon/email"
-													/>
-												</div>
-
-												<div>
-													<label
-														htmlFor="orderDate"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Tanggal
-														Pesanan *
-													</label>
-													<input
-														type="date"
-														id="orderDate"
-														name="orderDate"
-														required
-														value={
-															formData.orderDate
-														}
-														onChange={
-															handleInputChange
-														}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-													/>
-												</div>
-
-												<div>
-													<label
-														htmlFor="shipmentTime"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Waktu
-														Pengiriman *
-													</label>
-													<input
-														type="text"
-														id="shipmentTime"
-														name="shipmentTime"
-														required
-														value={
-															formData.shipmentTime
-														}
-														onChange={
-															handleInputChange
-														}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														placeholder="Contoh: 08:00-10:00"
-													/>
-												</div>
-											</div>
-
 											{/* Products Section */}
-											<div className="mt-8">
+											<div>
 												<div className="flex items-center justify-between mb-4">
 													<h4 className="text-lg font-semibold text-gray-900">
 														Produk
@@ -1088,7 +1070,7 @@ export default function Orders() {
 															}
 															className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-2xl"
 														>
-															<div className="md:col-span-2">
+															<div className="md:col-span-2 relative">
 																<label className="block text-sm font-medium text-gray-700 mb-1">
 																	Nama
 																	Produk
@@ -1098,22 +1080,41 @@ export default function Orders() {
 																	type="text"
 																	required
 																	value={
-																		product.product
+																		productSearch[index] || product.product
 																	}
 																	onChange={(
 																		e
 																	) =>
-																		handleProductChange(
+																		handleProductSearchChange(
 																			index,
-																			'product',
-																			e
-																				.target
-																				.value
+																			e.target.value
 																		)
 																	}
+																	onFocus={() => setShowProductDropdown(index)}
 																	className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-																	placeholder="Masukkan nama produk"
+																	placeholder="Cari produk..."
 																/>
+																{showProductDropdown === index && (
+																	<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+																		{getFilteredProducts(index).length > 0 ? (
+																			getFilteredProducts(index).map((p) => (
+																				<div
+																					key={p.id}
+																					onClick={() => handleProductSelect(index, p)}
+																					className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+																				>
+																					<div className="font-medium text-gray-900">{p.name}</div>
+																					<div className="text-xs text-gray-500">{p.brand} - {p.code}</div>
+																					<div className="text-sm text-blue-600 font-medium">Rp {p.price.toLocaleString('id-ID')}</div>
+																				</div>
+																			))
+																		) : (
+																			<div className="px-4 py-3 text-gray-500 text-sm">
+																				Tidak ada produk ditemukan
+																			</div>
+																		)}
+																	</div>
+																)}
 															</div>
 															<div>
 																<label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1209,6 +1210,79 @@ export default function Orders() {
 														</div>
 													)
 												)}
+											</div>
+
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+												<div>
+													<label
+														htmlFor="customer"
+														className="block text-sm font-semibold text-gray-700 mb-2"
+													>
+														Nama
+														Customer *
+													</label>
+													<input
+														type="text"
+														id="customer"
+														name="customer"
+														required
+														value={
+															formData.customer
+														}
+														onChange={
+															handleInputChange
+														}
+														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+														placeholder="Masukkan nama customer"
+													/>
+												</div>
+
+												<div>
+													<label
+														htmlFor="contact"
+														className="block text-sm font-semibold text-gray-700 mb-2"
+													>
+														Kontak *
+													</label>
+													<input
+														type="text"
+														id="contact"
+														name="contact"
+														required
+														value={
+															formData.contact
+														}
+														onChange={
+															handleInputChange
+														}
+														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+														placeholder="Masukkan nomor telepon/email"
+													/>
+												</div>
+
+												<div>
+													<label
+														htmlFor="shipmentTime"
+														className="block text-sm font-semibold text-gray-700 mb-2"
+													>
+														Waktu
+														Pengiriman *
+													</label>
+													<input
+														type="text"
+														id="shipmentTime"
+														name="shipmentTime"
+														required
+														value={
+															formData.shipmentTime
+														}
+														onChange={
+															handleInputChange
+														}
+														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+														placeholder="Contoh: 08:00-10:00"
+													/>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -1321,105 +1395,8 @@ export default function Orders() {
 													</div>
 												)}
 
-												<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-													<div>
-														<label
-															htmlFor="edit-customer"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Nama
-															Customer *
-														</label>
-														<input
-															type="text"
-															id="edit-customer"
-															name="customer"
-															required
-															value={
-																formData.customer
-															}
-															onChange={
-																handleInputChange
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-															placeholder="Masukkan nama customer"
-														/>
-													</div>
-
-													<div>
-														<label
-															htmlFor="edit-contact"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Kontak *
-														</label>
-														<input
-															type="text"
-															id="edit-contact"
-															name="contact"
-															required
-															value={
-																formData.contact
-															}
-															onChange={
-																handleInputChange
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-															placeholder="Masukkan nomor telepon/email"
-														/>
-													</div>
-
-													<div>
-														<label
-															htmlFor="edit-orderDate"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Tanggal
-															Pesanan *
-														</label>
-														<input
-															type="date"
-															id="edit-orderDate"
-															name="orderDate"
-															required
-															value={
-																formData.orderDate
-															}
-															onChange={
-																handleInputChange
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														/>
-													</div>
-
-													<div>
-														<label
-															htmlFor="edit-shipmentTime"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Waktu
-															Pengiriman
-															*
-														</label>
-														<input
-															type="text"
-															id="edit-shipmentTime"
-															name="shipmentTime"
-															required
-															value={
-																formData.shipmentTime
-															}
-															onChange={
-																handleInputChange
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-															placeholder="Contoh: 08:00-10:00"
-														/>
-													</div>
-												</div>
-
 												{/* Products Section */}
-												<div className="mt-8">
+												<div>
 													<div className="flex items-center justify-between mb-4">
 														<h4 className="text-lg font-semibold text-gray-900">
 															Produk
@@ -1447,7 +1424,7 @@ export default function Orders() {
 																}
 																className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-2xl"
 															>
-																<div className="md:col-span-2">
+																<div className="md:col-span-2 relative">
 																	<label className="block text-sm font-medium text-gray-700 mb-1">
 																		Nama
 																		Produk
@@ -1457,22 +1434,41 @@ export default function Orders() {
 																		type="text"
 																		required
 																		value={
-																			product.product
+																			productSearch[index] || product.product
 																		}
 																		onChange={(
 																			e
 																		) =>
-																			handleProductChange(
+																			handleProductSearchChange(
 																				index,
-																				'product',
-																				e
-																					.target
-																					.value
+																				e.target.value
 																			)
 																		}
+																		onFocus={() => setShowProductDropdown(index)}
 																		className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-																		placeholder="Masukkan nama produk"
+																		placeholder="Cari produk..."
 																	/>
+																	{showProductDropdown === index && (
+																		<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+																			{getFilteredProducts(index).length > 0 ? (
+																				getFilteredProducts(index).map((p) => (
+																					<div
+																						key={p.id}
+																						onClick={() => handleProductSelect(index, p)}
+																						className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+																					>
+																						<div className="font-medium text-gray-900">{p.name}</div>
+																						<div className="text-xs text-gray-500">{p.brand} - {p.code}</div>
+																						<div className="text-sm text-blue-600 font-medium">Rp {p.price.toLocaleString('id-ID')}</div>
+																					</div>
+																				))
+																			) : (
+																				<div className="px-4 py-3 text-gray-500 text-sm">
+																					Tidak ada produk ditemukan
+																				</div>
+																			)}
+																		</div>
+																	)}
 																</div>
 																<div>
 																	<label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1568,6 +1564,80 @@ export default function Orders() {
 															</div>
 														)
 													)}
+												</div>
+
+												<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+													<div>
+														<label
+															htmlFor="edit-customer"
+															className="block text-sm font-semibold text-gray-700 mb-2"
+														>
+															Nama
+															Customer *
+														</label>
+														<input
+															type="text"
+															id="edit-customer"
+															name="customer"
+															required
+															value={
+																formData.customer
+															}
+															onChange={
+																handleInputChange
+															}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+															placeholder="Masukkan nama customer"
+														/>
+													</div>
+
+													<div>
+														<label
+															htmlFor="edit-contact"
+															className="block text-sm font-semibold text-gray-700 mb-2"
+														>
+															Kontak *
+														</label>
+														<input
+															type="text"
+															id="edit-contact"
+															name="contact"
+															required
+															value={
+																formData.contact
+															}
+															onChange={
+																handleInputChange
+															}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+															placeholder="Masukkan nomor telepon/email"
+														/>
+													</div>
+
+													<div>
+														<label
+															htmlFor="edit-shipmentTime"
+															className="block text-sm font-semibold text-gray-700 mb-2"
+														>
+															Waktu
+															Pengiriman
+															*
+														</label>
+														<input
+															type="text"
+															id="edit-shipmentTime"
+															name="shipmentTime"
+															required
+															value={
+																formData.shipmentTime
+															}
+															onChange={
+																handleInputChange
+															}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+															placeholder="Contoh: 08:00-10:00"
+														/>
+													</div>
 												</div>
 											</div>
 										</div>

@@ -134,6 +134,49 @@ export const getProjectVisits = async (
 	}
 };
 
+export const getProjectVisitById = async (
+	id: string
+): Promise<ApiResponse<ProjectVisit>> => {
+	try {
+		const url = `${API_BASE_URL}/api/projectvisits/${id}`;
+
+		const response = await fetch(url, {
+			method: 'GET',
+			headers: {
+				'Content-Type':
+					'application/json',
+			},
+		});
+
+		const data = await response.json();
+
+		if (
+			data.status === 'success' &&
+			data.statusCode === 200
+		) {
+			return {
+				statusCode: 200,
+				data: data.data,
+			};
+		} else {
+			return {
+				statusCode:
+					data.statusCode ||
+					response.status,
+				error:
+					data.message ||
+					`HTTP error! status: ${response.status}`,
+			};
+		}
+	} catch {
+		return {
+			statusCode: 500,
+			error:
+				'Failed to fetch project visit details',
+		};
+	}
+};
+
 export const formatDate = (
 	dateString: string
 ): string => {

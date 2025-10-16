@@ -51,7 +51,7 @@ export default function Sidebar({
 		{
 			name: 'Produk',
 			href: '/products',
-			roles: [3, 5, 6, 7, 8], // Admin, Superadmin, Approver, Pricing, Gudang
+			roles: [3, 4, 5, 6, 7, 8, 9], // Admin, Superadmin, Approver, Pricing, Gudang
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -71,7 +71,7 @@ export default function Sidebar({
 		{
 			name: 'Toko',
 			href: '/stores',
-			roles: [5], // Only Superadmin
+			roles: [4, 5], // Only Superadmin
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -263,9 +263,10 @@ export default function Sidebar({
 	];
 
 	// Filter navigation items based on user role
-	const navigationItems = allNavigationItems.filter((item) =>
-		item.roles.includes(user.role)
-	);
+	const navigationItems =
+		allNavigationItems.filter((item) =>
+			item.roles.includes(user.role)
+		);
 
 	return (
 		<div
