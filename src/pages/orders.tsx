@@ -119,6 +119,7 @@ export default function Orders() {
 			fetchProducts();
 			setProductSearch(formData.products.map(() => ''));
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [showAddModal, showEditModal, fetchProducts]);
 
 	const fetchOrders = useCallback(async () => {

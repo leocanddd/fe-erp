@@ -88,7 +88,7 @@ export const getCollectorVisits = async (
 				error: data.message || `HTTP error! status: ${response.status}`,
 			};
 		}
-	} catch (error) {
+	} catch {
 		return {
 			status: 'error',
 			statusCode: 500,

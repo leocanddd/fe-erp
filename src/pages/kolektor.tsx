@@ -1,24 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { getStoredUser } from '@/lib/auth';
 import {
 	getCollectorVisits,
 	CollectorVisit,
 	CollectorVisitsParams,
 } from '@/lib/collector-visits';
 
-interface User {
-	username: string;
-	firstName: string;
-	lastName: string;
-	role: number;
-}
-
 export default function Kolektor() {
 	const [visits, setVisits] = useState<CollectorVisit[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
-	const [user, setUser] = useState<User | null>(null);
 
 	// Pagination & Filter states
 	const [currentPage, setCurrentPage] = useState(1);
@@ -30,13 +21,6 @@ export default function Kolektor() {
 	const [usernameFilter, setUsernameFilter] = useState('');
 	const [startDateFilter, setStartDateFilter] = useState('');
 	const [endDateFilter, setEndDateFilter] = useState('');
-
-	useEffect(() => {
-		const userData = getStoredUser();
-		if (userData) {
-			setUser(userData);
-		}
-	}, []);
 
 	const fetchCollectorVisits = useCallback(async () => {
 		setLoading(true);
@@ -69,7 +53,7 @@ export default function Kolektor() {
 			} else {
 				setError(response.error || 'Failed to fetch collector visits');
 			}
-		} catch (err) {
+		} catch {
 			setError('Failed to fetch collector visits');
 		} finally {
 			setLoading(false);
@@ -91,15 +75,6 @@ export default function Kolektor() {
 		setStartDateFilter('');
 		setEndDateFilter('');
 		setCurrentPage(1);
-	};
-
-	const formatDate = (dateString: string) => {
-		const date = new Date(dateString);
-		return date.toLocaleDateString('id-ID', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		});
 	};
 
 	const formatDateTime = (dateString: string) => {

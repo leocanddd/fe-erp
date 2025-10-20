@@ -91,7 +91,7 @@ export default function MapComponent({ visits, onMappedCount }: MapComponentProp
 		} else {
 			setLoading(false);
 		}
-	}, [visits]);
+	}, [visits, onMappedCount]);
 
 	useEffect(() => {
 		if (!mapContainerRef.current || loading) return;

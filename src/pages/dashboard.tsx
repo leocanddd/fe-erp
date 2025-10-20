@@ -54,6 +54,7 @@ export default function AdminDashboard() {
 		if (showSearchModal) {
 			fetchProducts();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [showSearchModal, searchTerm]);
 
 	const handleOpenSearchModal = () => {
