@@ -3,9 +3,7 @@ import type {
 	NextApiResponse,
 } from 'next';
 
-const BACKEND_URL =
-	process.env.NEXT_PUBLIC_API_URL ||
-	'http://localhost:8080';
+const BACKEND_URL = process.env.API_URL || 'http://localhost:8080';
 
 export default async function handler(
 	req: NextApiRequest,
