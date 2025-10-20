@@ -283,7 +283,7 @@ export default function Sidebar({
 		{
 			name: 'Kolektor',
 			href: '/kolektor',
-			roles: [6], // Only Approver
+			roles: [6, 5], // Only Approver
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -328,7 +328,7 @@ export default function Sidebar({
 					</div>
 				</div>
 
-				<nav className="flex-1 px-4 py-6 space-y-2">
+				<nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
 					{navigationItems.map(
 						(item) => (
 							<Link
