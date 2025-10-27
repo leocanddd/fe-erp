@@ -1,4 +1,5 @@
 import MainLayout from '@/components/MainLayout';
+import TinyMCEEditor from '@/components/TinyMCEEditor';
 import { Blog, UpdateBlogInput } from '@/types/blog';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -265,20 +266,16 @@ export default function EditBlog() {
 
 						<div>
 							<label className="block text-sm font-medium text-gray-700 mb-2">
-								Konten (HTML)
+								Konten
 							</label>
-							<textarea
-								required
-								rows={10}
+							<TinyMCEEditor
 								value={formData.content}
-								onChange={(e) =>
+								onChange={(content) =>
 									setFormData((prev) => ({
 										...prev,
-										content: e.target.value,
+										content: content,
 									}))
 								}
-								placeholder="<h2>Judul Konten</h2><p>Isi konten...</p>"
-								className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 font-mono text-sm"
 							/>
 						</div>
 
