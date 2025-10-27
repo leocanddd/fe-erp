@@ -9,6 +9,7 @@ export interface Blog {
 	author: string;
 	publishDate: string;
 	tags: string[];
+	isApproved?: boolean;
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -23,6 +24,7 @@ export interface CreateBlogInput {
 	author: string;
 	publishDate: string;
 	tags: string[];
+	isApproved?: boolean;
 }
 
 export interface UpdateBlogInput extends Partial<CreateBlogInput> {
