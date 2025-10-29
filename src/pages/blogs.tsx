@@ -151,6 +151,11 @@ export default function Blogs() {
 		id: string,
 		currentStatus: boolean
 	) => {
+		const newStatus = !currentStatus;
+		console.log('Current approval status:', currentStatus);
+		console.log('New approval status:', newStatus);
+		console.log('Sending payload:', { isApproved: newStatus });
+
 		setApproveLoading(id);
 		try {
 			const token =
@@ -165,7 +170,7 @@ export default function Blogs() {
 						Authorization: `Bearer ${token}`,
 					},
 					body: JSON.stringify({
-						isApproved: !currentStatus,
+						isApproved: newStatus,
 					}),
 				}
 			);
@@ -352,13 +357,16 @@ export default function Blogs() {
 											</div>
 											{isSuperAdmin && (
 												<button
-													onClick={() =>
+													onClick={() => {
+														console.log('Blog object:', blog);
+														console.log('blog.isApproved:', blog.isApproved);
+														console.log('Passing to handleApprove:', blog.isApproved || false);
 														handleApprove(
 															blog._id,
 															blog.isApproved ||
 																false
-														)
-													}
+														);
+													}}
 													disabled={
 														approveLoading ===
 														blog._id
