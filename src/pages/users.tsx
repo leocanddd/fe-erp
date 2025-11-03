@@ -336,6 +336,9 @@ export default function Users() {
 										<option value={12}>
 											Blog
 										</option>
+										<option value={13}>
+											Telemarketer
+										</option>
 									</select>
 								</div>
 								<div className="flex items-end space-x-2">
@@ -719,6 +722,9 @@ export default function Users() {
 									<option value={12}>
 										Blog
 									</option>
+									<option value={13}>
+										Telemarketer
+									</option>
 								</select>
 							</div>
 							<div>
@@ -960,6 +966,9 @@ export default function Users() {
 									</option>
 									<option value={12}>
 										Blog
+									</option>
+									<option value={13}>
+										Telemarketer
 									</option>
 								</select>
 							</div>

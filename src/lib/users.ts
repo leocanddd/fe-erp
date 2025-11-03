@@ -113,6 +113,7 @@ export const getRoleName = (
 		10: 'HRD',
 		11: 'Kolektor',
 		12: 'Blog',
+		13: 'Telemarketer',
 	};
 	return (
 		roleNames[role] || 'Unknown Role'
