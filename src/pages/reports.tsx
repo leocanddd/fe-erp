@@ -17,6 +17,7 @@ import {
 	useEffect,
 	useState,
 } from 'react';
+import * as XLSX from 'xlsx';
 
 export default function Reports() {
 	const [visits, setVisits] = useState<
@@ -175,6 +176,156 @@ export default function Reports() {
 		handleFilterChange('limit', limit);
 	};
 
+	const exportToExcel = async () => {
+		try {
+			// Fetch all visits with the same filters but no pagination limit
+			const exportFilters: VisitFilters = {
+				...filters,
+				limit: 999999, // Get all records
+				page: 1,
+			};
+
+			const response = await getVisits(exportFilters);
+
+			if (response.statusCode !== 200 || !response.data) {
+				alert('Failed to fetch data for export');
+				return;
+			}
+
+			const allVisits = response.data.visits;
+
+			// Prepare data for export
+			const exportData = allVisits.map((visit) => ({
+				'Sales': visit.name,
+				'Username': visit.username,
+				'Toko': visit.store,
+				'Lokasi': visit.location,
+				'Tanggal': formatVisitDateOnly(visit),
+				'Jam': formatVisitTimeOnly(visit),
+				'Deskripsi': visit.description,
+				'Order ID': visit.orderId || '-',
+			}));
+
+			// Create worksheet
+			const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+			// Create workbook
+			const workbook = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan Kunjungan');
+
+			// Generate filename with current date
+			const date = new Date().toISOString().split('T')[0];
+			const filename = `laporan-kunjungan-${date}.xlsx`;
+
+			// Download file
+			XLSX.writeFile(workbook, filename);
+		} catch (error) {
+			console.error('Export error:', error);
+			alert('Failed to export data');
+		}
+	};
+
+	const exportSummary = async () => {
+		try {
+			// Fetch all visits with the same filters but no pagination limit
+			const exportFilters: VisitFilters = {
+				...filters,
+				limit: 999999, // Get all records
+				page: 1,
+			};
+
+			const response = await getVisits(exportFilters);
+
+			if (response.statusCode !== 200 || !response.data) {
+				alert('Failed to fetch data for export');
+				return;
+			}
+
+			const allVisits = response.data.visits;
+
+			// Group visits by username and week
+			const summaryMap = new Map<string, Map<string, Set<string>>>();
+
+			allVisits.forEach((visit) => {
+				// Get week number and year
+				const visitDate = new Date(visit.startTime);
+				const weekNumber = getWeekNumber(visitDate);
+				const year = visitDate.getFullYear();
+				const weekKey = `${year}-W${weekNumber}`;
+
+				// Initialize username map if not exists
+				if (!summaryMap.has(visit.username)) {
+					summaryMap.set(visit.username, new Map());
+				}
+
+				const userWeeks = summaryMap.get(visit.username)!;
+
+				// Initialize week set if not exists
+				if (!userWeeks.has(weekKey)) {
+					userWeeks.set(weekKey, new Set());
+				}
+
+				// Add store to the set (automatically handles duplicates)
+				userWeeks.get(weekKey)!.add(visit.store);
+			});
+
+			// Convert to export format
+			const exportData: Array<{
+				Sales: string;
+				Username: string;
+				Week: string;
+				'Unique Stores Visited': number;
+			}> = [];
+
+			summaryMap.forEach((weeks, username) => {
+				const salesName = allVisits.find(v => v.username === username)?.name || username;
+
+				weeks.forEach((stores, weekKey) => {
+					exportData.push({
+						'Sales': salesName,
+						'Username': username,
+						'Week': weekKey,
+						'Unique Stores Visited': stores.size,
+					});
+				});
+			});
+
+			// Sort by username and week
+			exportData.sort((a, b) => {
+				if (a.Username !== b.Username) {
+					return a.Username.localeCompare(b.Username);
+				}
+				return a.Week.localeCompare(b.Week);
+			});
+
+			// Create worksheet
+			const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+			// Create workbook
+			const workbook = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(workbook, worksheet, 'Summary Kunjungan');
+
+			// Generate filename with current date
+			const date = new Date().toISOString().split('T')[0];
+			const filename = `summary-kunjungan-${date}.xlsx`;
+
+			// Download file
+			XLSX.writeFile(workbook, filename);
+		} catch (error) {
+			console.error('Export error:', error);
+			alert('Failed to export summary');
+		}
+	};
+
+	// Helper function to get week number
+	const getWeekNumber = (date: Date): number => {
+		const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+		const dayNum = d.getUTCDay() || 7;
+		d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+		const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+		return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+	};
+
 	const renderPagination = () => {
 		const pages = [];
 		const maxVisiblePages = 5;
@@ -273,14 +424,38 @@ export default function Reports() {
 		<MainLayout title="Laporan Kunjungan">
 			<div className="max-w-7xl mx-auto">
 				{/* Header */}
-				<div className="mb-8">
-					<h2 className="text-2xl font-bold text-gray-900 mb-2">
-						Laporan Kunjungan
-					</h2>
-					<p className="text-gray-600">
-						Data kunjungan sales dengan
-						filter dan pagination
-					</p>
+				<div className="mb-8 flex justify-between items-start">
+					<div>
+						<h2 className="text-2xl font-bold text-gray-900 mb-2">
+							Laporan Kunjungan
+						</h2>
+						<p className="text-gray-600">
+							Data kunjungan sales dengan
+							filter dan pagination
+						</p>
+					</div>
+					<div className="flex space-x-3">
+						<button
+							onClick={exportSummary}
+							disabled={visits.length === 0}
+							className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+						>
+							<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+							</svg>
+							<span>Export Summary</span>
+						</button>
+						<button
+							onClick={exportToExcel}
+							disabled={visits.length === 0}
+							className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+						>
+							<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+							</svg>
+							<span>Export to Excel</span>
+						</button>
+					</div>
 				</div>
 
 				{/* Filters */}
