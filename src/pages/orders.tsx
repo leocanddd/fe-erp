@@ -982,9 +982,6 @@ export default function Orders() {
 															{/* General Approval Buttons - Role 6 (Approver) */}
 															{user?.role ===
 																6 &&
-																order
-																	.priceApproved
-																	?.isActive &&
 																!(
 																	order
 																		.approved
