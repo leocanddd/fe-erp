@@ -1035,10 +1035,6 @@ export default function Orders() {
 															{/* Processing Buttons - Role 3 (Admin) */}
 															{user?.role ===
 																3 &&
-																(order
-																	.approved
-																	?.isActive ||
-																	order.isApproved) &&
 																!(
 																	order
 																		.cancelled
