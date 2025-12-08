@@ -80,25 +80,121 @@ export default function OrderPrint() {
 					body {
 						-webkit-print-color-adjust: exact;
 						print-color-adjust: exact;
+						margin: 0;
+						padding: 0;
 					}
 					.no-print {
 						display: none !important;
 					}
 					@page {
-						margin: 1cm;
+						size: A4;
+						margin: 0.5cm;
+					}
+					.print-container {
+						width: 100%;
+						height: 100vh;
+						display: flex;
+						flex-direction: column;
+						gap: 0.5cm;
+					}
+					.print-copy {
+						flex: 1;
+						display: flex;
+						flex-direction: column;
+						page-break-after: avoid;
+						page-break-inside: avoid;
+						border: 1px solid #ddd;
+						padding: 0.3cm;
+						box-sizing: border-box;
+					}
+					.print-copy h1 {
+						font-size: 16px !important;
+						margin-bottom: 4px !important;
+					}
+					.print-copy h2 {
+						font-size: 12px !important;
+						margin-bottom: 6px !important;
+						margin-top: 8px !important;
+					}
+					.print-copy p,
+					.print-copy td,
+					.print-copy th {
+						font-size: 9px !important;
+						margin: 2px 0 !important;
+						padding: 2px 4px !important;
+					}
+					.print-copy .text-3xl {
+						font-size: 16px !important;
+					}
+					.print-copy .text-xl {
+						font-size: 12px !important;
+					}
+					.print-copy .text-base {
+						font-size: 9px !important;
+					}
+					.print-copy .text-sm {
+						font-size: 8px !important;
+					}
+					.print-copy .mb-8 {
+						margin-bottom: 8px !important;
+					}
+					.print-copy .mb-4 {
+						margin-bottom: 4px !important;
+					}
+					.print-copy .pb-4 {
+						padding-bottom: 4px !important;
+					}
+					.print-copy .pb-2 {
+						padding-bottom: 2px !important;
+					}
+				}
+				@media screen {
+					.print-container {
+						max-width: 210mm;
+						margin: 0 auto;
+						padding: 1cm;
 					}
 				}
 			`}</style>
 
-			<div className="max-w-4xl mx-auto p-8 bg-white">
+			<div className="print-container">
+				{/* First Copy */}
+				<div className="print-copy">
+					{renderOrderContent(order)}
+				</div>
+
+				{/* Second Copy */}
+				<div className="print-copy">
+					{renderOrderContent(order)}
+				</div>
+			</div>
+
+			{/* Print Button - Hidden on print */}
+			<div className="no-print mt-8 text-center pb-8">
+				<button
+					onClick={() => window.print()}
+					className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors mr-4"
+				>
+					Print / Save as PDF
+				</button>
+				<button
+					onClick={() => window.close()}
+					className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+				>
+					Close
+				</button>
+			</div>
+		</>
+	);
+
+	function renderOrderContent(order: Order) {
+		return (
+			<div className="bg-white">
 				{/* Header */}
 				<div className="text-center mb-8 border-b-2 border-gray-800 pb-4">
-					<h1 className="text-3xl font-bold text-gray-900 mb-2">
-						DETAIL PESANAN
+					<h1 className="text-3xl font-bold text-gray-900">
+						#{order.orderId}
 					</h1>
-					<p className="text-xl font-semibold text-gray-700">
-						Order ID: {order.orderId}
-					</p>
 				</div>
 
 				{/* Order Information */}
@@ -222,296 +318,7 @@ export default function OrderPrint() {
 						<p className="text-base text-gray-900">{order.description}</p>
 					</div>
 				)}
-
-				{/* Timeline */}
-				<div className="mb-8">
-					<h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-400 pb-2">
-						Timeline Status
-					</h2>
-					<div className="space-y-3">
-						{/* Created */}
-						<div className="flex justify-between items-start border-b border-gray-300 pb-2">
-							<div>
-								<p className="font-semibold text-gray-900">Pesanan Dibuat</p>
-								<p className="text-sm text-gray-600">
-									Oleh: {order.createdBy}
-								</p>
-							</div>
-							<div className="text-right text-sm text-gray-600">
-								{order.createdAt
-									? new Date(order.createdAt).toLocaleString('id-ID', {
-											timeZone: 'Asia/Jakarta',
-											hour12: false,
-											hour: '2-digit',
-											minute: '2-digit',
-											day: '2-digit',
-											month: '2-digit',
-											year: 'numeric',
-									  }) + ' WIB'
-									: '-'}
-							</div>
-						</div>
-
-						{/* Price Approved */}
-						{order.priceApproved?.isActive && (
-							<div className="flex justify-between items-start border-b border-gray-300 pb-2">
-								<div>
-									<p className="font-semibold text-gray-900">
-										Harga Disetujui
-									</p>
-									<p className="text-sm text-gray-600">
-										{order.priceApproved.description ||
-											'Harga pesanan telah disetujui'}
-									</p>
-									<p className="text-sm text-gray-600">
-										Oleh: {order.priceApproved.actionBy}
-									</p>
-								</div>
-								<div className="text-right text-sm text-gray-600">
-									{order.priceApproved.actionAt
-										? new Date(
-												order.priceApproved.actionAt
-										  ).toLocaleString('id-ID', {
-												timeZone: 'Asia/Jakarta',
-												hour12: false,
-												hour: '2-digit',
-												minute: '2-digit',
-												day: '2-digit',
-												month: '2-digit',
-												year: 'numeric',
-										  }) + ' WIB'
-										: '-'}
-								</div>
-							</div>
-						)}
-
-						{/* Approved */}
-						{order.approved?.isActive && (
-							<div className="flex justify-between items-start border-b border-gray-300 pb-2">
-								<div>
-									<p className="font-semibold text-gray-900">
-										Pesanan Disetujui
-									</p>
-									<p className="text-sm text-gray-600">
-										{order.approved.description ||
-											'Pesanan telah disetujui dan akan diproses'}
-									</p>
-									<p className="text-sm text-gray-600">
-										Oleh: {order.approved.actionBy}
-									</p>
-								</div>
-								<div className="text-right text-sm text-gray-600">
-									{order.approved.actionAt
-										? new Date(order.approved.actionAt).toLocaleString(
-												'id-ID',
-												{
-													timeZone: 'Asia/Jakarta',
-													hour12: false,
-													hour: '2-digit',
-													minute: '2-digit',
-													day: '2-digit',
-													month: '2-digit',
-													year: 'numeric',
-												}
-										  ) + ' WIB'
-										: '-'}
-								</div>
-							</div>
-						)}
-
-						{/* Rejected */}
-						{order.rejected?.isActive && (
-							<div className="flex justify-between items-start border-b border-gray-300 pb-2">
-								<div>
-									<p className="font-semibold text-gray-900">
-										Pesanan Ditolak
-									</p>
-									<p className="text-sm text-gray-600">
-										{order.rejected.description ||
-											'Pesanan ditolak dan tidak dapat diproses'}
-									</p>
-									<p className="text-sm text-gray-600">
-										Oleh: {order.rejected.actionBy}
-									</p>
-								</div>
-								<div className="text-right text-sm text-gray-600">
-									{order.rejected.actionAt
-										? new Date(order.rejected.actionAt).toLocaleString(
-												'id-ID',
-												{
-													timeZone: 'Asia/Jakarta',
-													hour12: false,
-													hour: '2-digit',
-													minute: '2-digit',
-													day: '2-digit',
-													month: '2-digit',
-													year: 'numeric',
-												}
-										  ) + ' WIB'
-										: '-'}
-								</div>
-							</div>
-						)}
-
-						{/* Processed */}
-						{order.processed?.isActive && (
-							<div className="flex justify-between items-start border-b border-gray-300 pb-2">
-								<div>
-									<p className="font-semibold text-gray-900">
-										Pesanan Diproses
-									</p>
-									<p className="text-sm text-gray-600">
-										{order.processed.description ||
-											'Pesanan sedang dalam tahap pemrosesan'}
-									</p>
-									<p className="text-sm text-gray-600">
-										Oleh: {order.processed.actionBy}
-									</p>
-								</div>
-								<div className="text-right text-sm text-gray-600">
-									{order.processed.actionAt
-										? new Date(order.processed.actionAt).toLocaleString(
-												'id-ID',
-												{
-													timeZone: 'Asia/Jakarta',
-													hour12: false,
-													hour: '2-digit',
-													minute: '2-digit',
-													day: '2-digit',
-													month: '2-digit',
-													year: 'numeric',
-												}
-										  ) + ' WIB'
-										: '-'}
-								</div>
-							</div>
-						)}
-
-						{/* Shipment */}
-						{order.shipment?.isActive && (
-							<div className="flex justify-between items-start border-b border-gray-300 pb-2">
-								<div>
-									<p className="font-semibold text-gray-900">
-										Pesanan Dikirim
-									</p>
-									<p className="text-sm text-gray-600">
-										{order.shipment.description ||
-											'Pesanan telah dikirim ke alamat tujuan'}
-									</p>
-									<p className="text-sm text-gray-600">
-										Oleh: {order.shipment.actionBy}
-									</p>
-								</div>
-								<div className="text-right text-sm text-gray-600">
-									{order.shipment.actionAt
-										? new Date(order.shipment.actionAt).toLocaleString(
-												'id-ID',
-												{
-													timeZone: 'Asia/Jakarta',
-													hour12: false,
-													hour: '2-digit',
-													minute: '2-digit',
-													day: '2-digit',
-													month: '2-digit',
-													year: 'numeric',
-												}
-										  ) + ' WIB'
-										: '-'}
-								</div>
-							</div>
-						)}
-
-						{/* Finished */}
-						{order.finished?.isActive && (
-							<div className="flex justify-between items-start border-b border-gray-300 pb-2">
-								<div>
-									<p className="font-semibold text-gray-900">
-										Pesanan Selesai
-									</p>
-									<p className="text-sm text-gray-600">
-										{order.finished.description ||
-											'Pesanan telah selesai dan berhasil diselesaikan'}
-									</p>
-									<p className="text-sm text-gray-600">
-										Oleh: {order.finished.actionBy}
-									</p>
-								</div>
-								<div className="text-right text-sm text-gray-600">
-									{order.finished.actionAt
-										? new Date(order.finished.actionAt).toLocaleString(
-												'id-ID',
-												{
-													timeZone: 'Asia/Jakarta',
-													hour12: false,
-													hour: '2-digit',
-													minute: '2-digit',
-													day: '2-digit',
-													month: '2-digit',
-													year: 'numeric',
-												}
-										  ) + ' WIB'
-										: '-'}
-								</div>
-							</div>
-						)}
-
-						{/* Cancelled */}
-						{order.cancelled?.isActive && (
-							<div className="flex justify-between items-start border-b border-gray-300 pb-2">
-								<div>
-									<p className="font-semibold text-gray-900">
-										Pesanan Dibatalkan
-									</p>
-									<p className="text-sm text-gray-600">
-										{order.cancelled.description ||
-											'Pesanan telah dibatalkan'}
-									</p>
-									<p className="text-sm text-gray-600">
-										Oleh: {order.cancelled.actionBy}
-									</p>
-								</div>
-								<div className="text-right text-sm text-gray-600">
-									{order.cancelled.actionAt
-										? new Date(order.cancelled.actionAt).toLocaleString(
-												'id-ID',
-												{
-													timeZone: 'Asia/Jakarta',
-													hour12: false,
-													hour: '2-digit',
-													minute: '2-digit',
-													day: '2-digit',
-													month: '2-digit',
-													year: 'numeric',
-												}
-										  ) + ' WIB'
-										: '-'}
-								</div>
-							</div>
-						)}
-					</div>
-				</div>
-
-				{/* Footer */}
-				<div className="mt-8 pt-4 border-t-2 border-gray-800 text-center text-sm text-gray-600">
-					<p>Dicetak pada: {new Date().toLocaleString('id-ID')}</p>
-				</div>
-
-				{/* Print Button - Hidden on print */}
-				<div className="no-print mt-8 text-center">
-					<button
-						onClick={() => window.print()}
-						className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors mr-4"
-					>
-						Print / Save as PDF
-					</button>
-					<button
-						onClick={() => window.close()}
-						className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
-					>
-						Close
-					</button>
-				</div>
 			</div>
-		</>
-	);
+		);
+	}
 }
