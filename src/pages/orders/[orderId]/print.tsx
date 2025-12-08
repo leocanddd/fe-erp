@@ -318,6 +318,25 @@ export default function OrderPrint() {
 						<p className="text-base text-gray-900">{order.description}</p>
 					</div>
 				)}
+
+				{/* Timeline - Single Row */}
+				<div className="mb-4">
+					<h2 className="text-xl font-bold text-gray-900 mb-2 border-b border-gray-400 pb-2">
+						Timeline
+					</h2>
+					<p className="text-sm text-gray-700">
+						{[
+							order.createdAt && `Dibuat: ${new Date(order.createdAt).toLocaleDateString('id-ID')}`,
+							order.priceApproved?.isActive && order.priceApproved.actionAt && `Harga Disetujui: ${new Date(order.priceApproved.actionAt).toLocaleDateString('id-ID')} (${order.priceApproved.actionBy.split(' ')[0]})`,
+							order.approved?.isActive && order.approved.actionAt && `Disetujui: ${new Date(order.approved.actionAt).toLocaleDateString('id-ID')} (${order.approved.actionBy.split(' ')[0]})`,
+							order.rejected?.isActive && order.rejected.actionAt && `Ditolak: ${new Date(order.rejected.actionAt).toLocaleDateString('id-ID')} (${order.rejected.actionBy.split(' ')[0]})`,
+							order.processed?.isActive && order.processed.actionAt && `Diproses: ${new Date(order.processed.actionAt).toLocaleDateString('id-ID')} (${order.processed.actionBy.split(' ')[0]})`,
+							order.shipment?.isActive && order.shipment.actionAt && `Dikirim: ${new Date(order.shipment.actionAt).toLocaleDateString('id-ID')} (${order.shipment.actionBy.split(' ')[0]})`,
+							order.finished?.isActive && order.finished.actionAt && `Selesai: ${new Date(order.finished.actionAt).toLocaleDateString('id-ID')} (${order.finished.actionBy.split(' ')[0]})`,
+							order.cancelled?.isActive && order.cancelled.actionAt && `Dibatalkan: ${new Date(order.cancelled.actionAt).toLocaleDateString('id-ID')} (${order.cancelled.actionBy.split(' ')[0]})`
+						].filter(Boolean).join(' | ')}
+					</p>
+				</div>
 			</div>
 		);
 	}
