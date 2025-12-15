@@ -615,7 +615,7 @@ export default function Stocks() {
 									<p className="text-sm text-gray-400 mb-6">ID: {paletForBarcode.id}</p>
 									<div className="flex justify-center">
 										<QRCodeSVG
-											value={typeof window !== 'undefined' ? `${window.location.origin}/stocks/${paletForBarcode.id}` : paletForBarcode.id}
+											value={typeof window !== 'undefined' ? `${window.location.origin}/stocks/${paletForBarcode.id}` : (paletForBarcode.id || 'UNKNOWN')}
 											size={200}
 											level="H"
 											includeMargin={true}

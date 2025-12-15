@@ -873,7 +873,7 @@ export default function PaletDetail() {
 									<p className="text-sm text-gray-400 mb-6">ID: {palet.id}</p>
 									<div className="flex justify-center">
 										<QRCodeSVG
-											value={typeof window !== 'undefined' ? `${window.location.origin}/stocks/${palet.id}` : palet.id}
+											value={typeof window !== 'undefined' ? `${window.location.origin}/stocks/${palet.id}` : (palet.id || 'UNKNOWN')}
 											size={200}
 											level="H"
 											includeMargin={true}
