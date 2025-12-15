@@ -96,3 +96,11 @@ export const getCollectorVisits = async (
 		};
 	}
 };
+
+// Generate QR code URL for palet detail page
+export const generatePaletQRCodeUrl = (paletId: string): string => {
+	const baseUrl = typeof window !== 'undefined'
+		? window.location.origin
+		: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+	return `${baseUrl}/stocks/${paletId}`;
+};

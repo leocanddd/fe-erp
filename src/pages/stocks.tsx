@@ -14,7 +14,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import Barcode from 'react-barcode';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function Stocks() {
 	const router = useRouter();
@@ -614,7 +614,12 @@ export default function Stocks() {
 									<p className="text-lg text-gray-600 mb-2">Lokasi: {paletForBarcode.location}</p>
 									<p className="text-sm text-gray-400 mb-6">ID: {paletForBarcode.id}</p>
 									<div className="flex justify-center">
-										<Barcode value={paletForBarcode.id || 'UNKNOWN'} width={2} height={100} />
+										<QRCodeSVG
+											value={typeof window !== 'undefined' ? `${window.location.origin}/stocks/${paletForBarcode.id}` : paletForBarcode.id}
+											size={200}
+											level="H"
+											includeMargin={true}
+										/>
 									</div>
 								</div>
 							</div>
