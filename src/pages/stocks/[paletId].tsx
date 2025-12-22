@@ -9,6 +9,7 @@ import {
 	updateStock,
 	addIncomingStock,
 } from '@/lib/palets';
+import { getProducts, Product } from '@/lib/products';
 import { useRouter } from 'next/router';
 import {
 	useCallback,
@@ -22,6 +23,7 @@ export default function PaletDetail() {
 	const router = useRouter();
 	const { paletId } = router.query;
 	const printRef = useRef<HTMLDivElement>(null);
+	const productSearchRef = useRef<HTMLDivElement>(null);
 
 	const [palet, setPalet] = useState<Palet | null>(null);
 	const [stocks, setStocks] = useState<Stock[]>([]);
@@ -42,6 +44,12 @@ export default function PaletDetail() {
 	const [stockToDelete, setStockToDelete] = useState<Stock | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
+	// Product selection states
+	const [products, setProducts] = useState<Product[]>([]);
+	const [productSearch, setProductSearch] = useState('');
+	const [showProductDropdown, setShowProductDropdown] = useState(false);
+	const [loadingProducts, setLoadingProducts] = useState(false);
+
 	const [stockFormData, setStockFormData] = useState({
 		brand: '',
 		name: '',
@@ -55,6 +63,13 @@ export default function PaletDetail() {
 		productCode: '',
 		incomingStock: '',
 	});
+
+	// Product selection for incoming stock
+	const [incomingProducts, setIncomingProducts] = useState<Product[]>([]);
+	const [incomingProductSearch, setIncomingProductSearch] = useState('');
+	const [showIncomingProductDropdown, setShowIncomingProductDropdown] = useState(false);
+	const [loadingIncomingProducts, setLoadingIncomingProducts] = useState(false);
+	const incomingProductSearchRef = useRef<HTMLDivElement>(null);
 
 	const fetchPalet = useCallback(async () => {
 		if (!paletId || typeof paletId !== 'string') return;
@@ -104,6 +119,22 @@ export default function PaletDetail() {
 		fetchStocks();
 	}, [fetchStocks]);
 
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (productSearchRef.current && !productSearchRef.current.contains(event.target as Node)) {
+				setShowProductDropdown(false);
+			}
+			if (incomingProductSearchRef.current && !incomingProductSearchRef.current.contains(event.target as Node)) {
+				setShowIncomingProductDropdown(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, []);
+
 	const handleSearchStock = (e: React.FormEvent) => {
 		e.preventDefault();
 		setCurrentStockPage(1);
@@ -130,10 +161,88 @@ export default function PaletDetail() {
 			price: '',
 			entryDate: today,
 		});
+		setProductSearch('');
+		setProducts([]);
+		setShowProductDropdown(false);
 	};
 
 	const resetIncomingStockForm = () => {
 		setIncomingStockData({ productCode: '', incomingStock: '' });
+		setIncomingProductSearch('');
+		setIncomingProducts([]);
+		setShowIncomingProductDropdown(false);
+	};
+
+	const fetchProducts = useCallback(async (search: string) => {
+		setLoadingProducts(true);
+		try {
+			const response = await getProducts(1, 20, search);
+			if (response.statusCode === 200) {
+				setProducts(response.data);
+			}
+		} catch {
+			setProducts([]);
+		} finally {
+			setLoadingProducts(false);
+		}
+	}, []);
+
+	const handleProductSelect = (product: Product) => {
+		setStockFormData({
+			brand: product.brand,
+			name: product.name,
+			code: product.code,
+			stock: '',
+			price: product.price.toString(),
+			entryDate: stockFormData.entryDate,
+		});
+		setProductSearch(`${product.brand} - ${product.name} (${product.code})`);
+		setShowProductDropdown(false);
+	};
+
+	const handleProductSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setProductSearch(value);
+		setShowProductDropdown(true);
+		if (value.length >= 2) {
+			fetchProducts(value);
+		} else {
+			setProducts([]);
+		}
+	};
+
+	const fetchIncomingProducts = useCallback(async (search: string) => {
+		setLoadingIncomingProducts(true);
+		try {
+			const response = await getProducts(1, 20, search);
+			if (response.statusCode === 200) {
+				setIncomingProducts(response.data);
+			}
+		} catch {
+			setIncomingProducts([]);
+		} finally {
+			setLoadingIncomingProducts(false);
+		}
+	}, []);
+
+	const handleIncomingProductSelect = (product: Product) => {
+		setIncomingStockData({
+			productCode: product.code,
+			incomingStock: '',
+		});
+		setIncomingProductSearch(`${product.brand} - ${product.name} (${product.code})`);
+		setShowIncomingProductDropdown(false);
+	};
+
+	const handleIncomingProductSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setIncomingProductSearch(value);
+		setShowIncomingProductDropdown(true);
+		if (value.length >= 2) {
+			fetchIncomingProducts(value);
+		} else {
+			setIncomingProducts([]);
+		}
 	};
 
 	const handleAddStock = async (e: React.FormEvent) => {
@@ -570,6 +679,49 @@ export default function PaletDetail() {
 												</button>
 											</div>
 
+											{!editingStock && (
+												<div className="mb-6">
+													<label htmlFor="product-search" className="block text-sm font-semibold text-gray-700 mb-2">
+														Cari Produk
+													</label>
+													<div className="relative" ref={productSearchRef}>
+														<input
+															type="text"
+															id="product-search"
+															value={productSearch}
+															onChange={handleProductSearchChange}
+															onFocus={() => productSearch.length >= 2 && setShowProductDropdown(true)}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+															placeholder="Ketik minimal 2 karakter untuk mencari produk..."
+														/>
+														{showProductDropdown && (
+															<div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-60 overflow-y-auto">
+																{loadingProducts ? (
+																	<div className="p-4 text-center text-gray-500">Mencari produk...</div>
+																) : products.length === 0 ? (
+																	<div className="p-4 text-center text-gray-500">
+																		{productSearch.length < 2 ? 'Ketik minimal 2 karakter' : 'Tidak ada produk ditemukan'}
+																	</div>
+																) : (
+																	products.map((product) => (
+																		<button
+																			key={product.id}
+																			type="button"
+																			onClick={() => handleProductSelect(product)}
+																			className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+																		>
+																			<div className="font-medium text-gray-900">{product.brand} - {product.name}</div>
+																			<div className="text-sm text-gray-500">Kode: {product.code} | Harga: Rp {product.price.toLocaleString('id-ID')}</div>
+																		</button>
+																	))
+																)}
+															</div>
+														)}
+													</div>
+													<p className="mt-2 text-xs text-gray-500">Pilih produk dari daftar atau isi manual di bawah</p>
+												</div>
+											)}
+
 											<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 												<div>
 													<label htmlFor="stock-name" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -731,6 +883,47 @@ export default function PaletDetail() {
 											</div>
 
 											<div className="space-y-4">
+												<div>
+													<label htmlFor="incoming-product-search" className="block text-sm font-semibold text-gray-700 mb-2">
+														Cari Produk
+													</label>
+													<div className="relative" ref={incomingProductSearchRef}>
+														<input
+															type="text"
+															id="incoming-product-search"
+															value={incomingProductSearch}
+															onChange={handleIncomingProductSearchChange}
+															onFocus={() => incomingProductSearch.length >= 2 && setShowIncomingProductDropdown(true)}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+															placeholder="Ketik minimal 2 karakter untuk mencari produk..."
+														/>
+														{showIncomingProductDropdown && (
+															<div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-60 overflow-y-auto">
+																{loadingIncomingProducts ? (
+																	<div className="p-4 text-center text-gray-500">Mencari produk...</div>
+																) : incomingProducts.length === 0 ? (
+																	<div className="p-4 text-center text-gray-500">
+																		{incomingProductSearch.length < 2 ? 'Ketik minimal 2 karakter' : 'Tidak ada produk ditemukan'}
+																	</div>
+																) : (
+																	incomingProducts.map((product) => (
+																		<button
+																			key={product.id}
+																			type="button"
+																			onClick={() => handleIncomingProductSelect(product)}
+																			className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+																		>
+																			<div className="font-medium text-gray-900">{product.brand} - {product.name}</div>
+																			<div className="text-sm text-gray-500">Kode: {product.code} | Harga: Rp {product.price.toLocaleString('id-ID')}</div>
+																		</button>
+																	))
+																)}
+															</div>
+														)}
+													</div>
+													<p className="mt-2 text-xs text-gray-500">Pilih produk dari daftar atau isi kode manual di bawah</p>
+												</div>
+
 												<div>
 													<label htmlFor="incoming-productCode" className="block text-sm font-semibold text-gray-700 mb-2">
 														Kode Produk *
