@@ -323,7 +323,10 @@ export default function Sidebar({
 		{
 			name: 'Blogs',
 			href: '/blogs',
-			roles: [5, 12], // Superadmin, Blog
+			roles: [
+				5, 12, 1, 2, 3, 4, 6, 7, 8, 9,
+				10, 11, 13, 14,
+			], // Superadmin, Blog
 			icon: (
 				<svg
 					className="w-5 h-5"
