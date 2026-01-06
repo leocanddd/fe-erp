@@ -8,6 +8,7 @@ import {
 	Stock,
 	updateStock,
 	addIncomingStock,
+	addOutgoingStock,
 } from '@/lib/palets';
 import { getProducts, Product } from '@/lib/products';
 import { useRouter } from 'next/router';
@@ -39,6 +40,7 @@ export default function PaletDetail() {
 	const [showStockModal, setShowStockModal] = useState(false);
 	const [showDeleteStockModal, setShowDeleteStockModal] = useState(false);
 	const [showIncomingStockModal, setShowIncomingStockModal] = useState(false);
+	const [showOutgoingStockModal, setShowOutgoingStockModal] = useState(false);
 	const [showBarcodeModal, setShowBarcodeModal] = useState(false);
 	const [editingStock, setEditingStock] = useState<Stock | null>(null);
 	const [stockToDelete, setStockToDelete] = useState<Stock | null>(null);
@@ -64,12 +66,24 @@ export default function PaletDetail() {
 		incomingStock: '',
 	});
 
+	const [outgoingStockData, setOutgoingStockData] = useState({
+		productCode: '',
+		outgoingStock: '',
+	});
+
 	// Product selection for incoming stock
 	const [incomingProducts, setIncomingProducts] = useState<Product[]>([]);
 	const [incomingProductSearch, setIncomingProductSearch] = useState('');
 	const [showIncomingProductDropdown, setShowIncomingProductDropdown] = useState(false);
 	const [loadingIncomingProducts, setLoadingIncomingProducts] = useState(false);
 	const incomingProductSearchRef = useRef<HTMLDivElement>(null);
+
+	// Product selection for outgoing stock
+	const [outgoingProducts, setOutgoingProducts] = useState<Product[]>([]);
+	const [outgoingProductSearch, setOutgoingProductSearch] = useState('');
+	const [showOutgoingProductDropdown, setShowOutgoingProductDropdown] = useState(false);
+	const [loadingOutgoingProducts, setLoadingOutgoingProducts] = useState(false);
+	const outgoingProductSearchRef = useRef<HTMLDivElement>(null);
 
 	const fetchPalet = useCallback(async () => {
 		if (!paletId || typeof paletId !== 'string') return;
@@ -127,6 +141,9 @@ export default function PaletDetail() {
 			if (incomingProductSearchRef.current && !incomingProductSearchRef.current.contains(event.target as Node)) {
 				setShowIncomingProductDropdown(false);
 			}
+			if (outgoingProductSearchRef.current && !outgoingProductSearchRef.current.contains(event.target as Node)) {
+				setShowOutgoingProductDropdown(false);
+			}
 		};
 
 		document.addEventListener('mousedown', handleClickOutside);
@@ -151,6 +168,11 @@ export default function PaletDetail() {
 		setIncomingStockData((prev) => ({ ...prev, [name]: value }));
 	};
 
+	const handleOutgoingStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+		setOutgoingStockData((prev) => ({ ...prev, [name]: value }));
+	};
+
 	const resetStockForm = () => {
 		const today = new Date().toISOString().split('T')[0];
 		setStockFormData({
@@ -171,6 +193,13 @@ export default function PaletDetail() {
 		setIncomingProductSearch('');
 		setIncomingProducts([]);
 		setShowIncomingProductDropdown(false);
+	};
+
+	const resetOutgoingStockForm = () => {
+		setOutgoingStockData({ productCode: '', outgoingStock: '' });
+		setOutgoingProductSearch('');
+		setOutgoingProducts([]);
+		setShowOutgoingProductDropdown(false);
 	};
 
 	const fetchProducts = useCallback(async (search: string) => {
@@ -242,6 +271,40 @@ export default function PaletDetail() {
 			fetchIncomingProducts(value);
 		} else {
 			setIncomingProducts([]);
+		}
+	};
+
+	const fetchOutgoingProducts = useCallback(async (search: string) => {
+		setLoadingOutgoingProducts(true);
+		try {
+			const response = await getProducts(1, 20, search);
+			if (response.statusCode === 200) {
+				setOutgoingProducts(response.data);
+			}
+		} catch {
+			setOutgoingProducts([]);
+		} finally {
+			setLoadingOutgoingProducts(false);
+		}
+	}, []);
+
+	const handleOutgoingProductSelect = (product: Product) => {
+		setOutgoingStockData({
+			productCode: product.code,
+			outgoingStock: '',
+		});
+		setOutgoingProductSearch(`${product.brand} - ${product.name} (${product.code})`);
+		setShowOutgoingProductDropdown(false);
+	};
+
+	const handleOutgoingProductSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setOutgoingProductSearch(value);
+		setShowOutgoingProductDropdown(true);
+		if (value.length >= 2) {
+			fetchOutgoingProducts(value);
+		} else {
+			setOutgoingProducts([]);
 		}
 	};
 
@@ -344,6 +407,34 @@ export default function PaletDetail() {
 			}
 		} catch {
 			setError('Gagal menambah stok masuk');
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const handleAddOutgoingStock = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!paletId || typeof paletId !== 'string') return;
+
+		setIsSubmitting(true);
+		setError('');
+
+		try {
+			const outgoingData = {
+				productCode: outgoingStockData.productCode,
+				outgoingStock: parseInt(outgoingStockData.outgoingStock),
+			};
+
+			const response = await addOutgoingStock(paletId, outgoingData);
+			if (response.statusCode === 200) {
+				fetchStocks();
+				setShowOutgoingStockModal(false);
+				resetOutgoingStockForm();
+			} else {
+				setError(response.error || 'Gagal menambah stok keluar');
+			}
+		} catch {
+			setError('Gagal menambah stok keluar');
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -490,6 +581,15 @@ export default function PaletDetail() {
 									className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
 								>
 									+ Stok Masuk
+								</button>
+								<button
+									onClick={() => {
+										resetOutgoingStockForm();
+										setShowOutgoingStockModal(true);
+									}}
+									className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+								>
+									- Stok Keluar
 								</button>
 								<button
 									onClick={() => {
@@ -901,7 +1001,7 @@ export default function PaletDetail() {
 															<div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-60 overflow-y-auto">
 																{loadingIncomingProducts ? (
 																	<div className="p-4 text-center text-gray-500">Mencari produk...</div>
-																) : incomingProducts.length === 0 ? (
+																) : !incomingProducts || incomingProducts.length === 0 ? (
 																	<div className="p-4 text-center text-gray-500">
 																		{incomingProductSearch.length < 2 ? 'Ketik minimal 2 karakter' : 'Tidak ada produk ditemukan'}
 																	</div>
@@ -973,6 +1073,141 @@ export default function PaletDetail() {
 										onClick={() => {
 											setShowIncomingStockModal(false);
 											resetIncomingStockForm();
+										}}
+										className="mt-3 w-full inline-flex justify-center rounded-2xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200"
+									>
+										Batal
+									</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Outgoing Stock Modal */}
+			{showOutgoingStockModal && (
+				<div className="fixed inset-0 z-[60] overflow-y-auto">
+					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+						<div
+							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+							onClick={() => {
+								setShowOutgoingStockModal(false);
+								resetOutgoingStockForm();
+							}}
+						></div>
+						<div className="relative inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+							<form onSubmit={handleAddOutgoingStock}>
+								<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+									<div className="sm:flex sm:items-start">
+										<div className="w-full">
+											<div className="flex items-center justify-between mb-6">
+												<h3 className="text-2xl font-bold text-gray-900">Tambah Stok Keluar</h3>
+												<button
+													type="button"
+													onClick={() => {
+														setShowOutgoingStockModal(false);
+														resetOutgoingStockForm();
+													}}
+													className="text-gray-400 hover:text-gray-600 transition-colors"
+												>
+													<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+													</svg>
+												</button>
+											</div>
+
+											<div className="space-y-4">
+												<div>
+													<label htmlFor="outgoing-product-search" className="block text-sm font-semibold text-gray-700 mb-2">
+														Cari Produk
+													</label>
+													<div className="relative" ref={outgoingProductSearchRef}>
+														<input
+															type="text"
+															id="outgoing-product-search"
+															value={outgoingProductSearch}
+															onChange={handleOutgoingProductSearchChange}
+															onFocus={() => outgoingProductSearch.length >= 2 && setShowOutgoingProductDropdown(true)}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+															placeholder="Ketik minimal 2 karakter untuk mencari produk..."
+														/>
+														{showOutgoingProductDropdown && (
+															<div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-60 overflow-y-auto">
+																{loadingOutgoingProducts ? (
+																	<div className="p-4 text-center text-gray-500">Mencari produk...</div>
+																) : !outgoingProducts || outgoingProducts.length === 0 ? (
+																	<div className="p-4 text-center text-gray-500">
+																		{outgoingProductSearch.length < 2 ? 'Ketik minimal 2 karakter' : 'Tidak ada produk ditemukan'}
+																	</div>
+																) : (
+																	outgoingProducts.map((product) => (
+																		<button
+																			key={product.id}
+																			type="button"
+																			onClick={() => handleOutgoingProductSelect(product)}
+																			className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+																		>
+																			<div className="font-medium text-gray-900">{product.brand} - {product.name}</div>
+																			<div className="text-sm text-gray-500">Kode: {product.code} | Harga: Rp {product.price.toLocaleString('id-ID')}</div>
+																		</button>
+																	))
+																)}
+															</div>
+														)}
+													</div>
+													<p className="mt-2 text-xs text-gray-500">Pilih produk dari daftar atau isi kode manual di bawah</p>
+												</div>
+
+												<div>
+													<label htmlFor="outgoing-productCode" className="block text-sm font-semibold text-gray-700 mb-2">
+														Kode Produk *
+													</label>
+													<input
+														type="text"
+														id="outgoing-productCode"
+														name="productCode"
+														required
+														value={outgoingStockData.productCode}
+														onChange={handleOutgoingStockChange}
+														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+														placeholder="Masukkan kode produk"
+													/>
+												</div>
+
+												<div>
+													<label htmlFor="outgoing-stock" className="block text-sm font-semibold text-gray-700 mb-2">
+														Jumlah Stok Keluar *
+													</label>
+													<input
+														type="number"
+														id="outgoing-stock"
+														name="outgoingStock"
+														required
+														min="1"
+														value={outgoingStockData.outgoingStock}
+														onChange={handleOutgoingStockChange}
+														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+														placeholder="Masukkan jumlah stok"
+													/>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-3xl">
+									<button
+										type="submit"
+										disabled={isSubmitting}
+										className="w-full inline-flex justify-center rounded-2xl border border-transparent shadow-sm px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-base font-semibold text-white hover:from-red-700 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+									>
+										{isSubmitting ? 'Menyimpan...' : 'Kurangi Stok'}
+									</button>
+									<button
+										type="button"
+										onClick={() => {
+											setShowOutgoingStockModal(false);
+											resetOutgoingStockForm();
 										}}
 										className="mt-3 w-full inline-flex justify-center rounded-2xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200"
 									>

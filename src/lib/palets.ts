@@ -38,6 +38,11 @@ interface IncomingStockRequest {
   incomingStock: number;
 }
 
+interface OutgoingStockRequest {
+  productCode: string;
+  outgoingStock: number;
+}
+
 interface ApiResponse<T> {
   status: string;
   statusCode: number;
@@ -319,12 +324,32 @@ export const addIncomingStock = async (paletId: string, incomingStock: IncomingS
   }
 };
 
+export const addOutgoingStock = async (paletId: string, outgoingStock: OutgoingStockRequest): Promise<ApiResponse<Stock>> => {
+  try {
+    const response = await fetch(`${getApiUrl()}/api/palets/${paletId}/stocks/outgoing-stock`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(outgoingStock),
+    });
+
+    const data: ApiResponse<Stock> = await response.json();
+    return data;
+  } catch {
+    return {
+      status: 'error',
+      statusCode: 500,
+      error: 'Network error occurred',
+    };
+  }
+};
+
 export type {
   Palet,
   Stock,
   PaletCreateRequest,
   StockCreateRequest,
   IncomingStockRequest,
+  OutgoingStockRequest,
   ApiResponse,
   PaginatedResponse
 };
