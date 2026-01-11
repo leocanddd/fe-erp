@@ -415,10 +415,10 @@ export default function Sidebar({
 					<div className="flex items-center space-x-3 mb-4">
 						<div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
 							<span className="text-white font-semibold text-sm">
-								{user.firstName.charAt(
+								{user?.firstName?.charAt(
 									0
 								)}
-								{user.lastName.charAt(
+								{user?.lastName?.charAt(
 									0
 								)}
 							</span>

@@ -246,9 +246,14 @@ export default function Stocks() {
 	) => {
 		// Navigate to palet detail page
 		setShowScannerModal(false);
-		router.push(
-			`/stocks/${decodedText}`
-		);
+
+		// If it's a full URL, navigate to it directly
+		if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
+			window.location.href = decodedText;
+		} else {
+			// Otherwise treat it as an ID
+			router.push(`/stocks/${decodedText}`);
+		}
 	};
 
 	const handlePrintBarcode = () => {
