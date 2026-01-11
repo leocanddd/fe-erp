@@ -328,6 +328,7 @@ export default function PaletDetail() {
 	) => {
 		setStockFormData({
 			productId: product.id || '',
+			stock: '',
 		});
 		setProductSearch(
 			`${product.brand} - ${product.name} (${product.code})`
