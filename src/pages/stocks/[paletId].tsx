@@ -12,7 +12,9 @@ import {
 import {
 	getProducts,
 	Product,
+	createProductHistory,
 } from '@/lib/products';
+import { getStoredUser } from '@/lib/auth';
 import { useRouter } from 'next/router';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -377,6 +379,15 @@ export default function PaletDetail() {
 					stockData
 				);
 			if (response.statusCode === 201) {
+				// Log product history
+				const user = getStoredUser();
+				const selectedProduct = products.find(p => p.id === stockFormData.productId);
+				await createProductHistory({
+					name: user?.firstName || 'User',
+					type: 'ADD_TO_PALLET',
+					message: `${user?.firstName || 'User'} menambahkan ${stockData.stock} stock ${selectedProduct?.name || 'produk'} ke pallet`,
+				});
+
 				fetchStocks();
 				setShowStockModal(false);
 				resetStockForm();
@@ -457,6 +468,15 @@ export default function PaletDetail() {
 					incomingData
 				);
 			if (response.statusCode === 200) {
+				// Log product history
+				const user = getStoredUser();
+				const selectedStock = stocks.find(s => s.code === incomingStockData.productCode);
+				await createProductHistory({
+					name: user?.firstName || 'User',
+					type: 'INCOMING',
+					message: `${user?.firstName || 'User'} menambahkan ${incomingData.incomingStock} stock ${selectedStock?.name || 'produk'}`,
+				});
+
 				fetchStocks();
 				setShowIncomingStockModal(
 					false
@@ -505,6 +525,15 @@ export default function PaletDetail() {
 					outgoingData
 				);
 			if (response.statusCode === 200) {
+				// Log product history
+				const user = getStoredUser();
+				const selectedStock = stocks.find(s => s.code === outgoingStockData.productCode);
+				await createProductHistory({
+					name: user?.firstName || 'User',
+					type: 'OUTGOING',
+					message: `${user?.firstName || 'User'} mengurangi ${outgoingData.outgoingStock} stock ${selectedStock?.name || 'produk'}`,
+				});
+
 				fetchStocks();
 				setShowOutgoingStockModal(
 					false

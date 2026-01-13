@@ -1,11 +1,13 @@
 import MainLayout from '@/components/MainLayout';
 import {
 	createProduct,
+	createProductHistory,
 	deleteProduct,
 	getProducts,
 	Product,
 	updateProduct,
 } from '@/lib/products';
+import { getStoredUser } from '@/lib/auth';
 import {
 	useCallback,
 	useEffect,
@@ -191,6 +193,14 @@ export default function Products() {
 					productData
 				);
 			if (response.statusCode === 201) {
+				// Log product history
+				const user = getStoredUser();
+				await createProductHistory({
+					name: user?.firstName || 'User',
+					type: 'CREATE',
+					message: `Produk ${productData.name} berhasil ditambahkan`,
+				});
+
 				fetchProducts();
 				setShowAddModal(false);
 				resetForm();
@@ -250,6 +260,25 @@ export default function Products() {
 					productData
 				);
 			if (response.statusCode === 200) {
+				// Log product history
+				const user = getStoredUser();
+				const stockDiff = productData.stock - editingProduct.stock;
+
+				let historyMessage = '';
+				if (stockDiff > 0) {
+					historyMessage = `${user?.firstName || 'User'} menambahkan ${stockDiff} stock ${productData.name}`;
+				} else if (stockDiff < 0) {
+					historyMessage = `${user?.firstName || 'User'} mengurangi ${Math.abs(stockDiff)} stock ${productData.name}`;
+				} else {
+					historyMessage = `${user?.firstName || 'User'} memperbarui produk ${productData.name}`;
+				}
+
+				await createProductHistory({
+					name: user?.firstName || 'User',
+					type: 'UPDATE',
+					message: historyMessage,
+				});
+
 				fetchProducts();
 				setShowEditModal(false);
 				setEditingProduct(null);

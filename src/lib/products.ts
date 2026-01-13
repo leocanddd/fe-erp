@@ -161,4 +161,36 @@ export const deleteProduct = async (id: string): Promise<ProductResponse> => {
   }
 };
 
+interface ProductHistoryRequest {
+  name: string;
+  type: string;
+  message: string;
+}
+
+interface ProductHistoryResponse {
+  status: string;
+  statusCode: number;
+  message?: string;
+  error?: string;
+}
+
+export const createProductHistory = async (history: ProductHistoryRequest): Promise<ProductHistoryResponse> => {
+  try {
+    const response = await fetch(`${getApiUrl()}/api/product-history`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(history),
+    });
+
+    const data: ProductHistoryResponse = await response.json();
+    return data;
+  } catch {
+    return {
+      status: 'error',
+      statusCode: 500,
+      error: 'Network error occurred',
+    };
+  }
+};
+
 export type { Product, ProductCreateRequest, ProductResponse, ProductsListResponse };
