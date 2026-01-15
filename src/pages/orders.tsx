@@ -13,6 +13,13 @@ import {
 	Product,
 } from '@/lib/products';
 import {
+	getStocks,
+	getPalet,
+	addOutgoingStock,
+	Stock,
+} from '@/lib/palets';
+import BarcodeScanner from '@/components/BarcodeScanner';
+import {
 	useCallback,
 	useEffect,
 	useRef,
@@ -115,6 +122,32 @@ export default function Orders() {
 		showProductDropdown,
 		setShowProductDropdown,
 	] = useState<number | null>(null);
+	const [
+		showBarcodeScanModal,
+		setShowBarcodeScanModal,
+	] = useState(false);
+	const [
+		scannedOrder,
+		setScannedOrder,
+	] = useState<Order | null>(null);
+	const [scanError, setScanError] =
+		useState('');
+	const [
+		scannedPallets,
+		setScannedPallets,
+	] = useState<
+		{
+			paletId: string;
+			paletName: string;
+			products: {
+				name: string;
+				code: string;
+				scanned: number;
+				needed: number;
+			}[];
+		}[]
+	>([]);
+	const [isProcessingScan, setIsProcessingScan] = useState(false);
 	const dropdownRef =
 		useRef<HTMLDivElement>(null);
 
@@ -554,6 +587,210 @@ export default function Orders() {
 		setDescModalType(field);
 		setDescription('');
 		setShowDescModal(true);
+	};
+
+	const handleBarcodeScanned = async (decodedText: string) => {
+		// Prevent multiple scans in quick succession
+		if (isProcessingScan) {
+			return;
+		}
+
+		setIsProcessingScan(true);
+		setScanError('');
+
+		// Extract pallet ID from URL if it's a full URL
+		let paletId = decodedText;
+		try {
+			const url = new URL(decodedText);
+			const pathParts = url.pathname.split('/');
+			paletId = pathParts[pathParts.length - 1];
+		} catch {
+			// Not a URL, use as is
+		}
+
+		if (!scannedOrder) {
+			setScanError('Tidak ada pesanan yang dipilih');
+			setIsProcessingScan(false);
+			return;
+		}
+
+		// Check if pallet already scanned
+		if (scannedPallets.some((p) => p.paletId === paletId)) {
+			setScanError('Palet ini sudah di-scan');
+			setIsProcessingScan(false);
+			return;
+		}
+
+		try {
+			// Fetch pallet info
+			const paletResponse = await getPalet(paletId);
+			if (paletResponse.statusCode !== 200) {
+				setScanError('Palet tidak ditemukan');
+				setIsProcessingScan(false);
+				return;
+			}
+
+			// Fetch stocks from the pallet
+			const stocksResponse = await getStocks(paletId, 1, 100, '');
+
+			if (stocksResponse.statusCode !== 200) {
+				setScanError('Gagal memuat stok palet');
+				setIsProcessingScan(false);
+				return;
+			}
+
+			const paletStocks = stocksResponse.data || [];
+
+			// Check if pallet has the products from the order
+			const orderedProducts = scannedOrder.products || [];
+			const foundProducts: { name: string; code: string; scanned: number; needed: number }[] = [];
+			const missingProducts: string[] = [];
+
+			for (const orderedProduct of orderedProducts) {
+				const stockItem = paletStocks.find(
+					(stock: Stock) => stock.name === orderedProduct.product
+				);
+
+				if (stockItem && stockItem.palletStock > 0) {
+					foundProducts.push({
+						name: orderedProduct.product,
+						code: stockItem.code,
+						scanned: Math.min(stockItem.palletStock, orderedProduct.quantity),
+						needed: orderedProduct.quantity,
+					});
+				} else {
+					missingProducts.push(orderedProduct.product);
+				}
+			}
+
+			if (foundProducts.length === 0) {
+				setScanError(
+					`Palet tidak memiliki produk yang dipesan: ${missingProducts.join(', ')}`
+				);
+				setIsProcessingScan(false);
+				return;
+			}
+
+			// Add pallet to scanned list
+			setScannedPallets((prev) => [
+				...prev,
+				{
+					paletId,
+					paletName: paletResponse.data?.name || paletId,
+					products: foundProducts,
+				},
+			]);
+
+			// Clear error if successful
+			setScanError('');
+
+			// Allow next scan after a short delay (1 second)
+			setTimeout(() => {
+				setIsProcessingScan(false);
+			}, 1000);
+		} catch (error) {
+			console.error('Error checking pallet stocks:', error);
+			setScanError('Terjadi kesalahan saat memeriksa stok palet');
+			setIsProcessingScan(false);
+		}
+	};
+
+	const checkIfAllProductsFulfilled = () => {
+		if (!scannedOrder || scannedPallets.length === 0) return false;
+
+		const orderedProducts = scannedOrder.products || [];
+		const productTotals: { [key: string]: { scanned: number; needed: number } } = {};
+
+		// Initialize with ordered products
+		orderedProducts.forEach((p) => {
+			productTotals[p.product] = { scanned: 0, needed: p.quantity };
+		});
+
+		// Sum up scanned quantities
+		scannedPallets.forEach((pallet) => {
+			pallet.products.forEach((p) => {
+				if (productTotals[p.name]) {
+					productTotals[p.name].scanned += p.scanned;
+				}
+			});
+		});
+
+		// Check if all products are fulfilled
+		const unfulfilled = Object.entries(productTotals).filter(
+			([, totals]) => totals.scanned < totals.needed
+		);
+
+		return unfulfilled.length === 0;
+	};
+
+	const handleFinishScanning = async () => {
+		// Check if all products are fulfilled
+		if (!scannedOrder) return;
+
+		const orderedProducts = scannedOrder.products || [];
+		const productTotals: { [key: string]: { scanned: number; needed: number } } = {};
+
+		// Initialize with ordered products
+		orderedProducts.forEach((p) => {
+			productTotals[p.product] = { scanned: 0, needed: p.quantity };
+		});
+
+		// Sum up scanned quantities
+		scannedPallets.forEach((pallet) => {
+			pallet.products.forEach((p) => {
+				if (productTotals[p.name]) {
+					productTotals[p.name].scanned += p.scanned;
+				}
+			});
+		});
+
+		// Check if all products are fulfilled
+		const unfulfilled = Object.entries(productTotals).filter(
+			([, totals]) => totals.scanned < totals.needed
+		);
+
+		if (unfulfilled.length > 0) {
+			const details = unfulfilled
+				.map(
+					([name, totals]) =>
+						`${name} (butuh ${totals.needed}, terscan ${totals.scanned})`
+				)
+				.join(', ');
+			setScanError(`Masih ada produk yang kurang: ${details}`);
+			return;
+		}
+
+		try {
+			// Reduce stock from each pallet
+			for (const pallet of scannedPallets) {
+				for (const product of pallet.products) {
+					// Reduce stock using outgoing-stock API
+					const outgoingResponse = await addOutgoingStock(pallet.paletId, {
+						productCode: product.code,
+						outgoingStock: product.scanned,
+					});
+
+					if (outgoingResponse.statusCode !== 200) {
+						setScanError(
+							`Gagal mengurangi stok ${product.name} dari palet ${pallet.paletName}: ${outgoingResponse.error || 'Unknown error'}`
+						);
+						return;
+					}
+				}
+			}
+
+			// All products fulfilled and stock reduced, mark as shipment
+			if (scannedOrder) {
+				toggleOrderStatus(scannedOrder, 'isShipment');
+				setShowBarcodeScanModal(false);
+				setScannedOrder(null);
+				setScannedPallets([]);
+				setScanError('');
+			}
+		} catch (error) {
+			console.error('Error reducing stock:', error);
+			setScanError('Terjadi kesalahan saat mengurangi stok');
+		}
 	};
 
 	const handleDescriptionSubmit =
@@ -1118,6 +1355,28 @@ export default function Orders() {
 																	order.isFinished
 																) && (
 																	<>
+																		<button
+																			onClick={() => {
+																				setScannedOrder(
+																					order
+																				);
+																				setScannedPallets(
+																					[]
+																				);
+																				setScanError(
+																					''
+																				);
+																				setIsProcessingScan(
+																					false
+																				);
+																				setShowBarcodeScanModal(
+																					true
+																				);
+																			}}
+																			className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-purple-100 text-purple-700 hover:bg-purple-200"
+																		>
+																			Scan Barcode
+																		</button>
 																		{!order
 																			.shipment
 																			?.isActive ? (
@@ -2333,6 +2592,240 @@ export default function Orders() {
 						</div>
 					</div>
 				)}
+
+			{/* Barcode Scanner Modal */}
+			{showBarcodeScanModal && (
+				<div className="fixed inset-0 z-[60] overflow-y-auto">
+					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+						<div
+							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+							onClick={() => {
+								setShowBarcodeScanModal(
+									false
+								);
+								setScannedOrder(null);
+								setScannedPallets([]);
+								setScanError('');
+								setIsProcessingScan(false);
+							}}
+						></div>
+						<span className="hidden sm:inline-block sm:align-middle sm:h-screen">
+							&#8203;
+						</span>
+						<div className="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+							<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+								<div className="sm:flex sm:items-start">
+									<div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+										<div className="flex items-center justify-between mb-4">
+											<h3 className="text-lg leading-6 font-medium text-gray-900">
+												Scan Barcode Palet
+											</h3>
+											<button
+												type="button"
+												onClick={() => {
+													setShowBarcodeScanModal(
+														false
+													);
+													setScannedOrder(
+														null
+													);
+													setScannedPallets(
+														[]
+													);
+													setScanError(
+														''
+													);
+													setIsProcessingScan(
+														false
+													);
+												}}
+												className="text-gray-400 hover:text-gray-600 transition-colors"
+											>
+												<svg
+													className="w-6 h-6"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={
+															2
+														}
+														d="M6 18L18 6M6 6l12 12"
+													/>
+												</svg>
+											</button>
+										</div>
+
+										{scannedOrder && (
+											<div className="mb-4 p-3 bg-blue-50 rounded-lg">
+												<p className="text-sm font-medium text-gray-900">
+													Order ID:{' '}
+													{
+														scannedOrder.orderId
+													}
+												</p>
+												<p className="text-xs text-gray-600 mt-1">
+													Customer:{' '}
+													{
+														scannedOrder.customer
+													}
+												</p>
+												<p className="text-xs text-gray-600">
+													Produk:{' '}
+													{scannedOrder.products
+														?.map(
+															(
+																p
+															) =>
+																`${p.product} (${p.quantity})`
+														)
+														.join(
+															', '
+														)}
+												</p>
+											</div>
+										)}
+
+										{scanError && (
+											<div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+												<p className="text-sm text-red-600">
+													{scanError}
+												</p>
+											</div>
+										)}
+
+										{scannedPallets.length >
+											0 && (
+											<div className="mb-4 space-y-2">
+												<h4 className="text-sm font-semibold text-gray-900">
+													Palet yang
+													sudah
+													di-scan:
+												</h4>
+												{scannedPallets.map(
+													(
+														pallet,
+														idx
+													) => (
+														<div
+															key={
+																idx
+															}
+															className="p-3 bg-green-50 border border-green-200 rounded-lg"
+														>
+															<p className="text-sm font-medium text-green-900">
+																{
+																	pallet.paletName
+																}
+															</p>
+															<div className="mt-1 space-y-1">
+																{pallet.products.map(
+																	(
+																		prod,
+																		pidx
+																	) => (
+																		<p
+																			key={
+																				pidx
+																			}
+																			className="text-xs text-green-700"
+																		>
+																			✓{' '}
+																			{
+																				prod.name
+																			}
+
+																			:{' '}
+																			{
+																				prod.scanned
+																			}
+
+																			/
+																			{
+																				prod.needed
+																			}
+																		</p>
+																	)
+																)}
+															</div>
+														</div>
+													)
+												)}
+											</div>
+										)}
+
+										{!checkIfAllProductsFulfilled() && (
+											<div className="mt-2">
+												<BarcodeScanner
+													onScan={
+														handleBarcodeScanned
+													}
+													onError={(
+														error
+													) =>
+														console.error(
+															error
+														)
+													}
+												/>
+											</div>
+										)}
+
+										{checkIfAllProductsFulfilled() && (
+											<div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-lg">
+												<p className="text-sm font-semibold text-green-800 text-center">
+													✅ Semua produk
+													sudah terpenuhi!
+													Klik
+													&quot;Selesai
+													dan Kirim&quot;
+													untuk melanjutkan.
+												</p>
+											</div>
+										)}
+									</div>
+								</div>
+							</div>
+							<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3 rounded-b-2xl">
+								{scannedPallets.length >
+									0 && (
+									<button
+										onClick={
+											handleFinishScanning
+										}
+										className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-medium text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm"
+									>
+										Selesai dan Kirim
+									</button>
+								)}
+								<button
+									onClick={() => {
+										setShowBarcodeScanModal(
+											false
+										);
+										setScannedOrder(
+											null
+										);
+										setScannedPallets(
+											[]
+										);
+										setScanError('');
+										setIsProcessingScan(
+											false
+										);
+									}}
+									className="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm"
+								>
+									Tutup
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 		</MainLayout>
 	);
 }

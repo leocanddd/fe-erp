@@ -9,6 +9,16 @@ interface BarcodeScannerProps {
 export default function BarcodeScanner({ onScan, onError }: BarcodeScannerProps) {
 	const scannerRef = useRef<Html5Qrcode | null>(null);
 	const isScanning = useRef(false);
+	const lastScannedCode = useRef<string>('');
+	const lastScanTime = useRef<number>(0);
+	const onScanRef = useRef(onScan);
+	const onErrorRef = useRef(onError);
+
+	// Keep refs updated
+	useEffect(() => {
+		onScanRef.current = onScan;
+		onErrorRef.current = onError;
+	}, [onScan, onError]);
 
 	useEffect(() => {
 		const startScanner = async () => {
@@ -28,7 +38,16 @@ export default function BarcodeScanner({ onScan, onError }: BarcodeScannerProps)
 					{ facingMode: 'environment' },
 					config,
 					(decodedText) => {
-						onScan(decodedText);
+						const now = Date.now();
+						// Only process if it's a different code OR 2 seconds have passed since last scan
+						if (
+							decodedText !== lastScannedCode.current ||
+							now - lastScanTime.current > 2000
+						) {
+							lastScannedCode.current = decodedText;
+							lastScanTime.current = now;
+							onScanRef.current(decodedText);
+						}
 					},
 					(errorMessage) => {
 						// Ignore errors from scanner, they are frequent
@@ -39,8 +58,8 @@ export default function BarcodeScanner({ onScan, onError }: BarcodeScannerProps)
 				isScanning.current = true;
 			} catch (err) {
 				const errorMsg = err instanceof Error ? err.message : 'Gagal memulai scanner';
-				if (onError) {
-					onError(errorMsg);
+				if (onErrorRef.current) {
+					onErrorRef.current(errorMsg);
 				}
 				console.error('Error starting scanner:', err);
 			}
@@ -55,13 +74,16 @@ export default function BarcodeScanner({ onScan, onError }: BarcodeScannerProps)
 					.then(() => {
 						scannerRef.current?.clear();
 						isScanning.current = false;
+						lastScannedCode.current = '';
+						lastScanTime.current = 0;
 					})
 					.catch((err) => {
 						console.error('Error stopping scanner:', err);
 					});
 			}
 		};
-	}, [onScan, onError]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	return (
 		<div className="w-full">
