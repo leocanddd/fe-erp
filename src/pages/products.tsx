@@ -1,4 +1,5 @@
 import MainLayout from '@/components/MainLayout';
+import { getStoredUser } from '@/lib/auth';
 import {
 	createProduct,
 	createProductHistory,
@@ -7,7 +8,6 @@ import {
 	Product,
 	updateProduct,
 } from '@/lib/products';
-import { getStoredUser } from '@/lib/auth';
 import {
 	useCallback,
 	useEffect,
@@ -71,7 +71,7 @@ export default function Products() {
 					await getProducts(
 						currentPage,
 						10,
-						search
+						search,
 					);
 				if (
 					response.statusCode === 200
@@ -79,22 +79,22 @@ export default function Products() {
 					setProducts(response.data);
 					setTotalPages(
 						response.pagination
-							.totalPages
+							.totalPages,
 					);
 					setTotalItems(
 						response.pagination
-							.totalItems
+							.totalItems,
 					);
 					setError('');
 				} else {
 					setError(
 						response.error ||
-							'Failed to fetch products'
+							'Failed to fetch products',
 					);
 				}
 			} catch {
 				setError(
-					'Failed to fetch products'
+					'Failed to fetch products',
 				);
 			} finally {
 				setLoading(false);
@@ -106,7 +106,7 @@ export default function Products() {
 	}, [fetchProducts]);
 
 	const handleSearch = (
-		e: React.FormEvent
+		e: React.FormEvent,
 	) => {
 		e.preventDefault();
 		setCurrentPage(1);
@@ -114,7 +114,7 @@ export default function Products() {
 	};
 
 	const handleDelete = async (
-		product: Product
+		product: Product,
 	) => {
 		setProductToDelete(product);
 		setShowDeleteModal(true);
@@ -126,7 +126,7 @@ export default function Products() {
 		try {
 			const response =
 				await deleteProduct(
-					productToDelete.id!
+					productToDelete.id!,
 				);
 			if (response.statusCode === 200) {
 				fetchProducts();
@@ -135,18 +135,18 @@ export default function Products() {
 			} else {
 				setError(
 					response.error ||
-						'Failed to delete product'
+						'Failed to delete product',
 				);
 			}
 		} catch {
 			setError(
-				'Failed to delete product'
+				'Failed to delete product',
 			);
 		}
 	};
 
 	const handleInputChange = (
-		e: React.ChangeEvent<HTMLInputElement>
+		e: React.ChangeEvent<HTMLInputElement>,
 	) => {
 		const { name, value } = e.target;
 		setFormData((prev) => ({
@@ -170,7 +170,7 @@ export default function Products() {
 	};
 
 	const handleAddProduct = async (
-		e: React.FormEvent
+		e: React.FormEvent,
 	) => {
 		e.preventDefault();
 		setIsSubmitting(true);
@@ -183,20 +183,21 @@ export default function Products() {
 				code: formData.code.trim(),
 				stock: parseInt(formData.stock),
 				price: parseFloat(
-					formData.price
+					formData.price,
 				),
 				entryDate: formData.entryDate,
 			};
 
 			const response =
 				await createProduct(
-					productData
+					productData,
 				);
 			if (response.statusCode === 201) {
 				// Log product history
 				const user = getStoredUser();
 				await createProductHistory({
-					name: user?.firstName || 'User',
+					name:
+						user?.firstName || 'User',
 					type: 'CREATE',
 					message: `Produk ${productData.name} berhasil ditambahkan`,
 				});
@@ -207,7 +208,7 @@ export default function Products() {
 			} else {
 				setError(
 					response.error ||
-						'Gagal menambah produk'
+						'Gagal menambah produk',
 				);
 			}
 		} catch {
@@ -218,7 +219,7 @@ export default function Products() {
 	};
 
 	const handleEdit = (
-		product: Product
+		product: Product,
 	) => {
 		setEditingProduct(product);
 		setFormData({
@@ -234,7 +235,7 @@ export default function Products() {
 	};
 
 	const handleUpdateProduct = async (
-		e: React.FormEvent
+		e: React.FormEvent,
 	) => {
 		e.preventDefault();
 		if (!editingProduct) return;
@@ -249,7 +250,7 @@ export default function Products() {
 				code: formData.code.trim(),
 				stock: parseInt(formData.stock),
 				price: parseFloat(
-					formData.price
+					formData.price,
 				),
 				entryDate: formData.entryDate,
 			};
@@ -257,12 +258,14 @@ export default function Products() {
 			const response =
 				await updateProduct(
 					editingProduct.id!,
-					productData
+					productData,
 				);
 			if (response.statusCode === 200) {
 				// Log product history
 				const user = getStoredUser();
-				const stockDiff = productData.stock - editingProduct.stock;
+				const stockDiff =
+					productData.stock -
+					editingProduct.stock;
 
 				let historyMessage = '';
 				if (stockDiff > 0) {
@@ -274,7 +277,8 @@ export default function Products() {
 				}
 
 				await createProductHistory({
-					name: user?.firstName || 'User',
+					name:
+						user?.firstName || 'User',
 					type: 'UPDATE',
 					message: historyMessage,
 				});
@@ -286,7 +290,7 @@ export default function Products() {
 			} else {
 				setError(
 					response.error ||
-						'Gagal mengubah produk'
+						'Gagal mengubah produk',
 				);
 			}
 		} catch {
@@ -334,7 +338,7 @@ export default function Products() {
 								value={search}
 								onChange={(e) =>
 									setSearch(
-										e.target.value
+										e.target.value,
 									)
 								}
 								placeholder="Cari produk berdasarkan nama, merek, atau kode..."
@@ -390,6 +394,9 @@ export default function Products() {
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 												Stok
 											</th>
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+												Due Out
+											</th>
 
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 												Tanggal Masuk
@@ -434,12 +441,17 @@ export default function Products() {
 															product.stock
 														}
 													</td>
+													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+														{
+															product.holdingStock
+														}
+													</td>
 
 													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 														{new Date(
-															product.entryDate
+															product.entryDate,
 														).toLocaleDateString(
-															'id-ID'
+															'id-ID',
 														)}
 													</td>
 													<td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -447,7 +459,7 @@ export default function Products() {
 															<button
 																onClick={() =>
 																	handleEdit(
-																		product
+																		product,
 																	)
 																}
 																className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
@@ -472,7 +484,7 @@ export default function Products() {
 															<button
 																onClick={() =>
 																	handleDelete(
-																		product
+																		product,
 																	)
 																}
 																className="text-red-600 hover:text-red-900 p-1 rounded"
@@ -497,7 +509,7 @@ export default function Products() {
 														</div>
 													</td>
 												</tr>
-											)
+											),
 										)}
 									</tbody>
 								</table>
@@ -512,8 +524,8 @@ export default function Products() {
 												Math.max(
 													1,
 													currentPage -
-														1
-												)
+														1,
+												),
 											)
 										}
 										disabled={
@@ -529,8 +541,8 @@ export default function Products() {
 												Math.min(
 													totalPages,
 													currentPage +
-														1
-												)
+														1,
+												),
 											)
 										}
 										disabled={
@@ -557,7 +569,7 @@ export default function Products() {
 												{Math.min(
 													currentPage *
 														10,
-													totalItems
+													totalItems,
 												)}
 											</span>{' '}
 											dari{' '}
@@ -575,8 +587,8 @@ export default function Products() {
 														Math.max(
 															1,
 															currentPage -
-																1
-														)
+																1,
+														),
 													)
 												}
 												disabled={
@@ -593,8 +605,8 @@ export default function Products() {
 														Math.min(
 															totalPages,
 															currentPage +
-																1
-														)
+																1,
+														),
 													)
 												}
 												disabled={
@@ -644,11 +656,11 @@ export default function Products() {
 													type="button"
 													onClick={() => {
 														setShowAddModal(
-															false
+															false,
 														);
 														resetForm();
 														setError(
-															''
+															'',
 														);
 													}}
 													className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -847,7 +859,7 @@ export default function Products() {
 										type="button"
 										onClick={() => {
 											setShowAddModal(
-												false
+												false,
 											);
 											resetForm();
 											setError('');
@@ -872,10 +884,10 @@ export default function Products() {
 								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
 								onClick={() => {
 									setShowEditModal(
-										false
+										false,
 									);
 									setEditingProduct(
-										null
+										null,
 									);
 									resetForm();
 									setError('');
@@ -898,14 +910,14 @@ export default function Products() {
 														type="button"
 														onClick={() => {
 															setShowEditModal(
-																false
+																false,
 															);
 															setEditingProduct(
-																null
+																null,
 															);
 															resetForm();
 															setError(
-																''
+																'',
 															);
 														}}
 														className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -1105,10 +1117,10 @@ export default function Products() {
 											type="button"
 											onClick={() => {
 												setShowEditModal(
-													false
+													false,
 												);
 												setEditingProduct(
-													null
+													null,
 												);
 												resetForm();
 												setError('');
@@ -1132,10 +1144,10 @@ export default function Products() {
 							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
 							onClick={() => {
 								setShowDeleteModal(
-									false
+									false,
 								);
 								setProductToDelete(
-									null
+									null,
 								);
 							}}
 						></div>
@@ -1189,10 +1201,10 @@ export default function Products() {
 								<button
 									onClick={() => {
 										setShowDeleteModal(
-											false
+											false,
 										);
 										setProductToDelete(
-											null
+											null,
 										);
 									}}
 									className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
