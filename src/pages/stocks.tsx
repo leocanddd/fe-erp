@@ -247,9 +247,16 @@ export default function Stocks() {
 		// Navigate to palet detail page
 		setShowScannerModal(false);
 
-		// If it's a full URL, navigate to it directly
+		// If it's a full URL, extract the ID from it
 		if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
-			window.location.href = decodedText;
+			// Extract ID from URL like http://localhost:3000/stocks/{id}
+			const match = decodedText.match(/\/stocks\/([^/?#]+)/);
+			if (match && match[1]) {
+				router.push(`/stocks/${match[1]}`);
+			} else {
+				// Fallback: navigate to the URL directly
+				window.location.href = decodedText;
+			}
 		} else {
 			// Otherwise treat it as an ID
 			router.push(`/stocks/${decodedText}`);
