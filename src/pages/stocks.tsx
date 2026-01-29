@@ -1031,11 +1031,8 @@ export default function Stocks() {
 										<div className="flex justify-center">
 											<QRCodeSVG
 												value={
-													typeof window !==
-													'undefined'
-														? `${window.location.origin}/stocks/${paletForBarcode.id}`
-														: paletForBarcode.id ||
-														  'UNKNOWN'
+													paletForBarcode.id ||
+													'UNKNOWN'
 												}
 												size={200}
 												level="H"
