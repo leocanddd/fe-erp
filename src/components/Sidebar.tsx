@@ -217,7 +217,7 @@ export default function Sidebar({
 		{
 			name: 'Quotation',
 			href: '/quotations',
-			roles: [5], // Only Superadmin
+			roles: [5, 9, 3], // Only Superadmin
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -382,7 +382,7 @@ export default function Sidebar({
 	// Filter navigation items based on user role
 	const navigationItems =
 		allNavigationItems.filter((item) =>
-			item.roles.includes(user.role)
+			item.roles.includes(user.role),
 		);
 
 	return (
@@ -421,7 +421,7 @@ export default function Sidebar({
 								{item.icon}
 								<span>{item.name}</span>
 							</Link>
-						)
+						),
 					)}
 				</nav>
 
@@ -430,10 +430,10 @@ export default function Sidebar({
 						<div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
 							<span className="text-white font-semibold text-sm">
 								{user?.firstName?.charAt(
-									0
+									0,
 								)}
 								{user?.lastName?.charAt(
-									0
+									0,
 								)}
 							</span>
 						</div>
