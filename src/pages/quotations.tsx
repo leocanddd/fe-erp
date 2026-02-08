@@ -431,13 +431,17 @@ export default function Quotations() {
 																'id-ID',
 															)}
 														</td>
-														<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-															{
-																quotation
-																	.products
-																	.length
-															}{' '}
-															produk
+														<td className="px-6 py-4 text-sm text-gray-900">
+															<div className="max-w-xs">
+																{quotation.products
+																	.map(
+																		(p) =>
+																			p.name,
+																	)
+																	.join(
+																		', ',
+																	)}
+															</div>
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 															Rp{' '}

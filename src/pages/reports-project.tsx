@@ -17,6 +17,7 @@ import {
 	useEffect,
 	useState,
 } from 'react';
+import * as XLSX from 'xlsx';
 
 export default function ReportsProject() {
 	const [
@@ -183,6 +184,57 @@ export default function ReportsProject() {
 		handleFilterChange('limit', limit);
 	};
 
+	const handleExportToExcel = () => {
+		// Prepare data for export
+		const exportData = projectVisits.map((visit, index) => ({
+			'No': index + 1,
+			'Sales': visit.name.split(' ')[0],
+			'Project': visit.projectName,
+			'Lokasi': visit.location,
+			'Tanggal': formatProjectVisitDateOnly(visit),
+			'Jam': formatProjectVisitTimeOnly(visit),
+			'Product': visit.product || '-',
+			'Volume': visit.volume || '-',
+			'Schedule Supply': visit.scheduleSupply
+				? new Date(visit.scheduleSupply).toLocaleDateString('id-ID', {
+					year: 'numeric',
+					month: 'short',
+					day: 'numeric',
+				})
+				: '-',
+			'Uraian': visit.uraian || '-',
+			'Deskripsi': visit.description,
+		}));
+
+		// Create workbook and worksheet
+		const ws = XLSX.utils.json_to_sheet(exportData);
+		const wb = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(wb, ws, 'Project Visits');
+
+		// Auto-size columns
+		const colWidths = [
+			{ wch: 5 },  // No
+			{ wch: 15 }, // Sales
+			{ wch: 20 }, // Project
+			{ wch: 30 }, // Lokasi
+			{ wch: 12 }, // Tanggal
+			{ wch: 10 }, // Jam
+			{ wch: 20 }, // Product
+			{ wch: 15 }, // Volume
+			{ wch: 15 }, // Schedule Supply
+			{ wch: 30 }, // Uraian
+			{ wch: 40 }, // Deskripsi
+		];
+		ws['!cols'] = colWidths;
+
+		// Generate filename with current date
+		const date = new Date().toISOString().split('T')[0];
+		const filename = `Laporan_Project_${date}.xlsx`;
+
+		// Download file
+		XLSX.writeFile(wb, filename);
+	};
+
 	const renderPagination = () => {
 		const pages = [];
 		const maxVisiblePages = 5;
@@ -282,14 +334,36 @@ export default function ReportsProject() {
 		<MainLayout title="Laporan Project">
 			<div className="max-w-7xl mx-auto">
 				{/* Header */}
-				<div className="mb-8">
-					<h2 className="text-2xl font-bold text-gray-900 mb-2">
-						Laporan Project
-					</h2>
-					<p className="text-gray-600">
-						Data kunjungan project
-						dengan filter dan pagination
-					</p>
+				<div className="mb-8 flex justify-between items-center">
+					<div>
+						<h2 className="text-2xl font-bold text-gray-900 mb-2">
+							Laporan Project
+						</h2>
+						<p className="text-gray-600">
+							Data kunjungan project
+							dengan filter dan pagination
+						</p>
+					</div>
+					<button
+						onClick={handleExportToExcel}
+						disabled={projectVisits.length === 0}
+						className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+					>
+						<svg
+							className="w-5 h-5"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth={2}
+								d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+							/>
+						</svg>
+						<span>Export to Excel</span>
+					</button>
 				</div>
 
 				{/* Filters */}
@@ -487,6 +561,18 @@ export default function ReportsProject() {
 											Jam
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+											Product
+										</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+											Volume
+										</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+											Schedule Supply
+										</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+											Uraian
+										</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Deskripsi
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -559,6 +645,53 @@ export default function ReportsProject() {
 														{formatProjectVisitTimeOnly(
 															visit
 														)}
+													</div>
+												</td>
+												<td className="px-6 py-4">
+													<div
+														className="text-sm text-gray-900 max-w-xs truncate"
+														title={
+															visit.product
+														}
+													>
+														{
+															visit.product || '-'
+														}
+													</div>
+												</td>
+												<td className="px-6 py-4">
+													<div
+														className="text-sm text-gray-900 max-w-xs truncate"
+														title={
+															visit.volume
+														}
+													>
+														{
+															visit.volume || '-'
+														}
+													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-900">
+														{
+															visit.scheduleSupply ? new Date(visit.scheduleSupply).toLocaleDateString('id-ID', {
+																year: 'numeric',
+																month: 'short',
+																day: 'numeric',
+															}) : '-'
+														}
+													</div>
+												</td>
+												<td className="px-6 py-4">
+													<div
+														className="text-sm text-gray-900 max-w-xs truncate"
+														title={
+															visit.uraian
+														}
+													>
+														{
+															visit.uraian || '-'
+														}
 													</div>
 												</td>
 												<td className="px-6 py-4">

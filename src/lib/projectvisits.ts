@@ -15,6 +15,10 @@ export interface ProjectVisit {
 	createdAt: string;
 	updatedAt: string;
 	projectName: string;
+	product?: string;
+	volume?: string;
+	scheduleSupply?: string;
+	uraian?: string;
 }
 
 export interface ProjectVisitFilters {
