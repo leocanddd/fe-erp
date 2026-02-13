@@ -54,7 +54,11 @@ export default function Quotations() {
 		});
 	const [products, setProducts] =
 		useState<QuotationProduct[]>([
-			{ name: '', harga: 0, quantity: 0 },
+			{
+				name: '',
+				harga: 0,
+				quantity: 0,
+			},
 		]);
 
 	const fetchQuotations =
@@ -141,10 +145,12 @@ export default function Quotations() {
 
 	const handleInputChange = (
 		e: React.ChangeEvent<
-			HTMLInputElement | HTMLSelectElement
+			| HTMLInputElement
+			| HTMLSelectElement
 		>,
 	) => {
-		const { name, value, type } = e.target;
+		const { name, value, type } =
+			e.target;
 		if (type === 'checkbox') {
 			const checked = (
 				e.target as HTMLInputElement
@@ -166,7 +172,9 @@ export default function Quotations() {
 		field: keyof QuotationProduct,
 		value: string | number,
 	) => {
-		const updatedProducts = [...products];
+		const updatedProducts = [
+			...products,
+		];
 		updatedProducts[index] = {
 			...updatedProducts[index],
 			[field]: value,
@@ -177,14 +185,22 @@ export default function Quotations() {
 	const addProduct = () => {
 		setProducts([
 			...products,
-			{ name: '', harga: 0, quantity: 0 },
+			{
+				name: '',
+				harga: 0,
+				quantity: 0,
+			},
 		]);
 	};
 
-	const removeProduct = (index: number) => {
+	const removeProduct = (
+		index: number,
+	) => {
 		if (products.length > 1) {
 			setProducts(
-				products.filter((_, i) => i !== index),
+				products.filter(
+					(_, i) => i !== index,
+				),
 			);
 		}
 	};
@@ -201,7 +217,11 @@ export default function Quotations() {
 			isApproved: false,
 		});
 		setProducts([
-			{ name: '', harga: 0, quantity: 0 },
+			{
+				name: '',
+				harga: 0,
+				quantity: 0,
+			},
 		]);
 	};
 
@@ -225,7 +245,9 @@ export default function Quotations() {
 					quantity: p.quantity || 0,
 				})),
 				discount: formData.discount
-					? parseFloat(formData.discount)
+					? parseFloat(
+							formData.discount,
+						)
 					: 0,
 				isApproved: formData.isApproved,
 			};
@@ -245,7 +267,9 @@ export default function Quotations() {
 				);
 			}
 		} catch {
-			setError('Gagal menambah quotation');
+			setError(
+				'Gagal menambah quotation',
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -269,23 +293,28 @@ export default function Quotations() {
 				);
 			}
 		} catch {
-			setError('Gagal approve quotation');
+			setError(
+				'Gagal approve quotation',
+			);
 		}
 	};
 
 	const calculateTotal = (
 		quotation: Quotation,
 	) => {
-		const subtotal = quotation.products.reduce(
-			(sum, product) =>
-				sum +
-				(product.harga || 0) *
-					(product.quantity || 0),
-			0,
-		);
-		const discount = quotation.discount || 0;
+		const subtotal =
+			quotation.products.reduce(
+				(sum, product) =>
+					sum +
+					(product.harga || 0) *
+						(product.quantity || 0),
+				0,
+			);
+		const discount =
+			quotation.discount || 0;
 		const total =
-			subtotal - (subtotal * discount) / 100;
+			subtotal -
+			(subtotal * discount) / 100;
 		return { subtotal, total };
 	};
 
@@ -301,16 +330,6 @@ export default function Quotations() {
 						<p className="text-gray-600">
 							Kelola quotation pelanggan
 						</p>
-					</div>
-					<div className="mt-4 sm:mt-0">
-						<button
-							onClick={() =>
-								setShowAddModal(true)
-							}
-							className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-						>
-							Tambah Quotation
-						</button>
 					</div>
 				</div>
 
@@ -399,7 +418,9 @@ export default function Quotations() {
 									<tbody className="bg-white divide-y divide-gray-200">
 										{quotations.map(
 											(quotation) => {
-												const { total } =
+												const {
+													total,
+												} =
 													calculateTotal(
 														quotation,
 													);
@@ -435,7 +456,9 @@ export default function Quotations() {
 															<div className="max-w-xs">
 																{quotation.products
 																	.map(
-																		(p) =>
+																		(
+																			p,
+																		) =>
 																			p.name,
 																	)
 																	.join(
@@ -660,8 +683,8 @@ export default function Quotations() {
 										<div className="w-full">
 											<div className="flex items-center justify-between mb-6">
 												<h3 className="text-2xl font-bold text-gray-900">
-													Tambah Quotation
-													Baru
+													Tambah
+													Quotation Baru
 												</h3>
 												<button
 													type="button"
@@ -708,8 +731,8 @@ export default function Quotations() {
 														htmlFor="customerName"
 														className="block text-sm font-semibold text-gray-700 mb-2"
 													>
-														Nama Customer
-														*
+														Nama
+														Customer *
 													</label>
 													<input
 														type="text"
@@ -991,7 +1014,6 @@ export default function Quotations() {
 					</div>
 				</div>
 			)}
-
 
 			{/* Delete confirmation modal */}
 			{showDeleteModal && (
