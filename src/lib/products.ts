@@ -7,6 +7,7 @@ interface Product {
 	price: number;
 	holdingStock?: number;
 	entryDate: string;
+	image?: string;
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -18,6 +19,7 @@ interface ProductCreateRequest {
 	stock: number;
 	price: number;
 	entryDate: string;
+	image?: string;
 }
 
 interface ProductResponse {
