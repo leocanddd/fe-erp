@@ -48,12 +48,12 @@ export default function Blogs() {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
-				}
+				},
 			);
 
 			if (!response.ok) {
 				throw new Error(
-					'Failed to fetch blogs'
+					'Failed to fetch blogs',
 				);
 			}
 
@@ -61,13 +61,13 @@ export default function Blogs() {
 				await response.json();
 			console.log(
 				'Backend response:',
-				data
+				data,
 			);
 			const blogsData =
 				data.data || data || [];
 			console.log(
 				'Blogs data:',
-				blogsData
+				blogsData,
 			);
 			// Ensure all blogs have _id field (some backends use id instead)
 			const normalizedBlogs =
@@ -76,26 +76,26 @@ export default function Blogs() {
 							(
 								blog: Blog & {
 									id?: string;
-								}
+								},
 							) => ({
 								...blog,
 								_id:
 									blog._id ||
 									blog.id ||
 									'',
-							})
-					  )
+							}),
+						)
 					: [];
 			console.log(
 				'Normalized blogs:',
-				normalizedBlogs
+				normalizedBlogs,
 			);
 			setBlogs(normalizedBlogs);
 			setError('');
 		} catch (err) {
 			console.error(
 				'Error fetching blogs:',
-				err
+				err,
 			);
 			setError('Failed to fetch blogs');
 			setBlogs([]);
@@ -105,11 +105,11 @@ export default function Blogs() {
 	};
 
 	const handleDelete = async (
-		id: string
+		id: string,
 	) => {
 		if (
 			!confirm(
-				'Are you sure you want to delete this blog?'
+				'Are you sure you want to delete this blog?',
 			)
 		) {
 			return;
@@ -126,12 +126,12 @@ export default function Blogs() {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
-				}
+				},
 			);
 
 			if (!response.ok) {
 				throw new Error(
-					'Failed to delete blog'
+					'Failed to delete blog',
 				);
 			}
 
@@ -139,7 +139,7 @@ export default function Blogs() {
 		} catch (err) {
 			console.error(
 				'Error deleting blog:',
-				err
+				err,
 			);
 			alert('Failed to delete blog');
 		} finally {
@@ -149,12 +149,9 @@ export default function Blogs() {
 
 	const handleApprove = async (
 		id: string,
-		currentStatus: boolean
+		currentStatus: boolean,
 	) => {
 		const newStatus = !currentStatus;
-		console.log('Current approval status:', currentStatus);
-		console.log('New approval status:', newStatus);
-		console.log('Sending payload:', { isApproved: newStatus });
 
 		setApproveLoading(id);
 		try {
@@ -172,12 +169,12 @@ export default function Blogs() {
 					body: JSON.stringify({
 						isApproved: newStatus,
 					}),
-				}
+				},
 			);
 
 			if (!response.ok) {
 				throw new Error(
-					'Failed to update approval status'
+					'Failed to update approval status',
 				);
 			}
 
@@ -185,10 +182,10 @@ export default function Blogs() {
 		} catch (err) {
 			console.error(
 				'Error updating approval status:',
-				err
+				err,
 			);
 			alert(
-				'Failed to update approval status'
+				'Failed to update approval status',
 			);
 		} finally {
 			setApproveLoading(null);
@@ -196,10 +193,10 @@ export default function Blogs() {
 	};
 
 	const formatDate = (
-		dateString: string
+		dateString: string,
 	) => {
 		return new Date(
-			dateString
+			dateString,
 		).toLocaleDateString('id-ID', {
 			year: 'numeric',
 			month: 'long',
@@ -294,7 +291,7 @@ export default function Blogs() {
 											</span>
 											<span>
 												{formatDate(
-													blog.publishDate
+													blog.publishDate,
 												)}
 											</span>
 										</div>
@@ -304,7 +301,7 @@ export default function Blogs() {
 												.map(
 													(
 														tag,
-														index
+														index,
 													) => (
 														<span
 															key={
@@ -314,7 +311,7 @@ export default function Blogs() {
 														>
 															{tag}
 														</span>
-													)
+													),
 												)}
 											{blog.tags
 												.length > 3 && (
@@ -330,7 +327,7 @@ export default function Blogs() {
 												<button
 													onClick={() =>
 														router.push(
-															`/blogs/edit/${blog._id}`
+															`/blogs/edit/${blog._id}`,
 														)
 													}
 													className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -340,7 +337,7 @@ export default function Blogs() {
 												<button
 													onClick={() =>
 														handleDelete(
-															blog._id
+															blog._id,
 														)
 													}
 													disabled={
@@ -358,13 +355,23 @@ export default function Blogs() {
 											{isSuperAdmin && (
 												<button
 													onClick={() => {
-														console.log('Blog object:', blog);
-														console.log('blog.isApproved:', blog.isApproved);
-														console.log('Passing to handleApprove:', blog.isApproved || false);
+														console.log(
+															'Blog object:',
+															blog,
+														);
+														console.log(
+															'blog.isApproved:',
+															blog.isApproved,
+														);
+														console.log(
+															'Passing to handleApprove:',
+															blog.isApproved ||
+																false,
+														);
 														handleApprove(
 															blog._id,
 															blog.isApproved ||
-																false
+																false,
 														);
 													}}
 													disabled={
@@ -381,8 +388,8 @@ export default function Blogs() {
 													blog._id
 														? 'Loading...'
 														: blog.isApproved
-														? 'Unapprove'
-														: 'Approve'}
+															? 'Unapprove'
+															: 'Approve'}
 												</button>
 											)}
 										</div>

@@ -1,5 +1,4 @@
 import MainLayout from '@/components/MainLayout';
-import Link from 'next/link';
 import {
 	formatProjectVisitDateOnly,
 	formatProjectVisitTimeOnly,
@@ -12,6 +11,7 @@ import {
 	getUsers,
 	User,
 } from '@/lib/users';
+import Link from 'next/link';
 import {
 	useCallback,
 	useEffect,
@@ -63,13 +63,13 @@ export default function ReportsProject() {
 					// Filter to only show Sales Project users (role = 2)
 					const salesProjectUsers =
 						response.data.filter(
-							(user) => user.role === 2
+							(user) => user.role === 2,
 						);
 					setUsers(salesProjectUsers);
 				}
 			} catch {
 				console.error(
-					'Failed to fetch users for filter'
+					'Failed to fetch users for filter',
 				);
 			}
 		}, []);
@@ -80,42 +80,42 @@ export default function ReportsProject() {
 			try {
 				const response =
 					await getProjectVisits(
-						filters
+						filters,
 					);
 				if (
 					response.statusCode === 200 &&
 					response.data
 				) {
 					setProjectVisits(
-						response.data.projectVisits
+						response.data.projectVisits,
 					);
 					setCurrentPage(
 						response.data.pagination
-							.currentPage
+							.currentPage,
 					);
 					setTotalPages(
 						response.data.pagination
-							.totalPages
+							.totalPages,
 					);
 					setTotalItems(
 						response.data.pagination
-							.totalItems
+							.totalItems,
 					);
 					setItemsPerPage(
 						response.data.pagination
-							.itemsPerPage
+							.itemsPerPage,
 					);
 					setError('');
 				} else {
 					setError(
 						response.error ||
-							'Failed to fetch project visits'
+							'Failed to fetch project visits',
 					);
 					setProjectVisits([]);
 				}
 			} catch {
 				setError(
-					'Failed to fetch project visits'
+					'Failed to fetch project visits',
 				);
 				setProjectVisits([]);
 			} finally {
@@ -133,7 +133,7 @@ export default function ReportsProject() {
 
 	const handleFilterChange = (
 		key: keyof ProjectVisitFilters,
-		value: string | number
+		value: string | number,
 	) => {
 		setFilters((prev) => ({
 			...prev,
@@ -142,13 +142,13 @@ export default function ReportsProject() {
 				key !== 'page'
 					? 1
 					: typeof value === 'number'
-					? value
-					: 1, // Reset to page 1 when changing filters except pagination
+						? value
+						: 1, // Reset to page 1 when changing filters except pagination
 		}));
 	};
 
 	const handleSearch = (
-		e: React.FormEvent
+		e: React.FormEvent,
 	) => {
 		e.preventDefault();
 		setFilters((prev) => ({
@@ -168,7 +168,7 @@ export default function ReportsProject() {
 	};
 
 	const handlePageChange = (
-		page: number
+		page: number,
 	) => {
 		if (
 			page >= 1 &&
@@ -179,41 +179,63 @@ export default function ReportsProject() {
 	};
 
 	const handleLimitChange = (
-		limit: number
+		limit: number,
 	) => {
 		handleFilterChange('limit', limit);
 	};
 
 	const handleExportToExcel = () => {
 		// Prepare data for export
-		const exportData = projectVisits.map((visit, index) => ({
-			'No': index + 1,
-			'Sales': visit.name.split(' ')[0],
-			'Project': visit.projectName,
-			'Lokasi': visit.location,
-			'Tanggal': formatProjectVisitDateOnly(visit),
-			'Jam': formatProjectVisitTimeOnly(visit),
-			'Product': visit.product || '-',
-			'Volume': visit.volume || '-',
-			'Schedule Supply': visit.scheduleSupply
-				? new Date(visit.scheduleSupply).toLocaleDateString('id-ID', {
-					year: 'numeric',
-					month: 'short',
-					day: 'numeric',
-				})
-				: '-',
-			'Uraian': visit.uraian || '-',
-			'Deskripsi': visit.description,
-		}));
+		const exportData =
+			projectVisits.map(
+				(visit, index) => ({
+					No: index + 1,
+					Sales:
+						visit.name.split(' ')[0],
+					Project: visit.projectName,
+					Lokasi: visit.location,
+					Tanggal:
+						formatProjectVisitDateOnly(
+							visit,
+						),
+					Jam: formatProjectVisitTimeOnly(
+						visit,
+					),
+					Product: visit.product || '-',
+					Volume: visit.volume || '-',
+					'Schedule Supply':
+						visit.scheduleSupply
+							? new Date(
+									visit.scheduleSupply,
+								).toLocaleDateString(
+									'id-ID',
+									{
+										year: 'numeric',
+										month: 'short',
+										day: 'numeric',
+									},
+								)
+							: '-',
+					Uraian: visit.uraian || '-',
+					'Proyek Baru': visit.isNew,
+				}),
+			);
 
 		// Create workbook and worksheet
-		const ws = XLSX.utils.json_to_sheet(exportData);
+		const ws =
+			XLSX.utils.json_to_sheet(
+				exportData,
+			);
 		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'Project Visits');
+		XLSX.utils.book_append_sheet(
+			wb,
+			ws,
+			'Project Visits',
+		);
 
 		// Auto-size columns
 		const colWidths = [
-			{ wch: 5 },  // No
+			{ wch: 5 }, // No
 			{ wch: 15 }, // Sales
 			{ wch: 20 }, // Project
 			{ wch: 30 }, // Lokasi
@@ -223,12 +245,14 @@ export default function ReportsProject() {
 			{ wch: 15 }, // Volume
 			{ wch: 15 }, // Schedule Supply
 			{ wch: 30 }, // Uraian
-			{ wch: 40 }, // Deskripsi
+			{ wch: 40 }, // Proyek Baru
 		];
 		ws['!cols'] = colWidths;
 
 		// Generate filename with current date
-		const date = new Date().toISOString().split('T')[0];
+		const date = new Date()
+			.toISOString()
+			.split('T')[0];
 		const filename = `Laporan_Project_${date}.xlsx`;
 
 		// Download file
@@ -242,11 +266,11 @@ export default function ReportsProject() {
 		let startPage = Math.max(
 			1,
 			currentPage -
-				Math.floor(maxVisiblePages / 2)
+				Math.floor(maxVisiblePages / 2),
 		);
 		const endPage = Math.min(
 			totalPages,
-			startPage + maxVisiblePages - 1
+			startPage + maxVisiblePages - 1,
 		);
 
 		if (
@@ -255,7 +279,7 @@ export default function ReportsProject() {
 		) {
 			startPage = Math.max(
 				1,
-				endPage - maxVisiblePages + 1
+				endPage - maxVisiblePages + 1,
 			);
 		}
 
@@ -277,7 +301,7 @@ export default function ReportsProject() {
 					}`}
 				>
 					{i}
-				</button>
+				</button>,
 			);
 		}
 
@@ -289,12 +313,12 @@ export default function ReportsProject() {
 						(currentPage - 1) *
 							itemsPerPage +
 							1,
-						totalItems
+						totalItems,
 					)}{' '}
 					-{' '}
 					{Math.min(
 						currentPage * itemsPerPage,
-						totalItems
+						totalItems,
 					)}{' '}
 					dari {totalItems} kunjungan
 					project
@@ -303,7 +327,7 @@ export default function ReportsProject() {
 					<button
 						onClick={() =>
 							handlePageChange(
-								currentPage - 1
+								currentPage - 1,
 							)
 						}
 						disabled={currentPage === 1}
@@ -315,7 +339,7 @@ export default function ReportsProject() {
 					<button
 						onClick={() =>
 							handlePageChange(
-								currentPage + 1
+								currentPage + 1,
 							)
 						}
 						disabled={
@@ -341,12 +365,17 @@ export default function ReportsProject() {
 						</h2>
 						<p className="text-gray-600">
 							Data kunjungan project
-							dengan filter dan pagination
+							dengan filter dan
+							pagination
 						</p>
 					</div>
 					<button
-						onClick={handleExportToExcel}
-						disabled={projectVisits.length === 0}
+						onClick={
+							handleExportToExcel
+						}
+						disabled={
+							projectVisits.length === 0
+						}
 						className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
 					>
 						<svg
@@ -389,7 +418,7 @@ export default function ReportsProject() {
 									onChange={(e) =>
 										handleFilterChange(
 											'username',
-											e.target.value
+											e.target.value,
 										)
 									}
 									className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -429,7 +458,7 @@ export default function ReportsProject() {
 									onChange={(e) =>
 										handleFilterChange(
 											'startDate',
-											e.target.value
+											e.target.value,
 										)
 									}
 									className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -452,7 +481,7 @@ export default function ReportsProject() {
 									onChange={(e) =>
 										handleFilterChange(
 											'endDate',
-											e.target.value
+											e.target.value,
 										)
 									}
 									className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -490,8 +519,8 @@ export default function ReportsProject() {
 									onChange={(e) =>
 										handleLimitChange(
 											Number(
-												e.target.value
-											)
+												e.target.value,
+											),
 										)
 									}
 									className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -573,7 +602,7 @@ export default function ReportsProject() {
 											Uraian
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Deskripsi
+											Proyek Baru
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Actions
@@ -585,7 +614,7 @@ export default function ReportsProject() {
 										(visit) => (
 											<tr
 												key={getProjectVisitId(
-													visit
+													visit,
 												)}
 												className="hover:bg-gray-50"
 											>
@@ -595,10 +624,10 @@ export default function ReportsProject() {
 															<span className="text-white font-semibold text-xs">
 																{visit.name
 																	.split(
-																		' '
+																		' ',
 																	)[0]
 																	.charAt(
-																		0
+																		0,
 																	)
 																	.toUpperCase()}
 															</span>
@@ -607,7 +636,7 @@ export default function ReportsProject() {
 															<div className="text-sm font-medium text-gray-900">
 																{
 																	visit.name.split(
-																		' '
+																		' ',
 																	)[0]
 																}
 															</div>
@@ -636,14 +665,14 @@ export default function ReportsProject() {
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
 														{formatProjectVisitDateOnly(
-															visit
+															visit,
 														)}
 													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
 														{formatProjectVisitTimeOnly(
-															visit
+															visit,
 														)}
 													</div>
 												</td>
@@ -654,9 +683,8 @@ export default function ReportsProject() {
 															visit.product
 														}
 													>
-														{
-															visit.product || '-'
-														}
+														{visit.product ||
+															'-'}
 													</div>
 												</td>
 												<td className="px-6 py-4">
@@ -666,20 +694,25 @@ export default function ReportsProject() {
 															visit.volume
 														}
 													>
-														{
-															visit.volume || '-'
-														}
+														{visit.volume ||
+															'-'}
 													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
-														{
-															visit.scheduleSupply ? new Date(visit.scheduleSupply).toLocaleDateString('id-ID', {
-																year: 'numeric',
-																month: 'short',
-																day: 'numeric',
-															}) : '-'
-														}
+														{visit.scheduleSupply
+															? new Date(
+																	visit.scheduleSupply,
+																).toLocaleDateString(
+																	'id-ID',
+																	{
+																		year: 'numeric',
+																		month:
+																			'short',
+																		day: 'numeric',
+																	},
+																)
+															: '-'}
 													</div>
 												</td>
 												<td className="px-6 py-4">
@@ -689,27 +722,28 @@ export default function ReportsProject() {
 															visit.uraian
 														}
 													>
-														{
-															visit.uraian || '-'
-														}
+														{visit.uraian ||
+															'-'}
 													</div>
 												</td>
 												<td className="px-6 py-4">
 													<div
 														className="text-sm text-gray-900 max-w-xs truncate"
 														title={
-															visit.description
+															visit.isNew
+																? 'Proyek Baru'
+																: 'Proyek Lama'
 														}
 													>
-														{
-															visit.description
-														}
+														{visit.isNew
+															? 'Baru'
+															: 'Lama'}
 													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
 													<Link
 														href={`/reports-project/${getProjectVisitId(
-															visit
+															visit,
 														)}`}
 														className="text-indigo-600 hover:text-indigo-900 transition-colors duration-200"
 														title="View details"
@@ -723,20 +757,24 @@ export default function ReportsProject() {
 															<path
 																strokeLinecap="round"
 																strokeLinejoin="round"
-																strokeWidth={2}
+																strokeWidth={
+																	2
+																}
 																d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
 															/>
 															<path
 																strokeLinecap="round"
 																strokeLinejoin="round"
-																strokeWidth={2}
+																strokeWidth={
+																	2
+																}
 																d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
 															/>
 														</svg>
 													</Link>
 												</td>
 											</tr>
-										)
+										),
 									)}
 								</tbody>
 							</table>

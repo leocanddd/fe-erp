@@ -10,6 +10,7 @@ interface Product {
 	image?: string;
 	createdAt?: string;
 	updatedAt?: string;
+	displayWeb?: boolean;
 }
 
 interface ProductCreateRequest {

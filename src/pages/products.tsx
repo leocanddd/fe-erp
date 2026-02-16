@@ -1,4 +1,5 @@
 import MainLayout from '@/components/MainLayout';
+import { useUpload } from '@/hooks/useUpload';
 import { getStoredUser } from '@/lib/auth';
 import {
 	createProduct,
@@ -8,7 +9,6 @@ import {
 	Product,
 	updateProduct,
 } from '@/lib/products';
-import { useUpload } from '@/hooks/useUpload';
 import {
 	useCallback,
 	useEffect,
@@ -63,6 +63,7 @@ export default function Products() {
 			stock: '',
 			price: '',
 			entryDate: '',
+			displayWeb: false,
 		});
 
 	// Upload hook instances (one for Add, one for Edit)
@@ -82,8 +83,10 @@ export default function Products() {
 		reset: resetUploadEdit,
 	} = useUpload();
 
-	const addFileInputRef = useRef<HTMLInputElement>(null);
-	const editFileInputRef = useRef<HTMLInputElement>(null);
+	const addFileInputRef =
+		useRef<HTMLInputElement>(null);
+	const editFileInputRef =
+		useRef<HTMLInputElement>(null);
 
 	const fetchProducts =
 		useCallback(async () => {
@@ -170,10 +173,18 @@ export default function Products() {
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement>,
 	) => {
-		const { name, value } = e.target;
+		const {
+			name,
+			value,
+			type,
+			checked,
+		} = e.target;
 		setFormData((prev) => ({
 			...prev,
-			[name]: value,
+			[name]:
+				type === 'checkbox'
+					? checked
+					: value,
 		}));
 	};
 
@@ -188,13 +199,16 @@ export default function Products() {
 			stock: '',
 			price: '',
 			entryDate: today,
+			displayWeb: false,
 		});
 		resetUploadAdd();
 		resetUploadEdit();
 		if (addFileInputRef.current)
-			addFileInputRef.current.value = '';
+			addFileInputRef.current.value =
+				'';
 		if (editFileInputRef.current)
-			editFileInputRef.current.value = '';
+			editFileInputRef.current.value =
+				'';
 	};
 
 	const handleAddProduct = async (
@@ -214,6 +228,7 @@ export default function Products() {
 					formData.price,
 				),
 				entryDate: formData.entryDate,
+				displayWeb: formData.displayWeb,
 				...(uploadedUrlAdd && {
 					image: uploadedUrlAdd,
 				}),
@@ -259,6 +274,8 @@ export default function Products() {
 			code: product.code,
 			stock: product.stock.toString(),
 			price: product.price.toString(),
+			displayWeb:
+				product.displayWeb ?? false,
 			entryDate:
 				product.entryDate.split('T')[0], // Convert to YYYY-MM-DD format for date input
 		});
@@ -284,6 +301,7 @@ export default function Products() {
 					formData.price,
 				),
 				entryDate: formData.entryDate,
+				displayWeb: formData.displayWeb,
 				// Use newly uploaded URL, or keep the existing one
 				image:
 					uploadedUrlEdit ||
@@ -874,7 +892,8 @@ export default function Products() {
 												{/* Image Upload */}
 												<div className="md:col-span-2">
 													<label className="block text-sm font-semibold text-gray-700 mb-2">
-														Gambar Produk
+														Gambar
+														Produk
 													</label>
 													<div className="flex flex-col gap-3">
 														<div className="flex-1">
@@ -895,52 +914,104 @@ export default function Products() {
 																	</div>
 																) : uploadedUrlAdd ? (
 																	<div className="flex flex-col items-center gap-1 px-2 text-center">
-																		<svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+																		<svg
+																			className="w-5 h-5 text-green-500"
+																			fill="none"
+																			stroke="currentColor"
+																			viewBox="0 0 24 24"
+																		>
+																			<path
+																				strokeLinecap="round"
+																				strokeLinejoin="round"
+																				strokeWidth={
+																					2
+																				}
+																				d="M5 13l4 4L19 7"
+																			/>
 																		</svg>
-																		<span className="text-xs text-green-600 font-medium">Upload berhasil</span>
+																		<span className="text-xs text-green-600 font-medium">
+																			Upload
+																			berhasil
+																		</span>
 																		<span className="text-xs text-gray-400 truncate max-w-xs">
-																			{uploadedUrlAdd.split('/').pop()}
+																			{uploadedUrlAdd
+																				.split(
+																					'/',
+																				)
+																				.pop()}
 																		</span>
 																	</div>
 																) : (
 																	<div className="flex flex-col items-center gap-1">
-																		<svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+																		<svg
+																			className="w-6 h-6 text-gray-400"
+																			fill="none"
+																			stroke="currentColor"
+																			viewBox="0 0 24 24"
+																		>
+																			<path
+																				strokeLinecap="round"
+																				strokeLinejoin="round"
+																				strokeWidth={
+																					2
+																				}
+																				d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+																			/>
 																		</svg>
 																		<span className="text-sm text-gray-500">
-																			Klik untuk upload gambar
+																			Klik
+																			untuk
+																			upload
+																			gambar
 																		</span>
 																		<span className="text-xs text-gray-400">
-																			PNG, JPG, WEBP
+																			PNG,
+																			JPG,
+																			WEBP
 																		</span>
 																	</div>
 																)}
 																<input
 																	id="add-image-upload"
-																	ref={addFileInputRef}
+																	ref={
+																		addFileInputRef
+																	}
 																	type="file"
 																	accept="image/*"
 																	className="hidden"
-																	disabled={uploadingAdd}
-																	onChange={async (e) => {
+																	disabled={
+																		uploadingAdd
+																	}
+																	onChange={async (
+																		e,
+																	) => {
 																		const file =
-																			e.target.files?.[0];
-																		if (file)
-																			await uploadAdd(file);
+																			e
+																				.target
+																				.files?.[0];
+																		if (
+																			file
+																		)
+																			await uploadAdd(
+																				file,
+																			);
 																	}}
 																/>
 															</label>
 															{uploadErrorAdd && (
 																<p className="mt-1 text-xs text-red-500">
-																	{uploadErrorAdd}
+																	{
+																		uploadErrorAdd
+																	}
 																</p>
 															)}
 														</div>
 														{uploadedUrlAdd && (
 															// eslint-disable-next-line @next/next/no-img-element
 															<img
-																src={uploadedUrlAdd}
+																src={
+																	uploadedUrlAdd
+																}
 																alt="Preview"
 																className="w-full h-48 object-cover rounded-2xl border border-gray-200"
 															/>
@@ -1207,10 +1278,33 @@ export default function Products() {
 														/>
 													</div>
 
+													<div className="flex items-center space-x-3 mt-4">
+														<input
+															type="checkbox"
+															id="displayWeb"
+															name="displayWeb"
+															checked={
+																formData.displayWeb
+															}
+															onChange={
+																handleInputChange
+															}
+															className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+														/>
+														<label
+															htmlFor="displayWeb"
+															className="text-sm font-semibold text-gray-700"
+														>
+															Tampilkan
+															di web
+														</label>
+													</div>
+
 													{/* Image Upload */}
 													<div className="md:col-span-2">
 														<label className="block text-sm font-semibold text-gray-700 mb-2">
-															Gambar Produk
+															Gambar
+															Produk
 														</label>
 														<div className="flex flex-col gap-3">
 															<div className="flex-1">
@@ -1231,18 +1325,49 @@ export default function Products() {
 																		</div>
 																	) : uploadedUrlEdit ? (
 																		<div className="flex flex-col items-center gap-1 px-2 text-center">
-																			<svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+																			<svg
+																				className="w-5 h-5 text-green-500"
+																				fill="none"
+																				stroke="currentColor"
+																				viewBox="0 0 24 24"
+																			>
+																				<path
+																					strokeLinecap="round"
+																					strokeLinejoin="round"
+																					strokeWidth={
+																						2
+																					}
+																					d="M5 13l4 4L19 7"
+																				/>
 																			</svg>
-																			<span className="text-xs text-green-600 font-medium">Upload berhasil</span>
+																			<span className="text-xs text-green-600 font-medium">
+																				Upload
+																				berhasil
+																			</span>
 																			<span className="text-xs text-gray-400 truncate max-w-xs">
-																				{uploadedUrlEdit.split('/').pop()}
+																				{uploadedUrlEdit
+																					.split(
+																						'/',
+																					)
+																					.pop()}
 																			</span>
 																		</div>
 																	) : (
 																		<div className="flex flex-col items-center gap-1">
-																			<svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+																			<svg
+																				className="w-6 h-6 text-gray-400"
+																				fill="none"
+																				stroke="currentColor"
+																				viewBox="0 0 24 24"
+																			>
+																				<path
+																					strokeLinecap="round"
+																					strokeLinejoin="round"
+																					strokeWidth={
+																						2
+																					}
+																					d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+																				/>
 																			</svg>
 																			<span className="text-sm text-gray-500">
 																				{editingProduct?.image
@@ -1250,28 +1375,44 @@ export default function Products() {
 																					: 'Klik untuk upload gambar'}
 																			</span>
 																			<span className="text-xs text-gray-400">
-																				PNG, JPG, WEBP
+																				PNG,
+																				JPG,
+																				WEBP
 																			</span>
 																		</div>
 																	)}
 																	<input
 																		id="edit-image-upload"
-																		ref={editFileInputRef}
+																		ref={
+																			editFileInputRef
+																		}
 																		type="file"
 																		accept="image/*"
 																		className="hidden"
-																		disabled={uploadingEdit}
-																		onChange={async (e) => {
+																		disabled={
+																			uploadingEdit
+																		}
+																		onChange={async (
+																			e,
+																		) => {
 																			const file =
-																				e.target.files?.[0];
-																			if (file)
-																				await uploadEdit(file);
+																				e
+																					.target
+																					.files?.[0];
+																			if (
+																				file
+																			)
+																				await uploadEdit(
+																					file,
+																				);
 																		}}
 																	/>
 																</label>
 																{uploadErrorEdit && (
 																	<p className="mt-1 text-xs text-red-500">
-																		{uploadErrorEdit}
+																		{
+																			uploadErrorEdit
+																		}
 																	</p>
 																)}
 															</div>
@@ -1282,7 +1423,8 @@ export default function Products() {
 																<img
 																	src={
 																		uploadedUrlEdit ||
-																		editingProduct!.image
+																		editingProduct!
+																			.image
 																	}
 																	alt="Preview"
 																	className="w-full h-48 object-cover rounded-2xl border border-gray-200"
