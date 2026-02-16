@@ -1,6 +1,7 @@
 export interface WebProductVariant {
 	name: string;
 	description: string;
+	image: string;
 }
 
 export interface WebProduct {
@@ -12,6 +13,7 @@ export interface WebProduct {
 	subtitle: string;
 	category: string;
 	image: string;
+	description: string;
 	price: number;
 	variants: WebProductVariant[];
 	createdAt?: string;
@@ -24,6 +26,19 @@ export interface WebProductUpdateRequest {
 	subtitle?: string;
 	category?: string;
 	image?: string;
+	description?: string;
+	price?: number;
+	variants?: WebProductVariant[];
+}
+
+export interface WebProductCreateRequest {
+	name?: string;
+	displayName?: string;
+	brand?: string;
+	subtitle?: string;
+	category?: string;
+	image?: string;
+	description?: string;
 	price?: number;
 	variants?: WebProductVariant[];
 }
@@ -164,6 +179,28 @@ export const deleteWebProduct = async (
 			{
 				method: 'DELETE',
 				headers: getAuthHeaders(),
+			},
+		);
+		return await response.json();
+	} catch {
+		return {
+			status: 'error',
+			statusCode: 500,
+			error: 'Network error occurred',
+		};
+	}
+};
+
+export const createWebProduct = async (
+	payload: WebProductCreateRequest,
+): Promise<WebProductResponse> => {
+	try {
+		const response = await fetch(
+			`${getApiUrl()}/api/web-products`,
+			{
+				method: 'POST',
+				headers: getAuthHeaders(),
+				body: JSON.stringify(payload),
 			},
 		);
 		return await response.json();

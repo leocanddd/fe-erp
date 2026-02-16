@@ -5,6 +5,7 @@ import {
 	WebProduct,
 } from '@/lib/web-products';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import {
 	useCallback,
 	useEffect,
@@ -12,6 +13,7 @@ import {
 } from 'react';
 
 export default function WebProducts() {
+	const router = useRouter();
 	const [products, setProducts] =
 		useState<WebProduct[]>([]);
 	const [loading, setLoading] =
@@ -126,14 +128,26 @@ export default function WebProducts() {
 		<MainLayout title="Produk Web">
 			<div className="max-w-7xl mx-auto">
 				{/* Header */}
-				<div className="mb-8">
-					<h2 className="text-2xl font-bold text-gray-900 mb-1">
-						Produk Web
-					</h2>
-					<p className="text-gray-600">
-						Kelola produk yang tampil di
-						website
-					</p>
+				<div className="mb-8 flex justify-between items-center">
+					<div>
+						<h2 className="text-2xl font-bold text-gray-900 mb-1">
+							Produk Web
+						</h2>
+						<p className="text-gray-600">
+							Kelola produk yang tampil
+							di website
+						</p>
+					</div>
+					<button
+						onClick={() =>
+							router.push(
+								'/web-products/new',
+							)
+						}
+						className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-2 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+					>
+						+ Tambah Produk Web
+					</button>
 				</div>
 
 				{/* Filters */}
@@ -147,7 +161,7 @@ export default function WebProducts() {
 						onChange={(e) =>
 							setSearch(e.target.value)
 						}
-						placeholder="Cari nama / displayName..."
+						placeholder="Cari nama / display name..."
 						className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
 					/>
 					<input
@@ -237,19 +251,6 @@ export default function WebProducts() {
 												>
 													<td className="px-6 py-4">
 														<div className="flex items-center gap-3">
-															{p.image && (
-																// eslint-disable-next-line @next/next/no-img-element
-																<img
-																	src={
-																		p.image
-																	}
-																	alt={
-																		p.displayName ||
-																		p.name
-																	}
-																	className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100"
-																/>
-															)}
 															<div>
 																<div className="text-sm font-semibold text-gray-900">
 																	{p.displayName ||

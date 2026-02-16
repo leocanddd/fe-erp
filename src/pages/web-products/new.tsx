@@ -3,9 +3,7 @@ import { useUpload } from '@/hooks/useUpload';
 import { Category } from '@/lib/category';
 import { uploadFile } from '@/lib/upload';
 import {
-	getWebProduct,
-	updateWebProduct,
-	WebProduct,
+	createWebProduct,
 	WebProductVariant,
 } from '@/lib/web-products';
 import { useRouter } from 'next/router';
@@ -15,22 +13,16 @@ import {
 	useState,
 } from 'react';
 
-export default function WebProductDetail() {
+export default function NewWebProduct() {
 	const router = useRouter();
-	const { id } = router.query;
 
-	const [product, setProduct] =
-		useState<WebProduct | null>(null);
-	const [loading, setLoading] =
-		useState(true);
 	const [saving, setSaving] =
 		useState(false);
 	const [error, setError] =
 		useState('');
-	const [success, setSuccess] =
-		useState('');
 
 	// Form state
+	const [name, setName] = useState('');
 	const [displayName, setDisplayName] =
 		useState('');
 	const [subtitle, setSubtitle] =
@@ -45,12 +37,8 @@ export default function WebProductDetail() {
 		useState('');
 	const [variants, setVariants] =
 		useState<WebProductVariant[]>([]);
-	const [
-		variantUploading,
-		setVariantUploading,
-	] = useState<Record<number, boolean>>(
-		{},
-	);
+	const [variantUploading, setVariantUploading] =
+		useState<Record<number, boolean>>({});
 
 	const [categories, setCategories] =
 		useState<Category[]>([]);
@@ -60,17 +48,13 @@ export default function WebProductDetail() {
 		uploading,
 		uploadedUrl,
 		uploadError,
-		reset: resetUpload,
 	} = useUpload();
 	const imageInputRef =
 		useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
-		if (!id) return;
-		fetchProduct();
 		fetchCategories();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [id]);
+	}, []);
 
 	const fetchCategories = async () => {
 		try {
@@ -85,57 +69,11 @@ export default function WebProductDetail() {
 				},
 			);
 			if (response.ok) {
-				const data =
-					await response.json();
+				const data = await response.json();
 				setCategories(data.data || []);
 			}
 		} catch {
-			// silently fail — category dropdown just stays empty
-		}
-	};
-
-	const fetchProduct = async () => {
-		setLoading(true);
-		try {
-			const res = await getWebProduct(
-				id as string,
-			);
-			if (
-				res.statusCode === 200 &&
-				res.data
-			) {
-				const p = res.data;
-				setProduct(p);
-				setDisplayName(
-					p.displayName || '',
-				);
-				setSubtitle(p.subtitle || '');
-				setDescription(
-					p.description || '',
-				);
-				setCategory(p.category || '');
-				setBrand(p.brand || '');
-				setPrice(
-					p.price?.toString() || '',
-				);
-				setVariants(
-					(p.variants || []).map(
-						(v) => ({
-							...v,
-							image: v.image || '',
-						}),
-					),
-				);
-			} else {
-				setError(
-					res.error ||
-						'Gagal memuat produk',
-				);
-			}
-		} catch {
-			setError('Gagal memuat produk');
-		} finally {
-			setLoading(false);
+			// silently fail
 		}
 	};
 
@@ -143,75 +81,41 @@ export default function WebProductDetail() {
 		e: React.FormEvent,
 	) => {
 		e.preventDefault();
-		if (!product) return;
 		setSaving(true);
 		setError('');
-		setSuccess('');
 
 		try {
-			const res =
-				await updateWebProduct(
-					product.id,
-					{
-						displayName:
-							displayName.trim(),
-						subtitle: subtitle.trim(),
-						description:
-							description.trim(),
-						category: category.trim(),
-						brand: brand.trim(),
-						price: price
-							? parseFloat(price)
-							: undefined,
-						image:
-							uploadedUrl ||
-							product.image ||
-							undefined,
-						variants,
-					},
-				);
+			const res = await createWebProduct({
+				name: name.trim() || undefined,
+				displayName:
+					displayName.trim() || undefined,
+				subtitle:
+					subtitle.trim() || undefined,
+				description:
+					description.trim() || undefined,
+				category:
+					category.trim() || undefined,
+				brand: brand.trim() || undefined,
+				price: price
+					? parseFloat(price)
+					: undefined,
+				image: uploadedUrl || undefined,
+				variants:
+					variants.length > 0
+						? variants
+						: undefined,
+			});
 
-			if (res.statusCode === 200) {
-				setSuccess(
-					'Produk berhasil diperbarui',
-				);
-				setTimeout(
-					() => setSuccess(''),
-					3000,
-				);
-				setProduct((prev) =>
-					prev
-						? {
-								...prev,
-								displayName,
-								subtitle,
-								description,
-								category,
-								brand,
-								price: price
-									? parseFloat(price)
-									: prev.price,
-								image:
-									uploadedUrl ||
-									prev.image,
-								variants,
-							}
-						: prev,
-				);
-				resetUpload();
-				if (imageInputRef.current)
-					imageInputRef.current.value =
-						'';
+			if (res.statusCode === 200 || res.statusCode === 201) {
+				router.push('/web-products');
 			} else {
 				setError(
 					res.error ||
-						'Gagal menyimpan perubahan',
+						'Gagal membuat produk',
 				);
 			}
 		} catch {
-			setError(
-				'Gagal menyimpan perubahan',
-			);
+			setError('Gagal membuat produk');
 		} finally {
 			setSaving(false);
 		}
@@ -221,11 +125,7 @@ export default function WebProductDetail() {
 	const addVariant = () =>
 		setVariants((prev) => [
 			...prev,
-			{
-				name: '',
-				description: '',
-				image: '',
-			},
+			{ name: '', description: '', image: '' },
 		]);
 
 	const updateVariant = (
@@ -255,14 +155,9 @@ export default function WebProductDetail() {
 			[idx]: true,
 		}));
 		try {
-			const data =
-				await uploadFile(file);
+			const data = await uploadFile(file);
 			if (data.url) {
-				updateVariant(
-					idx,
-					'image',
-					data.url,
-				);
+				updateVariant(idx, 'image', data.url);
 			}
 		} catch {
 			// silently fail
@@ -274,38 +169,8 @@ export default function WebProductDetail() {
 		}
 	};
 
-	if (loading) {
-		return (
-			<MainLayout title="Produk Web">
-				<div className="flex items-center justify-center py-12">
-					<div className="inline-flex items-center space-x-3">
-						<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-						<span className="text-gray-600">
-							Memuat produk...
-						</span>
-					</div>
-				</div>
-			</MainLayout>
-		);
-	}
-
-	if (!product) {
-		return (
-			<MainLayout title="Produk Web">
-				<div className="max-w-3xl mx-auto py-12 text-center text-gray-500">
-					Produk tidak ditemukan.
-				</div>
-			</MainLayout>
-		);
-	}
-
-	const previewImage =
-		uploadedUrl || product.image;
-
 	return (
-		<MainLayout
-			title={`Edit — ${product.displayName || product.name}`}
-		>
+		<MainLayout title="Tambah Produk Web">
 			<div className="max-w-3xl mx-auto">
 				{/* Back */}
 				<button
@@ -330,16 +195,14 @@ export default function WebProductDetail() {
 					Kembali ke Produk Web
 				</button>
 
-				{/* Read-only info banner */}
-				<div className="mb-6 bg-gray-50 border border-gray-200 rounded-2xl p-4 flex flex-wrap gap-4 text-sm">
-					<div>
-						<span className="text-gray-500">
-							Nama Produk (ERP):{' '}
-						</span>
-						<span className="font-semibold text-gray-800">
-							{product.name}
-						</span>
-					</div>
+				<div className="mb-6">
+					<h2 className="text-2xl font-bold text-gray-900 mb-1">
+						Tambah Produk Web Baru
+					</h2>
+					<p className="text-gray-600">
+						Buat produk baru untuk
+						ditampilkan di website
+					</p>
 				</div>
 
 				{error && (
@@ -354,9 +217,21 @@ export default function WebProductDetail() {
 					onSubmit={handleSave}
 					className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8 space-y-6"
 				>
-					<h2 className="text-xl font-bold text-gray-900">
-						Edit Produk Web
-					</h2>
+					{/* Name */}
+					<div>
+						<label className="block text-sm font-semibold text-gray-700 mb-2">
+							Nama Produk (ERP)
+						</label>
+						<input
+							type="text"
+							value={name}
+							onChange={(e) =>
+								setName(e.target.value)
+							}
+							placeholder="Nama produk dari ERP"
+							className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+						/>
+					</div>
 
 					{/* Display Name */}
 					<div>
@@ -484,7 +359,7 @@ export default function WebProductDetail() {
 							Gambar Produk
 						</label>
 						<label
-							htmlFor="wp-image-upload"
+							htmlFor="wp-new-image-upload"
 							className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-2xl cursor-pointer transition-colors duration-200 ${
 								uploading
 									? 'border-blue-300 bg-blue-50'
@@ -538,9 +413,8 @@ export default function WebProductDetail() {
 										/>
 									</svg>
 									<span className="text-sm text-gray-500">
-										{product.image
-											? 'Klik untuk ganti gambar'
-											: 'Klik untuk upload gambar'}
+										Klik untuk upload
+										gambar
 									</span>
 									<span className="text-xs text-gray-400">
 										PNG, JPG, WEBP
@@ -548,7 +422,7 @@ export default function WebProductDetail() {
 								</div>
 							)}
 							<input
-								id="wp-image-upload"
+								id="wp-new-image-upload"
 								ref={imageInputRef}
 								type="file"
 								accept="image/*"
@@ -567,10 +441,10 @@ export default function WebProductDetail() {
 								{uploadError}
 							</p>
 						)}
-						{previewImage && (
+						{uploadedUrl && (
 							// eslint-disable-next-line @next/next/no-img-element
 							<img
-								src={previewImage}
+								src={uploadedUrl}
 								alt="Preview"
 								className="mt-3 w-full h-48 object-cover rounded-2xl border border-gray-200"
 							/>
@@ -623,7 +497,8 @@ export default function WebProductDetail() {
 									>
 										<div className="flex items-center justify-between">
 											<span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-												Varian {idx + 1}
+												Varian{' '}
+												{idx + 1}
 											</span>
 											<button
 												type="button"
@@ -752,8 +627,7 @@ export default function WebProductDetail() {
 															/>
 														</svg>
 														<span className="text-xs text-gray-500">
-															Upload
-															gambar
+															Upload gambar
 															varian
 														</span>
 													</div>
@@ -827,32 +701,12 @@ export default function WebProductDetail() {
 									Menyimpan...
 								</span>
 							) : (
-								'Simpan Perubahan'
+								'Simpan Produk'
 							)}
 						</button>
 					</div>
 				</form>
 			</div>
-
-			{/* Success toast */}
-			{success && (
-				<div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-green-600 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-xl animate-fade-in">
-					<svg
-						className="w-5 h-5 flex-shrink-0"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M5 13l4 4L19 7"
-						/>
-					</svg>
-					{success}
-				</div>
-			)}
 		</MainLayout>
 	);
 }
