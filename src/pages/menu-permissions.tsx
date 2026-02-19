@@ -8,15 +8,21 @@ import {
 	saveMenuPermissions,
 } from '@/lib/navigation';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import {
+	useEffect,
+	useState,
+} from 'react';
 
 export default function MenuPermissions() {
 	const router = useRouter();
 
 	// permissions: { [href]: Set of allowed role IDs (excluding 5 — always allowed) }
 	const [permissions, setPermissions] =
-		useState<Record<string, number[]>>({});
-	const [saved, setSaved] = useState(false);
+		useState<Record<string, number[]>>(
+			{},
+		);
+	const [saved, setSaved] =
+		useState(false);
 
 	useEffect(() => {
 		const user = getStoredUser();
@@ -24,7 +30,9 @@ export default function MenuPermissions() {
 			router.replace('/dashboard');
 			return;
 		}
-		setPermissions(getMenuPermissions());
+		setPermissions(
+			getMenuPermissions(),
+		);
 	}, [router]);
 
 	const toggle = (
@@ -33,7 +41,8 @@ export default function MenuPermissions() {
 	) => {
 		setPermissions((prev) => {
 			const current = prev[href] ?? [];
-			const has = current.includes(roleId);
+			const has =
+				current.includes(roleId);
 			return {
 				...prev,
 				[href]: has
@@ -49,12 +58,17 @@ export default function MenuPermissions() {
 	const handleSave = () => {
 		saveMenuPermissions(permissions);
 		setSaved(true);
-		setTimeout(() => setSaved(false), 3000);
+		setTimeout(
+			() => setSaved(false),
+			3000,
+		);
 	};
 
 	const handleReset = () => {
-		const defaults: Record<string, number[]> =
-			{};
+		const defaults: Record<
+			string,
+			number[]
+		> = {};
 		for (const item of NAV_ITEMS) {
 			defaults[item.href] =
 				item.defaultRoles;
@@ -106,9 +120,7 @@ export default function MenuPermissions() {
 								<th className="sticky left-0 z-10 bg-gray-50 px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-[180px]">
 									Menu
 								</th>
-								<th className="bg-gray-50 px-4 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-[60px]">
-									Path
-								</th>
+
 								{roleColumns.map(
 									(roleId) => (
 										<th
@@ -120,7 +132,11 @@ export default function MenuPermissions() {
 													{roleId}
 												</span>
 												<span className="text-gray-500 font-normal normal-case text-[10px] leading-tight">
-													{ROLES[roleId]}
+													{
+														ROLES[
+															roleId
+														]
+													}
 												</span>
 											</div>
 										</th>
@@ -143,9 +159,7 @@ export default function MenuPermissions() {
 										<td className="sticky left-0 z-10 bg-white hover:bg-gray-50 px-6 py-3 text-sm font-semibold text-gray-900 whitespace-nowrap">
 											{item.name}
 										</td>
-										<td className="px-4 py-3 text-xs text-gray-400 font-mono whitespace-nowrap">
-											{item.href}
-										</td>
+
 										{roleColumns.map(
 											(roleId) => {
 												const checked =

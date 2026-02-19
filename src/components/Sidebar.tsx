@@ -332,14 +332,16 @@ export default function Sidebar({
 		getMenuPermissions();
 
 	// Superadmin (role 5) always sees everything
+	// permissionOnly items hanya untuk konfigurasi, tidak tampil di sidebar
 	const navigationItems =
 		NAV_ITEMS.filter(
 			(item) =>
-				user.role === 5 ||
+				!item.permissionOnly &&
+				(user.role === 5 ||
 				(
 					permissions[item.href] ??
 					item.defaultRoles
-				).includes(user.role),
+				).includes(user.role)),
 		);
 
 	return (
@@ -355,7 +357,7 @@ export default function Sidebar({
 					<div className="flex items-center space-x-3">
 						{/* eslint-disable-next-line @next/next/no-img-element */}
 						<img
-							src="https://pub-cb8dfa0eab704a9b8152cd8e9e4f7f53.r2.dev/dki-logo.jpeg"
+							src="https://assetsdki.my.id/dki-logo.jpeg"
 							alt="Logo"
 							className="w-8 h-8 rounded-xl object-cover"
 						/>

@@ -1,5 +1,7 @@
+import BarcodeScanner from '@/components/BarcodeScanner';
 import MainLayout from '@/components/MainLayout';
 import { getStoredUser } from '@/lib/auth';
+import { getMenuPermissions } from '@/lib/navigation';
 import {
 	createOrder,
 	deleteOrder,
@@ -9,16 +11,15 @@ import {
 	updateOrder,
 } from '@/lib/orders';
 import {
+	addOutgoingStock,
+	getPalet,
+	getStocks,
+	Stock,
+} from '@/lib/palets';
+import {
 	getProducts,
 	Product,
 } from '@/lib/products';
-import {
-	getStocks,
-	getPalet,
-	addOutgoingStock,
-	Stock,
-} from '@/lib/palets';
-import BarcodeScanner from '@/components/BarcodeScanner';
 import {
 	useCallback,
 	useEffect,
@@ -89,6 +90,10 @@ export default function Orders() {
 
 	const [user, setUser] =
 		useState<User | null>(null);
+	const [canPriceApprove, setCanPriceApprove] = useState(false);
+	const [canApprove, setCanApprove] = useState(false);
+	const [canProcess, setCanProcess] = useState(false);
+	const [canShipment, setCanShipment] = useState(false);
 	const [
 		showDescModal,
 		setShowDescModal,
@@ -147,7 +152,10 @@ export default function Orders() {
 			}[];
 		}[]
 	>([]);
-	const [isProcessingScan, setIsProcessingScan] = useState(false);
+	const [
+		isProcessingScan,
+		setIsProcessingScan,
+	] = useState(false);
 	const dropdownRef =
 		useRef<HTMLDivElement>(null);
 
@@ -155,18 +163,24 @@ export default function Orders() {
 		const userData = getStoredUser();
 		if (userData) {
 			setUser(userData);
+			const perms = getMenuPermissions();
+			const r = userData.role;
+			setCanPriceApprove((perms['/orders/action/price-approve'] ?? [5, 7]).includes(r));
+			setCanApprove((perms['/orders/action/approve'] ?? [5, 6]).includes(r));
+			setCanProcess((perms['/orders/action/process'] ?? [5, 3]).includes(r));
+			setCanShipment((perms['/orders/action/shipment'] ?? [5, 8]).includes(r));
 		}
 	}, []);
 
 	// Close dropdown when clicking outside
 	useEffect(() => {
 		const handleClickOutside = (
-			event: MouseEvent
+			event: MouseEvent,
 		) => {
 			if (
 				dropdownRef.current &&
 				!dropdownRef.current.contains(
-					event.target as Node
+					event.target as Node,
 				)
 			) {
 				setShowProductDropdown(null);
@@ -175,12 +189,12 @@ export default function Orders() {
 
 		document.addEventListener(
 			'mousedown',
-			handleClickOutside
+			handleClickOutside,
 		);
 		return () => {
 			document.removeEventListener(
 				'mousedown',
-				handleClickOutside
+				handleClickOutside,
 			);
 		};
 	}, []);
@@ -194,12 +208,12 @@ export default function Orders() {
 					response.statusCode === 200
 				) {
 					setProducts(
-						response.data || []
+						response.data || [],
 					);
 				}
 			} catch {
 				console.error(
-					'Failed to fetch products'
+					'Failed to fetch products',
 				);
 			}
 		}, []);
@@ -208,7 +222,7 @@ export default function Orders() {
 		if (showAddModal || showEditModal) {
 			fetchProducts();
 			setProductSearch(
-				formData.products.map(() => '')
+				formData.products.map(() => ''),
 			);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -226,32 +240,32 @@ export default function Orders() {
 					await getOrders(
 						currentPage,
 						10,
-						search
+						search,
 					);
 				if (
 					response.statusCode === 200
 				) {
 					setOrders(
-						response.data || []
+						response.data || [],
 					);
 					setTotalPages(
 						response.pagination
-							.totalPages
+							.totalPages,
 					);
 					setTotalItems(
 						response.pagination
-							.totalItems
+							.totalItems,
 					);
 					setError('');
 				} else {
 					setError(
 						response.error ||
-							'Failed to fetch orders'
+							'Failed to fetch orders',
 					);
 				}
 			} catch {
 				setError(
-					'Failed to fetch orders'
+					'Failed to fetch orders',
 				);
 			} finally {
 				setLoading(false);
@@ -263,7 +277,7 @@ export default function Orders() {
 	}, [fetchOrders]);
 
 	const handleSearch = (
-		e: React.FormEvent
+		e: React.FormEvent,
 	) => {
 		e.preventDefault();
 		setCurrentPage(1);
@@ -283,7 +297,7 @@ export default function Orders() {
 		try {
 			const response =
 				await deleteOrder(
-					orderToDelete.id!
+					orderToDelete.id!,
 				);
 			if (response.statusCode === 200) {
 				fetchOrders();
@@ -292,12 +306,12 @@ export default function Orders() {
 			} else {
 				setError(
 					response.error ||
-						'Failed to delete order'
+						'Failed to delete order',
 				);
 			}
 		} catch {
 			setError(
-				'Failed to delete order'
+				'Failed to delete order',
 			);
 		}
 	};
@@ -306,7 +320,7 @@ export default function Orders() {
 		e: React.ChangeEvent<
 			| HTMLInputElement
 			| HTMLTextAreaElement
-		>
+		>,
 	) => {
 		const { name, value } = e.target;
 		setFormData((prev) => ({
@@ -318,7 +332,7 @@ export default function Orders() {
 	const handleProductChange = (
 		index: number,
 		field: keyof OrderProduct,
-		value: string | number
+		value: string | number,
 	) => {
 		const updatedProducts = [
 			...formData.products,
@@ -353,7 +367,7 @@ export default function Orders() {
 
 	const handleProductSelect = (
 		index: number,
-		product: Product
+		product: Product,
 	) => {
 		const updatedProducts = [
 			...formData.products,
@@ -378,7 +392,7 @@ export default function Orders() {
 
 	const handleProductSearchChange = (
 		index: number,
-		value: string
+		value: string,
 	) => {
 		const updatedSearch = [
 			...productSearch,
@@ -391,12 +405,12 @@ export default function Orders() {
 		handleProductChange(
 			index,
 			'product',
-			value
+			value,
 		);
 	};
 
 	const getFilteredProducts = (
-		index: number
+		index: number,
 	) => {
 		const searchTerm =
 			productSearch[
@@ -413,17 +427,17 @@ export default function Orders() {
 					.includes(searchTerm) ||
 				p.code
 					.toLowerCase()
-					.includes(searchTerm)
+					.includes(searchTerm),
 		);
 	};
 
 	const removeProduct = (
-		index: number
+		index: number,
 	) => {
 		if (formData.products.length > 1) {
 			const updatedProducts =
 				formData.products.filter(
-					(_, i) => i !== index
+					(_, i) => i !== index,
 				);
 			setFormData((prev) => ({
 				...prev,
@@ -448,7 +462,7 @@ export default function Orders() {
 	};
 
 	const handleAddOrder = async (
-		e: React.FormEvent
+		e: React.FormEvent,
 	) => {
 		e.preventDefault();
 		setIsSubmitting(true);
@@ -468,10 +482,10 @@ export default function Orders() {
 					(p) => ({
 						product: p.product.trim(),
 						quantity: Number(
-							p.quantity
+							p.quantity,
 						),
 						value: Number(p.value),
-					})
+					}),
 				),
 				createdBy: `${
 					user!.firstName
@@ -488,12 +502,12 @@ export default function Orders() {
 			} else {
 				setError(
 					response.error ||
-						'Gagal menambah pesanan'
+						'Gagal menambah pesanan',
 				);
 			}
 		} catch {
 			setError(
-				'Gagal menambah pesanan'
+				'Gagal menambah pesanan',
 			);
 		} finally {
 			setIsSubmitting(false);
@@ -514,7 +528,7 @@ export default function Orders() {
 	// };
 
 	const handleUpdateOrder = async (
-		e: React.FormEvent
+		e: React.FormEvent,
 	) => {
 		e.preventDefault();
 		if (!editingOrder) return;
@@ -536,10 +550,10 @@ export default function Orders() {
 					(p) => ({
 						product: p.product.trim(),
 						quantity: Number(
-							p.quantity
+							p.quantity,
 						),
 						value: Number(p.value),
-					})
+					}),
 				),
 				createdBy: `${
 					user!.firstName
@@ -550,7 +564,7 @@ export default function Orders() {
 			const response =
 				await updateOrder(
 					editingOrder.id!,
-					orderData
+					orderData,
 				);
 			if (response.statusCode === 200) {
 				fetchOrders();
@@ -560,12 +574,12 @@ export default function Orders() {
 			} else {
 				setError(
 					response.error ||
-						'Gagal mengubah pesanan'
+						'Gagal mengubah pesanan',
 				);
 			}
 		} catch {
 			setError(
-				'Gagal mengubah pesanan'
+				'Gagal mengubah pesanan',
 			);
 		} finally {
 			setIsSubmitting(false);
@@ -581,7 +595,7 @@ export default function Orders() {
 			| 'isApproved'
 			| 'isRejected'
 			| 'isPriceApproved'
-			| 'isShipment'
+			| 'isShipment',
 	) => {
 		setSelectedOrder(order);
 		setDescModalType(field);
@@ -589,7 +603,9 @@ export default function Orders() {
 		setShowDescModal(true);
 	};
 
-	const handleBarcodeScanned = async (decodedText: string) => {
+	const handleBarcodeScanned = async (
+		decodedText: string,
+	) => {
 		// Prevent multiple scans in quick succession
 		if (isProcessingScan) {
 			return;
@@ -602,70 +618,116 @@ export default function Orders() {
 		let paletId = decodedText;
 		try {
 			const url = new URL(decodedText);
-			const pathParts = url.pathname.split('/');
-			paletId = pathParts[pathParts.length - 1];
+			const pathParts =
+				url.pathname.split('/');
+			paletId =
+				pathParts[pathParts.length - 1];
 		} catch {
 			// Not a URL, use as is
 		}
 
 		if (!scannedOrder) {
-			setScanError('Tidak ada pesanan yang dipilih');
+			setScanError(
+				'Tidak ada pesanan yang dipilih',
+			);
 			setIsProcessingScan(false);
 			return;
 		}
 
 		// Check if pallet already scanned
-		if (scannedPallets.some((p) => p.paletId === paletId)) {
-			setScanError('Palet ini sudah di-scan');
+		if (
+			scannedPallets.some(
+				(p) => p.paletId === paletId,
+			)
+		) {
+			setScanError(
+				'Palet ini sudah di-scan',
+			);
 			setIsProcessingScan(false);
 			return;
 		}
 
 		try {
 			// Fetch pallet info
-			const paletResponse = await getPalet(paletId);
-			if (paletResponse.statusCode !== 200) {
-				setScanError('Palet tidak ditemukan');
+			const paletResponse =
+				await getPalet(paletId);
+			if (
+				paletResponse.statusCode !== 200
+			) {
+				setScanError(
+					'Palet tidak ditemukan',
+				);
 				setIsProcessingScan(false);
 				return;
 			}
 
 			// Fetch stocks from the pallet
-			const stocksResponse = await getStocks(paletId, 1, 100, '');
+			const stocksResponse =
+				await getStocks(
+					paletId,
+					1,
+					100,
+					'',
+				);
 
-			if (stocksResponse.statusCode !== 200) {
-				setScanError('Gagal memuat stok palet');
+			if (
+				stocksResponse.statusCode !==
+				200
+			) {
+				setScanError(
+					'Gagal memuat stok palet',
+				);
 				setIsProcessingScan(false);
 				return;
 			}
 
-			const paletStocks = stocksResponse.data || [];
+			const paletStocks =
+				stocksResponse.data || [];
 
 			// Check if pallet has the products from the order
-			const orderedProducts = scannedOrder.products || [];
-			const foundProducts: { name: string; code: string; scanned: number; needed: number }[] = [];
-			const missingProducts: string[] = [];
+			const orderedProducts =
+				scannedOrder.products || [];
+			const foundProducts: {
+				name: string;
+				code: string;
+				scanned: number;
+				needed: number;
+			}[] = [];
+			const missingProducts: string[] =
+				[];
 
 			for (const orderedProduct of orderedProducts) {
-				const stockItem = paletStocks.find(
-					(stock: Stock) => stock.name === orderedProduct.product
-				);
+				const stockItem =
+					paletStocks.find(
+						(stock: Stock) =>
+							stock.name ===
+							orderedProduct.product,
+					);
 
-				if (stockItem && stockItem.palletStock > 0) {
+				if (
+					stockItem &&
+					stockItem.palletStock > 0
+				) {
 					foundProducts.push({
 						name: orderedProduct.product,
 						code: stockItem.code,
-						scanned: Math.min(stockItem.palletStock, orderedProduct.quantity),
-						needed: orderedProduct.quantity,
+						scanned: Math.min(
+							stockItem.palletStock,
+							orderedProduct.quantity,
+						),
+						needed:
+							orderedProduct.quantity,
 					});
 				} else {
-					missingProducts.push(orderedProduct.product);
+					missingProducts.push(
+						orderedProduct.product,
+					);
 				}
 			}
 
 			if (foundProducts.length === 0) {
 				setScanError(
-					`Palet tidak memiliki produk yang dipesan: ${missingProducts.join(', ')}`
+					`Palet tidak memiliki produk yang dipesan: ${missingProducts.join(', ')}`,
 				);
 				setIsProcessingScan(false);
 				return;
@@ -676,7 +738,9 @@ export default function Orders() {
 				...prev,
 				{
 					paletId,
-					paletName: paletResponse.data?.name || paletId,
+					paletName:
+						paletResponse.data?.name ||
+						paletId,
 					products: foundProducts,
 				},
 			]);
@@ -689,109 +753,185 @@ export default function Orders() {
 				setIsProcessingScan(false);
 			}, 1000);
 		} catch (error) {
-			console.error('Error checking pallet stocks:', error);
-			setScanError('Terjadi kesalahan saat memeriksa stok palet');
+			console.error(
+				'Error checking pallet stocks:',
+				error,
+			);
+			setScanError(
+				'Terjadi kesalahan saat memeriksa stok palet',
+			);
 			setIsProcessingScan(false);
 		}
 	};
 
-	const checkIfAllProductsFulfilled = () => {
-		if (!scannedOrder || scannedPallets.length === 0) return false;
+	const checkIfAllProductsFulfilled =
+		() => {
+			if (
+				!scannedOrder ||
+				scannedPallets.length === 0
+			)
+				return false;
 
-		const orderedProducts = scannedOrder.products || [];
-		const productTotals: { [key: string]: { scanned: number; needed: number } } = {};
+			const orderedProducts =
+				scannedOrder.products || [];
+			const productTotals: {
+				[key: string]: {
+					scanned: number;
+					needed: number;
+				};
+			} = {};
 
-		// Initialize with ordered products
-		orderedProducts.forEach((p) => {
-			productTotals[p.product] = { scanned: 0, needed: p.quantity };
-		});
-
-		// Sum up scanned quantities
-		scannedPallets.forEach((pallet) => {
-			pallet.products.forEach((p) => {
-				if (productTotals[p.name]) {
-					productTotals[p.name].scanned += p.scanned;
-				}
+			// Initialize with ordered products
+			orderedProducts.forEach((p) => {
+				productTotals[p.product] = {
+					scanned: 0,
+					needed: p.quantity,
+				};
 			});
-		});
 
-		// Check if all products are fulfilled
-		const unfulfilled = Object.entries(productTotals).filter(
-			([, totals]) => totals.scanned < totals.needed
-		);
+			// Sum up scanned quantities
+			scannedPallets.forEach(
+				(pallet) => {
+					pallet.products.forEach(
+						(p) => {
+							if (
+								productTotals[p.name]
+							) {
+								productTotals[
+									p.name
+								].scanned += p.scanned;
+							}
+						},
+					);
+				},
+			);
 
-		return unfulfilled.length === 0;
-	};
+			// Check if all products are fulfilled
+			const unfulfilled =
+				Object.entries(
+					productTotals,
+				).filter(
+					([, totals]) =>
+						totals.scanned <
+						totals.needed,
+				);
 
-	const handleFinishScanning = async () => {
-		// Check if all products are fulfilled
-		if (!scannedOrder) return;
+			return unfulfilled.length === 0;
+		};
 
-		const orderedProducts = scannedOrder.products || [];
-		const productTotals: { [key: string]: { scanned: number; needed: number } } = {};
+	const handleFinishScanning =
+		async () => {
+			// Check if all products are fulfilled
+			if (!scannedOrder) return;
 
-		// Initialize with ordered products
-		orderedProducts.forEach((p) => {
-			productTotals[p.product] = { scanned: 0, needed: p.quantity };
-		});
+			const orderedProducts =
+				scannedOrder.products || [];
+			const productTotals: {
+				[key: string]: {
+					scanned: number;
+					needed: number;
+				};
+			} = {};
 
-		// Sum up scanned quantities
-		scannedPallets.forEach((pallet) => {
-			pallet.products.forEach((p) => {
-				if (productTotals[p.name]) {
-					productTotals[p.name].scanned += p.scanned;
-				}
+			// Initialize with ordered products
+			orderedProducts.forEach((p) => {
+				productTotals[p.product] = {
+					scanned: 0,
+					needed: p.quantity,
+				};
 			});
-		});
 
-		// Check if all products are fulfilled
-		const unfulfilled = Object.entries(productTotals).filter(
-			([, totals]) => totals.scanned < totals.needed
-		);
+			// Sum up scanned quantities
+			scannedPallets.forEach(
+				(pallet) => {
+					pallet.products.forEach(
+						(p) => {
+							if (
+								productTotals[p.name]
+							) {
+								productTotals[
+									p.name
+								].scanned += p.scanned;
+							}
+						},
+					);
+				},
+			);
 
-		if (unfulfilled.length > 0) {
-			const details = unfulfilled
-				.map(
-					([name, totals]) =>
-						`${name} (butuh ${totals.needed}, terscan ${totals.scanned})`
-				)
-				.join(', ');
-			setScanError(`Masih ada produk yang kurang: ${details}`);
-			return;
-		}
+			// Check if all products are fulfilled
+			const unfulfilled =
+				Object.entries(
+					productTotals,
+				).filter(
+					([, totals]) =>
+						totals.scanned <
+						totals.needed,
+				);
 
-		try {
-			// Reduce stock from each pallet
-			for (const pallet of scannedPallets) {
-				for (const product of pallet.products) {
-					// Reduce stock using outgoing-stock API
-					const outgoingResponse = await addOutgoingStock(pallet.paletId, {
-						productCode: product.code,
-						outgoingStock: product.scanned,
-					});
+			if (unfulfilled.length > 0) {
+				const details = unfulfilled
+					.map(
+						([name, totals]) =>
+							`${name} (butuh ${totals.needed}, terscan ${totals.scanned})`,
+					)
+					.join(', ');
+				setScanError(
+					`Masih ada produk yang kurang: ${details}`,
+				);
+				return;
+			}
 
-					if (outgoingResponse.statusCode !== 200) {
-						setScanError(
-							`Gagal mengurangi stok ${product.name} dari palet ${pallet.paletName}: ${outgoingResponse.error || 'Unknown error'}`
-						);
-						return;
+			try {
+				// Reduce stock from each pallet
+				for (const pallet of scannedPallets) {
+					for (const product of pallet.products) {
+						// Reduce stock using outgoing-stock API
+						const outgoingResponse =
+							await addOutgoingStock(
+								pallet.paletId,
+								{
+									productCode:
+										product.code,
+									outgoingStock:
+										product.scanned,
+								},
+							);
+
+						if (
+							outgoingResponse.statusCode !==
+							200
+						) {
+							setScanError(
+								`Gagal mengurangi stok ${product.name} dari palet ${pallet.paletName}: ${outgoingResponse.error || 'Unknown error'}`,
+							);
+							return;
+						}
 					}
 				}
-			}
 
-			// All products fulfilled and stock reduced, mark as shipment
-			if (scannedOrder) {
-				toggleOrderStatus(scannedOrder, 'isShipment');
-				setShowBarcodeScanModal(false);
-				setScannedOrder(null);
-				setScannedPallets([]);
-				setScanError('');
+				// All products fulfilled and stock reduced, mark as shipment
+				if (scannedOrder) {
+					toggleOrderStatus(
+						scannedOrder,
+						'isShipment',
+					);
+					setShowBarcodeScanModal(
+						false,
+					);
+					setScannedOrder(null);
+					setScannedPallets([]);
+					setScanError('');
+				}
+			} catch (error) {
+				console.error(
+					'Error reducing stock:',
+					error,
+				);
+				setScanError(
+					'Terjadi kesalahan saat mengurangi stok',
+				);
 			}
-		} catch (error) {
-			console.error('Error reducing stock:', error);
-			setScanError('Terjadi kesalahan saat mengurangi stok');
-		}
-	};
+		};
 
 	const handleDescriptionSubmit =
 		async () => {
@@ -806,7 +946,7 @@ export default function Orders() {
 				const currentUserName = `${user.firstName} ${user.lastName}`;
 
 				const getStatusField = (
-					type: string
+					type: string,
 				) => {
 					switch (type) {
 						case 'isProcessed':
@@ -867,7 +1007,7 @@ export default function Orders() {
 				const response =
 					await updateOrder(
 						selectedOrder.id!,
-						updateData
+						updateData,
 					);
 				if (
 					response.statusCode === 200
@@ -880,18 +1020,18 @@ export default function Orders() {
 				} else {
 					setError(
 						response.error ||
-							'Gagal mengubah status pesanan'
+							'Gagal mengubah status pesanan',
 					);
 				}
 			} catch {
 				setError(
-					'Gagal mengubah status pesanan'
+					'Gagal mengubah status pesanan',
 				);
 			}
 		};
 
 	const getStatusBadge = (
-		order: Order
+		order: Order,
 	) => {
 		if (
 			order.cancelled?.isActive ||
@@ -1002,7 +1142,7 @@ export default function Orders() {
 								value={search}
 								onChange={(e) =>
 									setSearch(
-										e.target.value
+										e.target.value,
 									)
 								}
 								placeholder="Cari pesanan berdasarkan nama customer..."
@@ -1097,16 +1237,16 @@ export default function Orders() {
 														<div className="text-sm font-semibold text-gray-900">
 															Rp{' '}
 															{order.totalValue.toLocaleString(
-																'id-ID'
+																'id-ID',
 															)}
 														</div>
 													</td>
 													<td className="px-6 py-4 whitespace-nowrap">
 														<div className="text-sm text-gray-900">
 															{new Date(
-																order.orderDate
+																order.orderDate,
 															).toLocaleDateString(
-																'id-ID'
+																'id-ID',
 															)}
 														</div>
 														{order.shipmentTime && (
@@ -1141,7 +1281,7 @@ export default function Orders() {
 													</td>
 													<td className="px-6 py-4 whitespace-nowrap">
 														{getStatusBadge(
-															order
+															order,
 														)}
 													</td>
 													<td className="px-6 py-4 whitespace-nowrap text-[#000000]">
@@ -1187,7 +1327,12 @@ export default function Orders() {
 													{/* Print Column */}
 													<td className="px-6 py-4 whitespace-nowrap text-center">
 														<button
-															onClick={() => window.open(`/orders/${order.orderId}/print`, '_blank')}
+															onClick={() =>
+																window.open(
+																	`/orders/${order.orderId}/print`,
+																	'_blank',
+																)
+															}
 															className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 hover:text-purple-700 transition-colors duration-200"
 															title="Print to PDF"
 														>
@@ -1200,7 +1345,9 @@ export default function Orders() {
 																<path
 																	strokeLinecap="round"
 																	strokeLinejoin="round"
-																	strokeWidth={2}
+																	strokeWidth={
+																		2
+																	}
 																	d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
 																/>
 															</svg>
@@ -1210,9 +1357,8 @@ export default function Orders() {
 													{/* Actions Column */}
 													<td className="px-6 py-4 whitespace-nowrap text-center">
 														<div className="flex items-center justify-center space-x-2">
-															{/* Price Approval Button - Role 7 (Pricing) */}
-															{user?.role ===
-																7 &&
+															{/* Price Approval Button - Pricing */}
+															{canPriceApprove &&
 																!order
 																	.priceApproved
 																	?.isActive &&
@@ -1232,7 +1378,7 @@ export default function Orders() {
 																		onClick={() =>
 																			toggleOrderStatus(
 																				order,
-																				'isPriceApproved'
+																				'isPriceApproved',
 																			)
 																		}
 																		className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
@@ -1242,9 +1388,8 @@ export default function Orders() {
 																	</button>
 																)}
 
-															{/* General Approval Buttons - Role 6 (Approver) */}
-															{user?.role ===
-																6 &&
+															{/* General Approval Buttons - Approver */}
+															{canApprove &&
 																!(
 																	order
 																		.approved
@@ -1274,7 +1419,7 @@ export default function Orders() {
 																			onClick={() =>
 																				toggleOrderStatus(
 																					order,
-																					'isApproved'
+																					'isApproved',
 																				)
 																			}
 																			className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
@@ -1285,7 +1430,7 @@ export default function Orders() {
 																			onClick={() =>
 																				toggleOrderStatus(
 																					order,
-																					'isRejected'
+																					'isRejected',
 																				)
 																			}
 																			className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-orange-100 text-orange-700 hover:bg-orange-200"
@@ -1295,9 +1440,8 @@ export default function Orders() {
 																	</>
 																)}
 
-															{/* Processing Buttons - Role 3 (Admin) */}
-															{user?.role ===
-																3 &&
+															{/* Processing Buttons - Admin */}
+															{canProcess &&
 																!(
 																	order
 																		.cancelled
@@ -1314,7 +1458,7 @@ export default function Orders() {
 																		onClick={() =>
 																			toggleOrderStatus(
 																				order,
-																				'isProcessed'
+																				'isProcessed',
 																			)
 																		}
 																		className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
@@ -1335,9 +1479,8 @@ export default function Orders() {
 																	</button>
 																)}
 
-															{/* Shipment and Finish Buttons - Role 8 (Gudang) */}
-															{user?.role ===
-																8 &&
+															{/* Shipment and Finish Buttons - Gudang */}
+															{canShipment &&
 																(order
 																	.approved
 																	?.isActive ||
@@ -1358,24 +1501,25 @@ export default function Orders() {
 																		<button
 																			onClick={() => {
 																				setScannedOrder(
-																					order
+																					order,
 																				);
 																				setScannedPallets(
-																					[]
+																					[],
 																				);
 																				setScanError(
-																					''
+																					'',
 																				);
 																				setIsProcessingScan(
-																					false
+																					false,
 																				);
 																				setShowBarcodeScanModal(
-																					true
+																					true,
 																				);
 																			}}
 																			className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-purple-100 text-purple-700 hover:bg-purple-200"
 																		>
-																			Scan Barcode
+																			Scan
+																			Barcode
 																		</button>
 																		{!order
 																			.shipment
@@ -1384,7 +1528,7 @@ export default function Orders() {
 																				onClick={() =>
 																					toggleOrderStatus(
 																						order,
-																						'isShipment'
+																						'isShipment',
 																					)
 																				}
 																				className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -1396,7 +1540,7 @@ export default function Orders() {
 																				onClick={() =>
 																					toggleOrderStatus(
 																						order,
-																						'isFinished'
+																						'isFinished',
 																					)
 																				}
 																				className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-green-100 text-green-700 hover:bg-green-200"
@@ -1418,7 +1562,7 @@ export default function Orders() {
 																	onClick={() =>
 																		toggleOrderStatus(
 																			order,
-																			'isCancelled'
+																			'isCancelled',
 																		)
 																	}
 																	className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
@@ -1441,7 +1585,7 @@ export default function Orders() {
 														</div>
 													</td>
 												</tr>
-											)
+											),
 										)}
 									</tbody>
 								</table>
@@ -1456,8 +1600,8 @@ export default function Orders() {
 												Math.max(
 													1,
 													currentPage -
-														1
-												)
+														1,
+												),
 											)
 										}
 										disabled={
@@ -1473,8 +1617,8 @@ export default function Orders() {
 												Math.min(
 													totalPages,
 													currentPage +
-														1
-												)
+														1,
+												),
 											)
 										}
 										disabled={
@@ -1501,7 +1645,7 @@ export default function Orders() {
 												{Math.min(
 													currentPage *
 														10,
-													totalItems
+													totalItems,
 												)}
 											</span>{' '}
 											dari{' '}
@@ -1519,8 +1663,8 @@ export default function Orders() {
 														Math.max(
 															1,
 															currentPage -
-																1
-														)
+																1,
+														),
 													)
 												}
 												disabled={
@@ -1537,8 +1681,8 @@ export default function Orders() {
 														Math.min(
 															totalPages,
 															currentPage +
-																1
-														)
+																1,
+														),
 													)
 												}
 												disabled={
@@ -1588,11 +1732,11 @@ export default function Orders() {
 													type="button"
 													onClick={() => {
 														setShowAddModal(
-															false
+															false,
 														);
 														resetForm();
 														setError(
-															''
+															'',
 														);
 													}}
 													className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -1644,7 +1788,7 @@ export default function Orders() {
 												{formData.products.map(
 													(
 														product,
-														index
+														index,
 													) => (
 														<div
 															key={
@@ -1668,18 +1812,18 @@ export default function Orders() {
 																		product.product
 																	}
 																	onChange={(
-																		e
+																		e,
 																	) =>
 																		handleProductSearchChange(
 																			index,
 																			e
 																				.target
-																				.value
+																				.value,
 																		)
 																	}
 																	onFocus={() =>
 																		setShowProductDropdown(
-																			index
+																			index,
 																		)
 																	}
 																	className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
@@ -1689,15 +1833,15 @@ export default function Orders() {
 																	index && (
 																	<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
 																		{getFilteredProducts(
-																			index
+																			index,
 																		)
 																			.length >
 																		0 ? (
 																			getFilteredProducts(
-																				index
+																				index,
 																			).map(
 																				(
-																					p
+																					p,
 																				) => (
 																					<div
 																						key={
@@ -1706,7 +1850,7 @@ export default function Orders() {
 																						onClick={() =>
 																							handleProductSelect(
 																								index,
-																								p
+																								p,
 																							)
 																						}
 																						className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
@@ -1728,11 +1872,11 @@ export default function Orders() {
 																						<div className="text-sm text-blue-600 font-medium">
 																							Rp{' '}
 																							{p.price.toLocaleString(
-																								'id-ID'
+																								'id-ID',
 																							)}
 																						</div>
 																					</div>
-																				)
+																				),
 																			)
 																		) : (
 																			<div className="px-4 py-3 text-gray-500 text-sm">
@@ -1758,7 +1902,7 @@ export default function Orders() {
 																		product.quantity
 																	}
 																	onChange={(
-																		e
+																		e,
 																	) =>
 																		handleProductChange(
 																			index,
@@ -1766,8 +1910,8 @@ export default function Orders() {
 																			parseInt(
 																				e
 																					.target
-																					.value
-																			)
+																					.value,
+																			),
 																		)
 																	}
 																	className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
@@ -1789,7 +1933,7 @@ export default function Orders() {
 																			product.value
 																		}
 																		onChange={(
-																			e
+																			e,
 																		) =>
 																			handleProductChange(
 																				index,
@@ -1797,8 +1941,8 @@ export default function Orders() {
 																				parseFloat(
 																					e
 																						.target
-																						.value
-																				)
+																						.value,
+																				),
 																			)
 																		}
 																		className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
@@ -1812,7 +1956,7 @@ export default function Orders() {
 																		type="button"
 																		onClick={() =>
 																			removeProduct(
-																				index
+																				index,
 																			)
 																		}
 																		className="ml-2 p-2 text-red-600 hover:text-red-800"
@@ -1837,7 +1981,7 @@ export default function Orders() {
 																)}
 															</div>
 														</div>
-													)
+													),
 												)}
 											</div>
 
@@ -1937,7 +2081,7 @@ export default function Orders() {
 										type="button"
 										onClick={() => {
 											setShowAddModal(
-												false
+												false,
 											);
 											resetForm();
 											setError('');
@@ -1962,7 +2106,7 @@ export default function Orders() {
 								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
 								onClick={() => {
 									setShowEditModal(
-										false
+										false,
 									);
 									setEditingOrder(null);
 									resetForm();
@@ -1986,14 +2130,14 @@ export default function Orders() {
 														type="button"
 														onClick={() => {
 															setShowEditModal(
-																false
+																false,
 															);
 															setEditingOrder(
-																null
+																null,
 															);
 															resetForm();
 															setError(
-																''
+																'',
 															);
 														}}
 														className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -2045,7 +2189,7 @@ export default function Orders() {
 													{formData.products.map(
 														(
 															product,
-															index
+															index,
 														) => (
 															<div
 																key={
@@ -2069,18 +2213,18 @@ export default function Orders() {
 																			product.product
 																		}
 																		onChange={(
-																			e
+																			e,
 																		) =>
 																			handleProductSearchChange(
 																				index,
 																				e
 																					.target
-																					.value
+																					.value,
 																			)
 																		}
 																		onFocus={() =>
 																			setShowProductDropdown(
-																				index
+																				index,
 																			)
 																		}
 																		className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
@@ -2090,15 +2234,15 @@ export default function Orders() {
 																		index && (
 																		<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
 																			{getFilteredProducts(
-																				index
+																				index,
 																			)
 																				.length >
 																			0 ? (
 																				getFilteredProducts(
-																					index
+																					index,
 																				).map(
 																					(
-																						p
+																						p,
 																					) => (
 																						<div
 																							key={
@@ -2107,7 +2251,7 @@ export default function Orders() {
 																							onClick={() =>
 																								handleProductSelect(
 																									index,
-																									p
+																									p,
 																								)
 																							}
 																							className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
@@ -2129,11 +2273,11 @@ export default function Orders() {
 																							<div className="text-sm text-blue-600 font-medium">
 																								Rp{' '}
 																								{p.price.toLocaleString(
-																									'id-ID'
+																									'id-ID',
 																								)}
 																							</div>
 																						</div>
-																					)
+																					),
 																				)
 																			) : (
 																				<div className="px-4 py-3 text-gray-500 text-sm">
@@ -2159,7 +2303,7 @@ export default function Orders() {
 																			product.quantity
 																		}
 																		onChange={(
-																			e
+																			e,
 																		) =>
 																			handleProductChange(
 																				index,
@@ -2167,8 +2311,8 @@ export default function Orders() {
 																				parseInt(
 																					e
 																						.target
-																						.value
-																				)
+																						.value,
+																				),
 																			)
 																		}
 																		className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
@@ -2190,7 +2334,7 @@ export default function Orders() {
 																				product.value
 																			}
 																			onChange={(
-																				e
+																				e,
 																			) =>
 																				handleProductChange(
 																					index,
@@ -2198,8 +2342,8 @@ export default function Orders() {
 																					parseFloat(
 																						e
 																							.target
-																							.value
-																					)
+																							.value,
+																					),
 																				)
 																			}
 																			className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
@@ -2213,7 +2357,7 @@ export default function Orders() {
 																			type="button"
 																			onClick={() =>
 																				removeProduct(
-																					index
+																					index,
 																				)
 																			}
 																			className="ml-2 p-2 text-red-600 hover:text-red-800"
@@ -2238,7 +2382,7 @@ export default function Orders() {
 																	)}
 																</div>
 															</div>
-														)
+														),
 													)}
 												</div>
 
@@ -2339,10 +2483,10 @@ export default function Orders() {
 											type="button"
 											onClick={() => {
 												setShowEditModal(
-													false
+													false,
 												);
 												setEditingOrder(
-													null
+													null,
 												);
 												resetForm();
 												setError('');
@@ -2366,7 +2510,7 @@ export default function Orders() {
 							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
 							onClick={() => {
 								setShowDeleteModal(
-									false
+									false,
 								);
 								setOrderToDelete(null);
 							}}
@@ -2423,10 +2567,10 @@ export default function Orders() {
 								<button
 									onClick={() => {
 										setShowDeleteModal(
-											false
+											false,
 										);
 										setOrderToDelete(
-											null
+											null,
 										);
 									}}
 									className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
@@ -2449,13 +2593,13 @@ export default function Orders() {
 								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
 								onClick={() => {
 									setShowDescModal(
-										false
+										false,
 									);
 									setSelectedOrder(
-										null
+										null,
 									);
 									setDescModalType(
-										null
+										null,
 									);
 									setDescription('');
 								}}
@@ -2502,11 +2646,11 @@ export default function Orders() {
 														description
 													}
 													onChange={(
-														e
+														e,
 													) =>
 														setDescription(
 															e.target
-																.value
+																.value,
 														)
 													}
 													placeholder="Masukkan deskripsi..."
@@ -2571,16 +2715,16 @@ export default function Orders() {
 									<button
 										onClick={() => {
 											setShowDescModal(
-												false
+												false,
 											);
 											setSelectedOrder(
-												null
+												null,
 											);
 											setDescModalType(
-												null
+												null,
 											);
 											setDescription(
-												''
+												'',
 											);
 										}}
 										className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
@@ -2601,12 +2745,14 @@ export default function Orders() {
 							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
 							onClick={() => {
 								setShowBarcodeScanModal(
-									false
+									false,
 								);
 								setScannedOrder(null);
 								setScannedPallets([]);
 								setScanError('');
-								setIsProcessingScan(false);
+								setIsProcessingScan(
+									false,
+								);
 							}}
 						></div>
 						<span className="hidden sm:inline-block sm:align-middle sm:h-screen">
@@ -2618,25 +2764,26 @@ export default function Orders() {
 									<div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
 										<div className="flex items-center justify-between mb-4">
 											<h3 className="text-lg leading-6 font-medium text-gray-900">
-												Scan Barcode Palet
+												Scan Barcode
+												Palet
 											</h3>
 											<button
 												type="button"
 												onClick={() => {
 													setShowBarcodeScanModal(
-														false
+														false,
 													);
 													setScannedOrder(
-														null
+														null,
 													);
 													setScannedPallets(
-														[]
+														[],
 													);
 													setScanError(
-														''
+														'',
 													);
 													setIsProcessingScan(
-														false
+														false,
 													);
 												}}
 												className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -2677,14 +2824,10 @@ export default function Orders() {
 													Produk:{' '}
 													{scannedOrder.products
 														?.map(
-															(
-																p
-															) =>
-																`${p.product} (${p.quantity})`
+															(p) =>
+																`${p.product} (${p.quantity})`,
 														)
-														.join(
-															', '
-														)}
+														.join(', ')}
 												</p>
 											</div>
 										)}
@@ -2702,18 +2845,15 @@ export default function Orders() {
 											<div className="mb-4 space-y-2">
 												<h4 className="text-sm font-semibold text-gray-900">
 													Palet yang
-													sudah
-													di-scan:
+													sudah di-scan:
 												</h4>
 												{scannedPallets.map(
 													(
 														pallet,
-														idx
+														idx,
 													) => (
 														<div
-															key={
-																idx
-															}
+															key={idx}
 															className="p-3 bg-green-50 border border-green-200 rounded-lg"
 														>
 															<p className="text-sm font-medium text-green-900">
@@ -2725,7 +2865,7 @@ export default function Orders() {
 																{pallet.products.map(
 																	(
 																		prod,
-																		pidx
+																		pidx,
 																	) => (
 																		<p
 																			key={
@@ -2737,22 +2877,20 @@ export default function Orders() {
 																			{
 																				prod.name
 																			}
-
 																			:{' '}
 																			{
 																				prod.scanned
 																			}
-
 																			/
 																			{
 																				prod.needed
 																			}
 																		</p>
-																	)
+																	),
 																)}
 															</div>
 														</div>
-													)
+													),
 												)}
 											</div>
 										)}
@@ -2764,10 +2902,10 @@ export default function Orders() {
 														handleBarcodeScanned
 													}
 													onError={(
-														error
+														error,
 													) =>
 														console.error(
-															error
+															error,
 														)
 													}
 												/>
@@ -2777,12 +2915,15 @@ export default function Orders() {
 										{checkIfAllProductsFulfilled() && (
 											<div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-lg">
 												<p className="text-sm font-semibold text-green-800 text-center">
-													✅ Semua produk
-													sudah terpenuhi!
+													✅ Semua
+													produk sudah
+													terpenuhi!
 													Klik
 													&quot;Selesai
-													dan Kirim&quot;
-													untuk melanjutkan.
+													dan
+													Kirim&quot;
+													untuk
+													melanjutkan.
 												</p>
 											</div>
 										)}
@@ -2804,17 +2945,17 @@ export default function Orders() {
 								<button
 									onClick={() => {
 										setShowBarcodeScanModal(
-											false
+											false,
 										);
 										setScannedOrder(
-											null
+											null,
 										);
 										setScannedPallets(
-											[]
+											[],
 										);
 										setScanError('');
 										setIsProcessingScan(
-											false
+											false,
 										);
 									}}
 									className="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm"

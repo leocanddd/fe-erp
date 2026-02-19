@@ -2,6 +2,8 @@ export interface NavItem {
 	name: string;
 	href: string;
 	defaultRoles: number[];
+	/** Jika true, item hanya dipakai untuk konfigurasi permission, tidak tampil di sidebar */
+	permissionOnly?: boolean;
 }
 
 export const ROLES: Record<number, string> = {
@@ -121,6 +123,48 @@ export const NAV_ITEMS: NavItem[] = [
 		name: 'Hak Akses Menu',
 		href: '/menu-permissions',
 		defaultRoles: [5],
+	},
+	{
+		name: 'Approve Blog',
+		href: '/blogs/approve',
+		defaultRoles: [5, 12],
+		permissionOnly: true,
+	},
+	{
+		name: 'Pesanan: Setujui Harga',
+		href: '/orders/action/price-approve',
+		defaultRoles: [5, 7],
+		permissionOnly: true,
+	},
+	{
+		name: 'Pesanan: Setujui & Tolak',
+		href: '/orders/action/approve',
+		defaultRoles: [5, 6],
+		permissionOnly: true,
+	},
+	{
+		name: 'Pesanan: Proses',
+		href: '/orders/action/process',
+		defaultRoles: [5, 3],
+		permissionOnly: true,
+	},
+	{
+		name: 'Pesanan: Kirim & Selesai',
+		href: '/orders/action/shipment',
+		defaultRoles: [5, 8],
+		permissionOnly: true,
+	},
+	{
+		name: 'Kategori Produk: Hapus',
+		href: '/product-categories/action/delete',
+		defaultRoles: [5],
+		permissionOnly: true,
+	},
+	{
+		name: 'Dashboard: Akses Cepat',
+		href: '/dashboard/quick-access',
+		defaultRoles: [5, 8],
+		permissionOnly: true,
 	},
 ];
 

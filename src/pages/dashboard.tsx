@@ -1,5 +1,6 @@
 import MainLayout from '@/components/MainLayout';
 import { getStoredUser } from '@/lib/auth';
+import { getMenuPermissions } from '@/lib/navigation';
 import { getRoleName } from '@/lib/users';
 import { getProducts, Product } from '@/lib/products';
 import Link from 'next/link';
@@ -18,6 +19,7 @@ interface User {
 export default function AdminDashboard() {
 	const [user, setUser] =
 		useState<User | null>(null);
+	const [canQuickAccess, setCanQuickAccess] = useState(false);
 	const [showSearchModal, setShowSearchModal] = useState(false);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [products, setProducts] = useState<Product[]>([]);
@@ -33,6 +35,8 @@ export default function AdminDashboard() {
 		const userData = getStoredUser();
 		if (userData) {
 			setUser(userData);
+			const perms = getMenuPermissions();
+			setCanQuickAccess((perms['/dashboard/quick-access'] ?? [5, 8]).includes(userData.role));
 		}
 	}, []);
 
@@ -180,8 +184,8 @@ export default function AdminDashboard() {
 				</div>
 			</div>
 
-			{/* Quick Access Shortcuts for Role 8 (Gudang) */}
-			{user?.role === 8 && (
+			{/* Quick Access Shortcuts */}
+			{canQuickAccess && (
 				<div className="mb-8">
 					<h3 className="text-xl font-bold text-gray-900 mb-4">
 						Akses Cepat

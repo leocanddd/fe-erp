@@ -1,6 +1,7 @@
 import MainLayout from '@/components/MainLayout';
 import { getStoredUser } from '@/lib/auth';
 import { Category } from '@/lib/category';
+import { getMenuPermissions } from '@/lib/navigation';
 import { useRouter } from 'next/router';
 import {
 	useEffect,
@@ -19,15 +20,14 @@ export default function ProductCategories() {
 		deleteLoading,
 		setDeleteLoading,
 	] = useState<string | null>(null);
-	const [
-		isSuperAdmin,
-		setIsSuperAdmin,
-	] = useState(false);
+	const [canDelete, setCanDelete] =
+		useState(false);
 
 	useEffect(() => {
 		const user = getStoredUser();
 		if (user) {
-			setIsSuperAdmin(user.role === 5);
+			const perms = getMenuPermissions();
+			setCanDelete((perms['/product-categories/action/delete'] ?? [5]).includes(user.role));
 		}
 		fetchCategories();
 	}, []);
@@ -191,7 +191,7 @@ export default function ProductCategories() {
 												{cat.key}
 											</td>
 											<td className="px-6 py-4 text-right space-x-2">
-												{isSuperAdmin && (
+												{canDelete && (
 													<button
 														onClick={() =>
 															handleDelete(

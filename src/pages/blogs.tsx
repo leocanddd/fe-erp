@@ -1,5 +1,6 @@
 import MainLayout from '@/components/MainLayout';
 import { getStoredUser } from '@/lib/auth';
+import { getMenuPermissions } from '@/lib/navigation';
 import { Blog } from '@/types/blog';
 import { useRouter } from 'next/router';
 import {
@@ -25,14 +26,16 @@ export default function Blogs() {
 		setApproveLoading,
 	] = useState<string | null>(null);
 	const [
-		isSuperAdmin,
-		setIsSuperAdmin,
+		canApproveBlog,
+		setCanApproveBlog,
 	] = useState(false);
 
 	useEffect(() => {
 		const user = getStoredUser();
 		if (user) {
-			setIsSuperAdmin(user.role === 5);
+			const permissions = getMenuPermissions();
+			const approveRoles = permissions['/blogs/approve'] ?? [5, 12];
+			setCanApproveBlog(approveRoles.includes(user.role));
 		}
 		fetchBlogs();
 	}, []);
@@ -352,7 +355,7 @@ export default function Blogs() {
 														: 'Delete'}
 												</button>
 											</div>
-											{isSuperAdmin && (
+											{canApproveBlog && (
 												<button
 													onClick={() => {
 														console.log(
