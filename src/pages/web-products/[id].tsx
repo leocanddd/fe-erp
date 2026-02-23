@@ -6,6 +6,7 @@ import {
 	getWebProduct,
 	updateWebProduct,
 	WebProduct,
+	WebProductSpecifications,
 	WebProductVariant,
 } from '@/lib/web-products';
 import { useRouter } from 'next/router';
@@ -51,6 +52,13 @@ export default function WebProductDetail() {
 	] = useState<Record<number, boolean>>(
 		{},
 	);
+	const [specifications, setSpecifications] =
+		useState<WebProductSpecifications>({
+			berat: '',
+			tinggi: '',
+			lebar: '',
+			panjang: '',
+		});
 
 	const [categories, setCategories] =
 		useState<Category[]>([]);
@@ -126,6 +134,16 @@ export default function WebProductDetail() {
 						}),
 					),
 				);
+				setSpecifications({
+					berat:
+						p.specifications?.berat || '',
+					tinggi:
+						p.specifications?.tinggi || '',
+					lebar:
+						p.specifications?.lebar || '',
+					panjang:
+						p.specifications?.panjang || '',
+				});
 			} else {
 				setError(
 					res.error ||
@@ -168,6 +186,20 @@ export default function WebProductDetail() {
 							product.image ||
 							undefined,
 						variants,
+						specifications: {
+							berat:
+								specifications.berat?.trim() ||
+								undefined,
+							tinggi:
+								specifications.tinggi?.trim() ||
+								undefined,
+							lebar:
+								specifications.lebar?.trim() ||
+								undefined,
+							panjang:
+								specifications.panjang?.trim() ||
+								undefined,
+						},
 					},
 				);
 
@@ -225,13 +257,14 @@ export default function WebProductDetail() {
 				name: '',
 				description: '',
 				image: '',
+				price: 0,
 			},
 		]);
 
 	const updateVariant = (
 		idx: number,
 		field: keyof WebProductVariant,
-		value: string,
+		value: string | number,
 	) =>
 		setVariants((prev) =>
 			prev.map((v, i) =>
@@ -577,6 +610,103 @@ export default function WebProductDetail() {
 						)}
 					</div>
 
+					{/* Specifications */}
+					<div>
+						<label className="block text-sm font-semibold text-gray-700 mb-3">
+							Spesifikasi
+						</label>
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div>
+								<label className="block text-xs text-gray-500 mb-1">
+									Berat
+								</label>
+								<input
+									type="text"
+									value={
+										specifications.berat
+									}
+									onChange={(e) =>
+										setSpecifications(
+											(prev) => ({
+												...prev,
+												berat: e.target
+													.value,
+											}),
+										)
+									}
+									placeholder="e.g. 500g"
+									className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+								/>
+							</div>
+							<div>
+								<label className="block text-xs text-gray-500 mb-1">
+									Tinggi
+								</label>
+								<input
+									type="text"
+									value={
+										specifications.tinggi
+									}
+									onChange={(e) =>
+										setSpecifications(
+											(prev) => ({
+												...prev,
+												tinggi: e.target
+													.value,
+											}),
+										)
+									}
+									placeholder="e.g. 20cm"
+									className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+								/>
+							</div>
+							<div>
+								<label className="block text-xs text-gray-500 mb-1">
+									Lebar
+								</label>
+								<input
+									type="text"
+									value={
+										specifications.lebar
+									}
+									onChange={(e) =>
+										setSpecifications(
+											(prev) => ({
+												...prev,
+												lebar: e.target
+													.value,
+											}),
+										)
+									}
+									placeholder="e.g. 10cm"
+									className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+								/>
+							</div>
+							<div>
+								<label className="block text-xs text-gray-500 mb-1">
+									Panjang
+								</label>
+								<input
+									type="text"
+									value={
+										specifications.panjang
+									}
+									onChange={(e) =>
+										setSpecifications(
+											(prev) => ({
+												...prev,
+												panjang: e.target
+													.value,
+											}),
+										)
+									}
+									placeholder="e.g. 15cm"
+									className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+								/>
+							</div>
+						</div>
+					</div>
+
 					{/* Variants */}
 					<div>
 						<div className="flex items-center justify-between mb-3">
@@ -652,7 +782,7 @@ export default function WebProductDetail() {
 											</button>
 										</div>
 
-										<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+										<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 											<input
 												type="text"
 												value={v.name}
@@ -681,6 +811,21 @@ export default function WebProductDetail() {
 													)
 												}
 												placeholder="Deskripsi varian"
+												className="px-3 py-2 bg-white border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all"
+											/>
+											<input
+												type="number"
+												min="0"
+												step="0.01"
+												value={v.price || ''}
+												onChange={(e) =>
+													updateVariant(
+														idx,
+														'price',
+														parseFloat(e.target.value) || 0,
+													)
+												}
+												placeholder="Harga varian (Rp)"
 												className="px-3 py-2 bg-white border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all"
 											/>
 										</div>

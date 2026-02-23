@@ -193,6 +193,8 @@ export default function ReportsProject() {
 					Sales:
 						visit.name.split(' ')[0],
 					Project: visit.projectName,
+					PIC: visit.pic || '-',
+					Contact: visit.contact || '-',
 					Lokasi: visit.location,
 					Tanggal:
 						formatProjectVisitDateOnly(
@@ -204,18 +206,7 @@ export default function ReportsProject() {
 					Product: visit.product || '-',
 					Volume: visit.volume || '-',
 					'Schedule Supply':
-						visit.scheduleSupply
-							? new Date(
-									visit.scheduleSupply,
-								).toLocaleDateString(
-									'id-ID',
-									{
-										year: 'numeric',
-										month: 'short',
-										day: 'numeric',
-									},
-								)
-							: '-',
+						visit.scheduleSupply || '-',
 					Uraian: visit.uraian || '-',
 					'Proyek Baru': visit.isNew,
 				}),
@@ -238,6 +229,8 @@ export default function ReportsProject() {
 			{ wch: 5 }, // No
 			{ wch: 15 }, // Sales
 			{ wch: 20 }, // Project
+			{ wch: 15 }, // PIC
+			{ wch: 20 }, // Contact
 			{ wch: 30 }, // Lokasi
 			{ wch: 12 }, // Tanggal
 			{ wch: 10 }, // Jam
@@ -581,6 +574,12 @@ export default function ReportsProject() {
 											Project
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+											PIC
+										</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+											Contact
+										</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Lokasi
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -650,6 +649,18 @@ export default function ReportsProject() {
 														}
 													</div>
 												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-900">
+														{visit.pic ||
+															'-'}
+													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-900">
+														{visit.contact ||
+															'-'}
+													</div>
+												</td>
 												<td className="px-6 py-4">
 													<div
 														className="text-sm text-gray-900 max-w-xs truncate"
@@ -700,19 +711,8 @@ export default function ReportsProject() {
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
-														{visit.scheduleSupply
-															? new Date(
-																	visit.scheduleSupply,
-																).toLocaleDateString(
-																	'id-ID',
-																	{
-																		year: 'numeric',
-																		month:
-																			'short',
-																		day: 'numeric',
-																	},
-																)
-															: '-'}
+														{visit.scheduleSupply ||
+															'-'}
 													</div>
 												</td>
 												<td className="px-6 py-4">

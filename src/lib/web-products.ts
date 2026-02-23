@@ -1,7 +1,15 @@
+export interface WebProductSpecifications {
+	berat?: string;
+	tinggi?: string;
+	lebar?: string;
+	panjang?: string;
+}
+
 export interface WebProductVariant {
 	name: string;
 	description: string;
 	image: string;
+	price: number;
 }
 
 export interface WebProduct {
@@ -16,6 +24,7 @@ export interface WebProduct {
 	description: string;
 	price: number;
 	variants: WebProductVariant[];
+	specifications?: WebProductSpecifications;
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -29,6 +38,7 @@ export interface WebProductUpdateRequest {
 	description?: string;
 	price?: number;
 	variants?: WebProductVariant[];
+	specifications?: WebProductSpecifications;
 }
 
 export interface WebProductCreateRequest {
@@ -41,6 +51,7 @@ export interface WebProductCreateRequest {
 	description?: string;
 	price?: number;
 	variants?: WebProductVariant[];
+	specifications?: WebProductSpecifications;
 }
 
 export interface WebProductResponse {

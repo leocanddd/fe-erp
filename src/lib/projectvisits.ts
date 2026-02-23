@@ -15,6 +15,8 @@ export interface ProjectVisit {
 	createdAt: string;
 	updatedAt: string;
 	projectName: string;
+	pic?: string;
+	contact?: string;
 	product?: string;
 	volume?: string;
 	scheduleSupply?: string;
