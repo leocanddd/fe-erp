@@ -22,6 +22,7 @@ export interface ProjectVisit {
 	scheduleSupply?: string;
 	uraian?: string;
 	isNew?: boolean;
+	customerName?: string;
 }
 
 export interface ProjectVisitFilters {

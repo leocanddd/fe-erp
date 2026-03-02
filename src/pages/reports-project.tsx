@@ -194,7 +194,8 @@ export default function ReportsProject() {
 						visit.name.split(' ')[0],
 					Project: visit.projectName,
 					PIC: visit.pic || '-',
-					Contact: visit.contact || '-',
+					Customer:
+						visit.customerName || '-',
 					Lokasi: visit.location,
 					Tanggal:
 						formatProjectVisitDateOnly(
@@ -577,7 +578,7 @@ export default function ReportsProject() {
 											PIC
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Contact
+											Customer
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Lokasi
@@ -657,7 +658,7 @@ export default function ReportsProject() {
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
-														{visit.contact ||
+														{visit.customerName ||
 															'-'}
 													</div>
 												</td>
