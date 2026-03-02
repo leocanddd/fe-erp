@@ -41,6 +41,14 @@ export default function Quotations() {
 		setShowAddModal,
 	] = useState(false);
 	const [
+		showPreviewModal,
+		setShowPreviewModal,
+	] = useState(false);
+	const [
+		selectedQuotation,
+		setSelectedQuotation,
+	] = useState<Quotation | null>(null);
+	const [
 		isSubmitting,
 		setIsSubmitting,
 	] = useState(false);
@@ -318,6 +326,22 @@ export default function Quotations() {
 		return { subtotal, total };
 	};
 
+	const calculateProductTotal = (product: QuotationProduct) => {
+		const basePrice = (product.harga || 0) * (product.quantity || 0);
+		const firstDiscount = product.firstDiscount || 0;
+		const secondDiscount = product.secondDiscount || 0;
+
+		const afterFirstDiscount = basePrice - (basePrice * firstDiscount / 100);
+		const afterSecondDiscount = afterFirstDiscount - (afterFirstDiscount * secondDiscount / 100);
+
+		return afterSecondDiscount;
+	};
+
+	const handlePreview = (quotation: Quotation) => {
+		setSelectedQuotation(quotation);
+		setShowPreviewModal(true);
+	};
+
 	return (
 		<MainLayout title="Quotation">
 			<div className="max-w-7xl mx-auto">
@@ -487,6 +511,39 @@ export default function Quotations() {
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
 															<div className="flex items-center justify-end space-x-2">
+																<button
+																	onClick={() =>
+																		handlePreview(
+																			quotation,
+																		)
+																	}
+																	className="text-blue-600 hover:text-blue-900 p-1 rounded"
+																	title="Preview quotation"
+																>
+																	<svg
+																		className="w-4 h-4"
+																		fill="none"
+																		stroke="currentColor"
+																		viewBox="0 0 24 24"
+																	>
+																		<path
+																			strokeLinecap="round"
+																			strokeLinejoin="round"
+																			strokeWidth={
+																				2
+																			}
+																			d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+																		/>
+																		<path
+																			strokeLinecap="round"
+																			strokeLinejoin="round"
+																			strokeWidth={
+																				2
+																			}
+																			d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+																		/>
+																	</svg>
+																</button>
 																{!quotation.isApproved && (
 																	<button
 																		onClick={() =>
@@ -1010,6 +1067,244 @@ export default function Quotations() {
 									</button>
 								</div>
 							</form>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Preview Modal */}
+			{showPreviewModal && selectedQuotation && (
+				<div className="fixed inset-0 z-[60] overflow-y-auto">
+					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+						<div
+							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+							onClick={() => {
+								setShowPreviewModal(false);
+								setSelectedQuotation(null);
+							}}
+						></div>
+						<div className="relative inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+							<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-h-[80vh] overflow-y-auto">
+								<div className="sm:flex sm:items-start">
+									<div className="w-full">
+										<div className="flex items-center justify-between mb-6">
+											<h3 className="text-2xl font-bold text-gray-900">
+												Detail Quotation
+											</h3>
+											<button
+												type="button"
+												onClick={() => {
+													setShowPreviewModal(false);
+													setSelectedQuotation(null);
+												}}
+												className="text-gray-400 hover:text-gray-600 transition-colors"
+											>
+												<svg
+													className="w-6 h-6"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M6 18L18 6M6 6l12 12"
+													/>
+												</svg>
+											</button>
+										</div>
+
+										{/* Header Information */}
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-4 bg-gray-50 rounded-2xl">
+											<div>
+												<label className="block text-sm font-semibold text-gray-600 mb-1">
+													Customer
+												</label>
+												<p className="text-base text-gray-900">
+													{selectedQuotation.customerName}
+												</p>
+											</div>
+											<div>
+												<label className="block text-sm font-semibold text-gray-600 mb-1">
+													Sales
+												</label>
+												<p className="text-base text-gray-900">
+													{selectedQuotation.salesName}
+												</p>
+											</div>
+											{selectedQuotation.projectName && (
+												<div>
+													<label className="block text-sm font-semibold text-gray-600 mb-1">
+														Project
+													</label>
+													<p className="text-base text-gray-900">
+														{selectedQuotation.projectName}
+													</p>
+												</div>
+											)}
+											<div>
+												<label className="block text-sm font-semibold text-gray-600 mb-1">
+													Tanggal
+												</label>
+												<p className="text-base text-gray-900">
+													{new Date(selectedQuotation.date).toLocaleDateString('id-ID')}
+												</p>
+											</div>
+											<div>
+												<label className="block text-sm font-semibold text-gray-600 mb-1">
+													Status
+												</label>
+												<span
+													className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+														selectedQuotation.isApproved
+															? 'bg-green-100 text-green-800'
+															: 'bg-yellow-100 text-yellow-800'
+													}`}
+												>
+													{selectedQuotation.isApproved ? 'Approved' : 'Pending'}
+												</span>
+											</div>
+										</div>
+
+										{/* Note */}
+										{selectedQuotation.note && (
+											<div className="mb-6 p-4 bg-blue-50 rounded-2xl">
+												<label className="block text-sm font-semibold text-gray-700 mb-2">
+													Catatan
+												</label>
+												<p className="text-sm text-gray-700 whitespace-pre-line">
+													{selectedQuotation.note}
+												</p>
+											</div>
+										)}
+
+										{/* Products Table */}
+										<div className="mb-6">
+											<h4 className="text-lg font-semibold text-gray-900 mb-4">
+												Daftar Produk
+											</h4>
+											<div className="overflow-x-auto border border-gray-200 rounded-2xl">
+												<table className="min-w-full divide-y divide-gray-200">
+													<thead className="bg-gray-50">
+														<tr>
+															<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+																Produk
+															</th>
+															<th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+																Harga
+															</th>
+															<th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+																Qty
+															</th>
+															{selectedQuotation.products.some(p => p.firstDiscount || p.secondDiscount) && (
+																<>
+																	<th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+																		Disc 1 (%)
+																	</th>
+																	<th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+																		Disc 2 (%)
+																	</th>
+																</>
+															)}
+															<th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+																Total
+															</th>
+														</tr>
+													</thead>
+													<tbody className="bg-white divide-y divide-gray-200">
+														{selectedQuotation.products.map((product, index) => {
+															const total = calculateProductTotal(product);
+															return (
+																<tr key={index}>
+																	<td className="px-4 py-3 text-sm text-gray-900">
+																		{product.name}
+																	</td>
+																	<td className="px-4 py-3 text-sm text-gray-900 text-right">
+																		Rp {(product.harga || 0).toLocaleString('id-ID')}
+																	</td>
+																	<td className="px-4 py-3 text-sm text-gray-900 text-right">
+																		{product.quantity || 0}
+																	</td>
+																	{selectedQuotation.products.some(p => p.firstDiscount || p.secondDiscount) && (
+																		<>
+																			<td className="px-4 py-3 text-sm text-gray-900 text-right">
+																				{product.firstDiscount || 0}%
+																			</td>
+																			<td className="px-4 py-3 text-sm text-gray-900 text-right">
+																				{product.secondDiscount || 0}%
+																			</td>
+																		</>
+																	)}
+																	<td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
+																		Rp {total.toLocaleString('id-ID')}
+																	</td>
+																</tr>
+															);
+														})}
+													</tbody>
+													<tfoot className="bg-gray-50">
+														<tr>
+															<td
+																colSpan={
+																	selectedQuotation.products.some(p => p.firstDiscount || p.secondDiscount)
+																		? 5
+																		: 3
+																}
+																className="px-4 py-3 text-sm font-semibold text-gray-900 text-right"
+															>
+																Grand Total:
+															</td>
+															<td className="px-4 py-3 text-sm font-bold text-gray-900 text-right">
+																Rp{' '}
+																{selectedQuotation.products
+																	.reduce((sum, product) => sum + calculateProductTotal(product), 0)
+																	.toLocaleString('id-ID')}
+															</td>
+														</tr>
+													</tfoot>
+												</table>
+											</div>
+										</div>
+
+										{/* Timestamps */}
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+											<div>
+												<label className="block text-xs font-medium text-gray-500 mb-1">
+													Dibuat pada
+												</label>
+												<p className="text-sm text-gray-900">
+													{selectedQuotation.createdAt
+														? new Date(selectedQuotation.createdAt).toLocaleString('id-ID')
+														: '-'}
+												</p>
+											</div>
+											<div>
+												<label className="block text-xs font-medium text-gray-500 mb-1">
+													Terakhir diubah
+												</label>
+												<p className="text-sm text-gray-900">
+													{selectedQuotation.updatedAt
+														? new Date(selectedQuotation.updatedAt).toLocaleString('id-ID')
+														: '-'}
+												</p>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-3xl">
+								<button
+									type="button"
+									onClick={() => {
+										setShowPreviewModal(false);
+										setSelectedQuotation(null);
+									}}
+									className="w-full inline-flex justify-center rounded-2xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm transition-colors duration-200"
+								>
+									Tutup
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>

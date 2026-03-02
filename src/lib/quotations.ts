@@ -2,12 +2,16 @@ interface QuotationProduct {
 	name: string;
 	harga?: number;
 	quantity?: number;
+	firstDiscount?: number;
+	secondDiscount?: number;
 }
 
 interface Quotation {
 	id?: string;
 	customerName: string;
 	salesName: string;
+	projectName?: string;
+	note?: string;
 	date: string;
 	products: QuotationProduct[];
 	discount?: number;
