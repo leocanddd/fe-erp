@@ -64,6 +64,7 @@ export default function Products() {
 			price: '',
 			entryDate: '',
 			displayWeb: false,
+			pointMultiplier: 0,
 		});
 
 	// Upload hook instances (one for Add, one for Edit)
@@ -200,6 +201,7 @@ export default function Products() {
 			price: '',
 			entryDate: today,
 			displayWeb: false,
+			pointMultiplier: 0,
 		});
 		resetUploadAdd();
 		resetUploadEdit();
@@ -229,6 +231,9 @@ export default function Products() {
 				),
 				entryDate: formData.entryDate,
 				displayWeb: formData.displayWeb,
+				pointMultiplier: parseFloat(
+					formData.pointMultiplier.toString(),
+				),
 				...(uploadedUrlAdd && {
 					image: uploadedUrlAdd,
 				}),
@@ -274,6 +279,8 @@ export default function Products() {
 			code: product.code,
 			stock: product.stock.toString(),
 			price: product.price.toString(),
+			pointMultiplier:
+				product.pointMultiplier,
 			displayWeb:
 				product.displayWeb ?? false,
 			entryDate:
@@ -302,6 +309,9 @@ export default function Products() {
 				),
 				entryDate: formData.entryDate,
 				displayWeb: formData.displayWeb,
+				pointMultiplier: parseFloat(
+					formData.pointMultiplier.toString(),
+				),
 				// Use newly uploaded URL, or keep the existing one
 				image:
 					uploadedUrlEdit ||
@@ -1275,6 +1285,32 @@ export default function Products() {
 																handleInputChange
 															}
 															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+														/>
+													</div>
+
+													<div>
+														<label
+															htmlFor="edit-entryDate"
+															className="block text-sm font-semibold text-gray-700 mb-2"
+														>
+															Point
+															Multiplier
+														</label>
+														<input
+															type="number"
+															id="edit-point"
+															name="pointMultiplier"
+															required
+															min="0"
+															step="0.01"
+															value={
+																formData.pointMultiplier
+															}
+															onChange={
+																handleInputChange
+															}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+															placeholder="Masukkan jumlah point multiplier"
 														/>
 													</div>
 

@@ -4,6 +4,8 @@ export interface NavItem {
 	defaultRoles: number[];
 	/** Jika true, item hanya dipakai untuk konfigurasi permission, tidak tampil di sidebar */
 	permissionOnly?: boolean;
+	/** Submenu items for dropdown */
+	submenu?: NavItem[];
 }
 
 export const ROLES: Record<number, string> = {
@@ -123,6 +125,23 @@ export const NAV_ITEMS: NavItem[] = [
 		name: 'Hak Akses Menu',
 		href: '/menu-permissions',
 		defaultRoles: [5],
+	},
+	{
+		name: 'Point',
+		href: '/point',
+		defaultRoles: [5],
+	},
+	{
+		name: 'Website',
+		href: '/website',
+		defaultRoles: [5],
+		submenu: [
+			{
+				name: 'Pesan',
+				href: '/website/messages',
+				defaultRoles: [5],
+			},
+		],
 	},
 	{
 		name: 'Approve Blog',

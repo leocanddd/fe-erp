@@ -7,6 +7,9 @@ interface Store {
 	limit: number;
 	description: string;
 	totalVisit: number;
+	username: string;
+	pin: string;
+	points: number;
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -19,6 +22,8 @@ interface StoreCreateRequest {
 	limit: number;
 	description: string;
 	totalVisit: number;
+	username: string;
+	pin: string;
 }
 
 interface StoreResponse {
@@ -51,7 +56,7 @@ const getApiUrl = () => {
 
 const getAuthHeaders = () => {
 	const token = localStorage.getItem(
-		'accessToken'
+		'accessToken',
 	);
 	return {
 		'Content-Type': 'application/json',
@@ -62,7 +67,7 @@ const getAuthHeaders = () => {
 };
 
 export const createStore = async (
-	store: StoreCreateRequest
+	store: StoreCreateRequest,
 ): Promise<StoreResponse> => {
 	try {
 		const response = await fetch(
@@ -71,7 +76,7 @@ export const createStore = async (
 				method: 'POST',
 				headers: getAuthHeaders(),
 				body: JSON.stringify(store),
-			}
+			},
 		);
 
 		const data: StoreResponse =
@@ -89,7 +94,7 @@ export const createStore = async (
 export const getStores = async (
 	page: number = 1,
 	limit: number = 10,
-	name: string = ''
+	name: string = '',
 ): Promise<StoresListResponse> => {
 	const emptyResponse: StoresListResponse =
 		{
@@ -117,7 +122,7 @@ export const getStores = async (
 			{
 				method: 'GET',
 				headers: getAuthHeaders(),
-			}
+			},
 		);
 
 		// 🧩 Safari-safe: read as text, then safely parse
@@ -134,12 +139,12 @@ export const getStores = async (
 		let parsed: StoresListResponse;
 		try {
 			parsed = JSON.parse(
-				text
+				text,
 			) as StoresListResponse;
 		} catch {
 			console.warn(
 				'⚠️ Invalid JSON from /api/stores:',
-				text
+				text,
 			);
 			return {
 				...emptyResponse,
@@ -168,7 +173,7 @@ export const getStores = async (
 				: 'Client exception — network request failed';
 		console.error(
 			'❌ getStores failed:',
-			message
+			message,
 		);
 
 		return {
@@ -214,7 +219,7 @@ export const getStores = async (
 // };
 
 export const getStore = async (
-	id: string
+	id: string,
 ): Promise<StoreResponse> => {
 	try {
 		const response = await fetch(
@@ -222,7 +227,7 @@ export const getStore = async (
 			{
 				method: 'GET',
 				headers: getAuthHeaders(),
-			}
+			},
 		);
 
 		const data: StoreResponse =
@@ -239,7 +244,7 @@ export const getStore = async (
 
 export const updateStore = async (
 	id: string,
-	store: Partial<StoreCreateRequest>
+	store: Partial<StoreCreateRequest>,
 ): Promise<StoreResponse> => {
 	try {
 		const response = await fetch(
@@ -248,7 +253,7 @@ export const updateStore = async (
 				method: 'PUT',
 				headers: getAuthHeaders(),
 				body: JSON.stringify(store),
-			}
+			},
 		);
 
 		const data: StoreResponse =
@@ -264,7 +269,7 @@ export const updateStore = async (
 };
 
 export const deleteStore = async (
-	id: string
+	id: string,
 ): Promise<StoreResponse> => {
 	try {
 		const response = await fetch(
@@ -272,7 +277,7 @@ export const deleteStore = async (
 			{
 				method: 'DELETE',
 				headers: getAuthHeaders(),
-			}
+			},
 		);
 
 		const data: StoreResponse =
@@ -295,7 +300,7 @@ export const getTop10Stores =
 				{
 					method: 'GET',
 					headers: getAuthHeaders(),
-				}
+				},
 			);
 
 			const data: StoresListResponse =

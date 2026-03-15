@@ -11,6 +11,7 @@ interface Product {
 	createdAt?: string;
 	updatedAt?: string;
 	displayWeb?: boolean;
+	pointMultiplier: number;
 }
 
 interface ProductCreateRequest {
@@ -21,6 +22,8 @@ interface ProductCreateRequest {
 	price: number;
 	entryDate: string;
 	image?: string;
+	pointMultiplier?: number;
+	displayWeb?: boolean;
 }
 
 interface ProductResponse {

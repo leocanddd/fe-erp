@@ -1,9 +1,11 @@
 import {
 	getMenuPermissions,
 	NAV_ITEMS,
+	NavItem,
 } from '@/lib/navigation';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 
 interface User {
 	username: string;
@@ -319,6 +321,36 @@ const ICONS: Record<
 			/>
 		</svg>
 	),
+	'/website': (
+		<svg
+			className="w-5 h-5"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+			/>
+		</svg>
+	),
+	'/point': (
+		<svg
+			className="w-5 h-5"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+			/>
+		</svg>
+	),
 };
 
 export default function Sidebar({
@@ -327,6 +359,7 @@ export default function Sidebar({
 	onLogout,
 }: SidebarProps) {
 	const router = useRouter();
+	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
 	const permissions =
 		getMenuPermissions();
@@ -343,6 +376,17 @@ export default function Sidebar({
 					item.defaultRoles
 				).includes(user.role)),
 		);
+
+	const toggleDropdown = (href: string) => {
+		setOpenDropdown(openDropdown === href ? null : href);
+	};
+
+	const isActive = (item: NavItem) => {
+		if (item.submenu) {
+			return item.submenu.some(sub => router.pathname === sub.href);
+		}
+		return router.pathname === item.href;
+	};
 
 	return (
 		<div
@@ -369,35 +413,117 @@ export default function Sidebar({
 
 				<nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
 					{navigationItems.map(
-						(item) => (
-							<Link
-								key={item.href}
-								href={item.href}
-								className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-									router.pathname ===
-									item.href
-										? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-										: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-								}`}
-							>
-								{ICONS[item.href] ?? (
-									<svg
-										className="w-5 h-5"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M4 6h16M4 12h16M4 18h16"
-										/>
-									</svg>
-								)}
-								<span>{item.name}</span>
-							</Link>
-						),
+						(item) => {
+							if (item.submenu) {
+								// Menu with submenu (dropdown)
+								const isOpen = openDropdown === item.href;
+								const active = isActive(item);
+
+								return (
+									<div key={item.href} className="space-y-1">
+										<button
+											onClick={() => toggleDropdown(item.href)}
+											className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+												active
+													? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+													: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+											}`}
+										>
+											<div className="flex items-center space-x-3">
+												{ICONS[item.href] ?? (
+													<svg
+														className="w-5 h-5"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth={2}
+															d="M4 6h16M4 12h16M4 18h16"
+														/>
+													</svg>
+												)}
+												<span>{item.name}</span>
+											</div>
+											<svg
+												className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M19 9l-7 7-7-7"
+												/>
+											</svg>
+										</button>
+
+										{/* Submenu */}
+										{isOpen && (
+											<div className="ml-8 space-y-1">
+												{item.submenu
+													.filter(
+														(subItem) =>
+															user.role === 5 ||
+															(
+																permissions[subItem.href] ??
+																subItem.defaultRoles
+															).includes(user.role),
+													)
+													.map((subItem) => (
+														<Link
+															key={subItem.href}
+															href={subItem.href}
+															className={`w-full flex items-center space-x-3 px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+																router.pathname === subItem.href
+																	? 'bg-blue-50 text-blue-600 font-medium'
+																	: 'text-gray-600 hover:bg-gray-100'
+															}`}
+														>
+															<span>{subItem.name}</span>
+														</Link>
+													))}
+											</div>
+										)}
+									</div>
+								);
+							}
+
+							// Regular menu item
+							return (
+								<Link
+									key={item.href}
+									href={item.href}
+									className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+										router.pathname ===
+										item.href
+											? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+											: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+									}`}
+								>
+									{ICONS[item.href] ?? (
+										<svg
+											className="w-5 h-5"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M4 6h16M4 12h16M4 18h16"
+											/>
+										</svg>
+									)}
+									<span>{item.name}</span>
+								</Link>
+							);
+						},
 					)}
 				</nav>
 

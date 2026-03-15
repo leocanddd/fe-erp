@@ -1,0 +1,60 @@
+import type {
+	NextApiRequest,
+	NextApiResponse,
+} from 'next';
+
+const BACKEND_URL = process.env.API_URL || 'http://localhost:8080';
+
+export default async function handler(
+	req: NextApiRequest,
+	res: NextApiResponse
+) {
+	const token =
+		req.headers.authorization;
+
+	try {
+		if (req.method === 'GET') {
+			// Get query parameters
+			const { page = '1', limit = '10' } = req.query;
+
+			// Get web messages with pagination
+			const response = await fetch(
+				`${BACKEND_URL}/api/web-messages?page=${page}&limit=${limit}`,
+				{
+					headers: {
+						Authorization: token || '',
+					},
+				}
+			);
+
+			if (!response.ok) {
+				const error =
+					await response.json();
+				return res
+					.status(response.status)
+					.json(error);
+			}
+
+			const data =
+				await response.json();
+			return res.status(200).json(data);
+		} else {
+			return res
+				.status(405)
+				.json({
+					message: 'Method not allowed',
+				});
+		}
+	} catch (error) {
+		console.error(
+			'Web Messages API error:',
+			error
+		);
+		return res
+			.status(500)
+			.json({
+				message:
+					'Internal server error',
+			});
+	}
+}

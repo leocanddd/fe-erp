@@ -21,6 +21,10 @@ import {
 	Product,
 } from '@/lib/products';
 import {
+	getStores,
+	Store,
+} from '@/lib/stores';
+import {
 	useCallback,
 	useEffect,
 	useRef,
@@ -79,6 +83,7 @@ export default function Orders() {
 			customer: '',
 			contact: '',
 			shipmentTime: '',
+			store: '',
 			products: [
 				{
 					product: '',
@@ -127,6 +132,22 @@ export default function Orders() {
 		showProductDropdown,
 		setShowProductDropdown,
 	] = useState<number | null>(null);
+	const [stores, setStores] =
+		useState<Store[]>([]);
+	const [storeSearch, setStoreSearch] =
+		useState('');
+	const [
+		showStoreDropdown,
+		setShowStoreDropdown,
+	] = useState(false);
+	const [
+		loadingStores,
+		setLoadingStores,
+	] = useState(false);
+	const storeDropdownRef =
+		useRef<HTMLDivElement>(null);
+	const debounceTimerRef =
+		useRef<NodeJS.Timeout | null>(null);
 	const [
 		showBarcodeScanModal,
 		setShowBarcodeScanModal,
@@ -185,6 +206,14 @@ export default function Orders() {
 			) {
 				setShowProductDropdown(null);
 			}
+			if (
+				storeDropdownRef.current &&
+				!storeDropdownRef.current.contains(
+					event.target as Node,
+				)
+			) {
+				setShowStoreDropdown(false);
+			}
 		};
 
 		document.addEventListener(
@@ -217,6 +246,20 @@ export default function Orders() {
 				);
 			}
 		}, []);
+
+	const fetchStores = useCallback(async (searchTerm: string) => {
+		setLoadingStores(true);
+		try {
+			const response = await getStores(1, 20, searchTerm);
+			if (response.statusCode === 200) {
+				setStores(response.data || []);
+			}
+		} catch {
+			console.error('Failed to fetch stores');
+		} finally {
+			setLoadingStores(false);
+		}
+	}, []);
 
 	useEffect(() => {
 		if (showAddModal || showEditModal) {
@@ -431,6 +474,33 @@ export default function Orders() {
 		);
 	};
 
+	const handleStoreSearchChange = (value: string) => {
+		setStoreSearch(value);
+		setFormData((prev) => ({
+			...prev,
+			store: value,
+		}));
+		setShowStoreDropdown(true);
+
+		// Debounce the API call
+		if (debounceTimerRef.current) {
+			clearTimeout(debounceTimerRef.current);
+		}
+
+		debounceTimerRef.current = setTimeout(() => {
+			fetchStores(value);
+		}, 300);
+	};
+
+	const handleStoreSelect = (store: Store) => {
+		setFormData((prev) => ({
+			...prev,
+			store: store.name,
+		}));
+		setStoreSearch(store.name);
+		setShowStoreDropdown(false);
+	};
+
 	const removeProduct = (
 		index: number,
 	) => {
@@ -451,6 +521,7 @@ export default function Orders() {
 			customer: '',
 			contact: '',
 			shipmentTime: '',
+			store: '',
 			products: [
 				{
 					product: '',
@@ -459,6 +530,7 @@ export default function Orders() {
 				},
 			],
 		});
+		setStoreSearch('');
 	};
 
 	const handleAddOrder = async (
@@ -478,6 +550,7 @@ export default function Orders() {
 					new Date().toISOString(),
 				shipmentTime:
 					formData.shipmentTime,
+				...(formData.store && { store: formData.store.trim() }),
 				products: formData.products.map(
 					(p) => ({
 						product: p.product.trim(),
@@ -546,6 +619,7 @@ export default function Orders() {
 					editingOrder.orderDate,
 				shipmentTime:
 					formData.shipmentTime,
+				...(formData.store && { store: formData.store.trim() }),
 				products: formData.products.map(
 					(p) => ({
 						product: p.product.trim(),
@@ -2055,6 +2129,69 @@ export default function Orders() {
 														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
 														placeholder="Contoh: 08:00-10:00"
 													/>
+												</div>
+
+												<div className="relative" ref={storeDropdownRef}>
+													<label
+														htmlFor="store"
+														className="block text-sm font-semibold text-gray-700 mb-2"
+													>
+														Toko (Opsional)
+													</label>
+													<input
+														type="text"
+														id="store"
+														name="store"
+														value={
+															storeSearch
+														}
+														onChange={(e) =>
+															handleStoreSearchChange(
+																e.target.value,
+															)
+														}
+														onFocus={() => {
+															setShowStoreDropdown(true);
+															if (!storeSearch) {
+																fetchStores('');
+															}
+														}}
+														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+														placeholder="Cari toko..."
+													/>
+													{showStoreDropdown && (
+														<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+															{loadingStores ? (
+																<div className="px-4 py-3 text-gray-500 text-sm text-center">
+																	<div className="inline-flex items-center">
+																		<div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2"></div>
+																		Memuat...
+																	</div>
+																</div>
+															) : stores.length > 0 ? (
+																stores.map((s) => (
+																	<div
+																		key={s.id}
+																		onClick={() =>
+																			handleStoreSelect(s)
+																		}
+																		className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+																	>
+																		<div className="font-medium text-gray-900">
+																			{s.name}
+																		</div>
+																		<div className="text-xs text-gray-500">
+																			{s.location}
+																		</div>
+																	</div>
+																))
+															) : (
+																<div className="px-4 py-3 text-gray-500 text-sm">
+																	Tidak ada toko ditemukan
+																</div>
+															)}
+														</div>
+													)}
 												</div>
 											</div>
 										</div>
