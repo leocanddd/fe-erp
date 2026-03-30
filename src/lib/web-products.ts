@@ -21,6 +21,7 @@ export interface WebProduct {
 	subtitle: string;
 	category: string;
 	image: string;
+	images?: string[];
 	description: string;
 	price: number;
 	variants: WebProductVariant[];
@@ -35,6 +36,7 @@ export interface WebProductUpdateRequest {
 	subtitle?: string;
 	category?: string;
 	image?: string;
+	images?: string[];
 	description?: string;
 	price?: number;
 	variants?: WebProductVariant[];
@@ -48,6 +50,7 @@ export interface WebProductCreateRequest {
 	subtitle?: string;
 	category?: string;
 	image?: string;
+	images?: string[];
 	description?: string;
 	price?: number;
 	variants?: WebProductVariant[];

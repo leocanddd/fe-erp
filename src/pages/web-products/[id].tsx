@@ -72,6 +72,8 @@ export default function WebProductDetail() {
 	} = useUpload();
 	const imageInputRef =
 		useRef<HTMLInputElement>(null);
+	const [uploadedImages, setUploadedImages] =
+		useState<string[]>([]);
 
 	useEffect(() => {
 		if (!id) return;
@@ -79,6 +81,15 @@ export default function WebProductDetail() {
 		fetchCategories();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id]);
+
+	useEffect(() => {
+		if (uploadedUrl && !uploadedImages.includes(uploadedUrl)) {
+			setUploadedImages(prev => [...prev, uploadedUrl]);
+			resetUpload();
+			if (imageInputRef.current)
+				imageInputRef.current.value = '';
+		}
+	}, [uploadedUrl, uploadedImages, resetUpload]);
 
 	const fetchCategories = async () => {
 		try {
@@ -144,6 +155,7 @@ export default function WebProductDetail() {
 					panjang:
 						p.specifications?.panjang || '',
 				});
+				setUploadedImages(p.images || (p.image ? [p.image] : []));
 			} else {
 				setError(
 					res.error ||
@@ -182,9 +194,10 @@ export default function WebProductDetail() {
 							? parseFloat(price)
 							: undefined,
 						image:
-							uploadedUrl ||
+							uploadedImages[0] ||
 							product.image ||
 							undefined,
+						images: uploadedImages.length > 0 ? uploadedImages : undefined,
 						variants,
 						specifications: {
 							berat:
@@ -332,8 +345,6 @@ export default function WebProductDetail() {
 		);
 	}
 
-	const previewImage =
-		uploadedUrl || product.image;
 
 	return (
 		<MainLayout
@@ -576,7 +587,7 @@ export default function WebProductDetail() {
 											: 'Klik untuk upload gambar'}
 									</span>
 									<span className="text-xs text-gray-400">
-										PNG, JPG, WEBP
+										PNG, JPG, WEBP (multiple)
 									</span>
 								</div>
 							)}
@@ -600,13 +611,28 @@ export default function WebProductDetail() {
 								{uploadError}
 							</p>
 						)}
-						{previewImage && (
-							// eslint-disable-next-line @next/next/no-img-element
-							<img
-								src={previewImage}
-								alt="Preview"
-								className="mt-3 w-full h-48 object-cover rounded-2xl border border-gray-200"
-							/>
+						{uploadedImages.length > 0 && (
+							<div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+								{uploadedImages.map((imgUrl, idx) => (
+									<div key={idx} className="relative group">
+										{/* eslint-disable-next-line @next/next/no-img-element */}
+										<img
+											src={imgUrl}
+											alt={`Preview ${idx + 1}`}
+											className="w-full h-32 object-cover rounded-xl border border-gray-200"
+										/>
+										<button
+											type="button"
+											onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))}
+											className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+										>
+											<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+											</svg>
+										</button>
+									</div>
+								))}
+							</div>
 						)}
 					</div>
 

@@ -56,13 +56,25 @@ export default function NewWebProduct() {
 		uploading,
 		uploadedUrl,
 		uploadError,
+		reset: resetUpload,
 	} = useUpload();
 	const imageInputRef =
 		useRef<HTMLInputElement>(null);
+	const [uploadedImages, setUploadedImages] =
+		useState<string[]>([]);
 
 	useEffect(() => {
 		fetchCategories();
 	}, []);
+
+	useEffect(() => {
+		if (uploadedUrl && !uploadedImages.includes(uploadedUrl)) {
+			setUploadedImages(prev => [...prev, uploadedUrl]);
+			resetUpload();
+			if (imageInputRef.current)
+				imageInputRef.current.value = '';
+		}
+	}, [uploadedUrl, uploadedImages, resetUpload]);
 
 	const fetchCategories = async () => {
 		try {
@@ -107,7 +119,8 @@ export default function NewWebProduct() {
 				price: price
 					? parseFloat(price)
 					: undefined,
-				image: uploadedUrl || undefined,
+				image: uploadedImages[0] || undefined,
+				images: uploadedImages.length > 0 ? uploadedImages : undefined,
 				variants:
 					variants.length > 0
 						? variants
@@ -443,7 +456,7 @@ export default function NewWebProduct() {
 										gambar
 									</span>
 									<span className="text-xs text-gray-400">
-										PNG, JPG, WEBP
+										PNG, JPG, WEBP (multiple)
 									</span>
 								</div>
 							)}
@@ -467,13 +480,28 @@ export default function NewWebProduct() {
 								{uploadError}
 							</p>
 						)}
-						{uploadedUrl && (
-							// eslint-disable-next-line @next/next/no-img-element
-							<img
-								src={uploadedUrl}
-								alt="Preview"
-								className="mt-3 w-full h-48 object-cover rounded-2xl border border-gray-200"
-							/>
+						{uploadedImages.length > 0 && (
+							<div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+								{uploadedImages.map((imgUrl, idx) => (
+									<div key={idx} className="relative group">
+										{/* eslint-disable-next-line @next/next/no-img-element */}
+										<img
+											src={imgUrl}
+											alt={`Preview ${idx + 1}`}
+											className="w-full h-32 object-cover rounded-xl border border-gray-200"
+										/>
+										<button
+											type="button"
+											onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))}
+											className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+										>
+											<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+											</svg>
+										</button>
+									</div>
+								))}
+							</div>
 						)}
 					</div>
 
