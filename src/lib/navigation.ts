@@ -141,6 +141,11 @@ export const NAV_ITEMS: NavItem[] = [
 				href: '/website/messages',
 				defaultRoles: [5],
 			},
+			{
+				name: 'Official Store',
+				href: '/website/official-store',
+				defaultRoles: [5],
+			},
 		],
 	},
 	{
