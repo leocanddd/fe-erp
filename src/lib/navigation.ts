@@ -146,6 +146,11 @@ export const NAV_ITEMS: NavItem[] = [
 				href: '/website/official-store',
 				defaultRoles: [5],
 			},
+			{
+				name: 'Projects',
+				href: '/website/projects',
+				defaultRoles: [5],
+			},
 		],
 	},
 	{
