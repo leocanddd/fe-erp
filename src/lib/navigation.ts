@@ -112,16 +112,6 @@ export const NAV_ITEMS: NavItem[] = [
 		defaultRoles: [5],
 	},
 	{
-		name: 'Jobs',
-		href: '/jobs',
-		defaultRoles: [5],
-	},
-	{
-		name: 'Kategori Produk',
-		href: '/product-categories',
-		defaultRoles: [5],
-	},
-	{
 		name: 'Hak Akses Menu',
 		href: '/menu-permissions',
 		defaultRoles: [5],
@@ -149,6 +139,16 @@ export const NAV_ITEMS: NavItem[] = [
 			{
 				name: 'Projects',
 				href: '/website/projects',
+				defaultRoles: [5],
+			},
+			{
+				name: 'Kategori Produk',
+				href: '/product-categories',
+				defaultRoles: [5],
+			},
+			{
+				name: 'Karir',
+				href: '/jobs',
 				defaultRoles: [5],
 			},
 		],
