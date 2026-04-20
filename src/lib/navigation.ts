@@ -154,6 +154,23 @@ export const NAV_ITEMS: NavItem[] = [
 		],
 	},
 	{
+		name: 'Rockwoolindo',
+		href: '/rockwoolindo',
+		defaultRoles: [5],
+		submenu: [
+			{
+				name: 'Kategori',
+				href: '/rockwoolindo/categories',
+				defaultRoles: [5],
+			},
+			{
+				name: 'Produk',
+				href: '/rockwoolindo/products',
+				defaultRoles: [5],
+			},
+		],
+	},
+	{
 		name: 'Approve Blog',
 		href: '/blogs/approve',
 		defaultRoles: [5, 12],

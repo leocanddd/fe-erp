@@ -95,10 +95,16 @@ export default function Orders() {
 
 	const [user, setUser] =
 		useState<User | null>(null);
-	const [canPriceApprove, setCanPriceApprove] = useState(false);
-	const [canApprove, setCanApprove] = useState(false);
-	const [canProcess, setCanProcess] = useState(false);
-	const [canShipment, setCanShipment] = useState(false);
+	const [
+		canPriceApprove,
+		setCanPriceApprove,
+	] = useState(false);
+	const [canApprove, setCanApprove] =
+		useState(false);
+	const [canProcess, setCanProcess] =
+		useState(false);
+	const [canShipment, setCanShipment] =
+		useState(false);
 	const [
 		showDescModal,
 		setShowDescModal,
@@ -132,8 +138,9 @@ export default function Orders() {
 		showProductDropdown,
 		setShowProductDropdown,
 	] = useState<number | null>(null);
-	const [stores, setStores] =
-		useState<Store[]>([]);
+	const [stores, setStores] = useState<
+		Store[]
+	>([]);
 	const [storeSearch, setStoreSearch] =
 		useState('');
 	const [
@@ -184,12 +191,37 @@ export default function Orders() {
 		const userData = getStoredUser();
 		if (userData) {
 			setUser(userData);
-			const perms = getMenuPermissions();
+			const perms =
+				getMenuPermissions();
 			const r = userData.role;
-			setCanPriceApprove((perms['/orders/action/price-approve'] ?? [5, 7]).includes(r));
-			setCanApprove((perms['/orders/action/approve'] ?? [5, 6]).includes(r));
-			setCanProcess((perms['/orders/action/process'] ?? [5, 3]).includes(r));
-			setCanShipment((perms['/orders/action/shipment'] ?? [5, 8]).includes(r));
+			setCanPriceApprove(
+				(
+					perms[
+						'/orders/action/price-approve'
+					] ?? [5, 7]
+				).includes(r),
+			);
+			setCanApprove(
+				(
+					perms[
+						'/orders/action/approve'
+					] ?? [5, 6]
+				).includes(r),
+			);
+			setCanProcess(
+				(
+					perms[
+						'/orders/action/process'
+					] ?? [5, 3]
+				).includes(r),
+			);
+			setCanShipment(
+				(
+					perms[
+						'/orders/action/shipment'
+					] ?? [5, 8]
+				).includes(r),
+			);
 		}
 	}, []);
 
@@ -247,19 +279,33 @@ export default function Orders() {
 			}
 		}, []);
 
-	const fetchStores = useCallback(async (searchTerm: string) => {
-		setLoadingStores(true);
-		try {
-			const response = await getStores(1, 20, searchTerm);
-			if (response.statusCode === 200) {
-				setStores(response.data || []);
+	const fetchStores = useCallback(
+		async (searchTerm: string) => {
+			setLoadingStores(true);
+			try {
+				const response =
+					await getStores(
+						1,
+						20,
+						searchTerm,
+					);
+				if (
+					response.statusCode === 200
+				) {
+					setStores(
+						response.data || [],
+					);
+				}
+			} catch {
+				console.error(
+					'Failed to fetch stores',
+				);
+			} finally {
+				setLoadingStores(false);
 			}
-		} catch {
-			console.error('Failed to fetch stores');
-		} finally {
-			setLoadingStores(false);
-		}
-	}, []);
+		},
+		[],
+	);
 
 	useEffect(() => {
 		if (showAddModal || showEditModal) {
@@ -474,7 +520,9 @@ export default function Orders() {
 		);
 	};
 
-	const handleStoreSearchChange = (value: string) => {
+	const handleStoreSearchChange = (
+		value: string,
+	) => {
 		setStoreSearch(value);
 		setFormData((prev) => ({
 			...prev,
@@ -484,15 +532,20 @@ export default function Orders() {
 
 		// Debounce the API call
 		if (debounceTimerRef.current) {
-			clearTimeout(debounceTimerRef.current);
+			clearTimeout(
+				debounceTimerRef.current,
+			);
 		}
 
-		debounceTimerRef.current = setTimeout(() => {
-			fetchStores(value);
-		}, 300);
+		debounceTimerRef.current =
+			setTimeout(() => {
+				fetchStores(value);
+			}, 300);
 	};
 
-	const handleStoreSelect = (store: Store) => {
+	const handleStoreSelect = (
+		store: Store,
+	) => {
 		setFormData((prev) => ({
 			...prev,
 			store: store.name,
@@ -550,7 +603,9 @@ export default function Orders() {
 					new Date().toISOString(),
 				shipmentTime:
 					formData.shipmentTime,
-				...(formData.store && { store: formData.store.trim() }),
+				...(formData.store && {
+					store: formData.store.trim(),
+				}),
 				products: formData.products.map(
 					(p) => ({
 						product: p.product.trim(),
@@ -619,7 +674,9 @@ export default function Orders() {
 					editingOrder.orderDate,
 				shipmentTime:
 					formData.shipmentTime,
-				...(formData.store && { store: formData.store.trim() }),
+				...(formData.store && {
+					store: formData.store.trim(),
+				}),
 				products: formData.products.map(
 					(p) => ({
 						product: p.product.trim(),
@@ -2131,12 +2188,18 @@ export default function Orders() {
 													/>
 												</div>
 
-												<div className="relative" ref={storeDropdownRef}>
+												<div
+													className="relative"
+													ref={
+														storeDropdownRef
+													}
+												>
 													<label
 														htmlFor="store"
 														className="block text-sm font-semibold text-gray-700 mb-2"
 													>
-														Toko (Opsional)
+														Toko
+														(Opsional)
 													</label>
 													<input
 														type="text"
@@ -2145,15 +2208,24 @@ export default function Orders() {
 														value={
 															storeSearch
 														}
-														onChange={(e) =>
+														onChange={(
+															e,
+														) =>
 															handleStoreSearchChange(
-																e.target.value,
+																e.target
+																	.value,
 															)
 														}
 														onFocus={() => {
-															setShowStoreDropdown(true);
-															if (!storeSearch) {
-																fetchStores('');
+															setShowStoreDropdown(
+																true,
+															);
+															if (
+																!storeSearch
+															) {
+																fetchStores(
+																	'',
+																);
 															}
 														}}
 														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
@@ -2168,26 +2240,42 @@ export default function Orders() {
 																		Memuat...
 																	</div>
 																</div>
-															) : stores.length > 0 ? (
-																stores.map((s) => (
-																	<div
-																		key={s.id}
-																		onClick={() =>
-																			handleStoreSelect(s)
-																		}
-																		className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-																	>
-																		<div className="font-medium text-gray-900">
-																			{s.name}
+															) : stores.length >
+															  0 ? (
+																stores.map(
+																	(
+																		s,
+																	) => (
+																		<div
+																			key={
+																				s.id
+																			}
+																			onClick={() =>
+																				handleStoreSelect(
+																					s,
+																				)
+																			}
+																			className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+																		>
+																			<div className="font-medium text-gray-900">
+																				{
+																					s.name
+																				}
+																			</div>
+																			<div className="text-xs text-gray-500">
+																				{
+																					s.location
+																				}
+																			</div>
 																		</div>
-																		<div className="text-xs text-gray-500">
-																			{s.location}
-																		</div>
-																	</div>
-																))
+																	),
+																)
 															) : (
 																<div className="px-4 py-3 text-gray-500 text-sm">
-																	Tidak ada toko ditemukan
+																	Tidak
+																	ada
+																	toko
+																	ditemukan
 																</div>
 															)}
 														</div>
