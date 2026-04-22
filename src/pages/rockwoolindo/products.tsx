@@ -119,7 +119,7 @@ export default function RockwoolindoProducts() {
 			const data =
 				await response.json();
 			const productsData =
-				(data.data || []).map((product: any) => ({
+				(data.data || []).map((product: { id?: string; _id?: string; [key: string]: unknown }) => ({
 					...product,
 					id: product.id || product._id,
 				}));
