@@ -1,6 +1,7 @@
 export interface WebsiteCatalogue {
 	_id?: string;
 	id?: string;
+	title: string;
 	images: string[];
 	descText: string;
 	createdAt?: string;
@@ -8,11 +9,13 @@ export interface WebsiteCatalogue {
 }
 
 export interface WebsiteCatalogueCreateRequest {
+	title: string;
 	images: string[];
 	descText: string;
 }
 
 export interface WebsiteCatalogueUpdateRequest {
+	title?: string;
 	images?: string[];
 	descText?: string;
 }

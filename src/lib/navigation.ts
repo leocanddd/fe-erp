@@ -122,6 +122,11 @@ export const NAV_ITEMS: NavItem[] = [
 		defaultRoles: [5],
 	},
 	{
+		name: 'Upload Gambar',
+		href: '/upload-image',
+		defaultRoles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+	},
+	{
 		name: 'Website',
 		href: '/website',
 		defaultRoles: [5],

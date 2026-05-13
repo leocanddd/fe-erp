@@ -16,6 +16,7 @@ export default function OfficialStore() {
 	const [showModal, setShowModal] = useState(false);
 	const [editingItem, setEditingItem] = useState<WebsiteCatalogue | null>(null);
 	const [formData, setFormData] = useState({
+		title: '',
 		images: [] as string[],
 		descText: '',
 	});
@@ -48,12 +49,14 @@ export default function OfficialStore() {
 		if (item) {
 			setEditingItem(item);
 			setFormData({
+				title: item.title,
 				images: item.images.length > 0 ? item.images : [],
 				descText: item.descText,
 			});
 		} else {
 			setEditingItem(null);
 			setFormData({
+				title: '',
 				images: [],
 				descText: '',
 			});
@@ -69,6 +72,7 @@ export default function OfficialStore() {
 		setShowModal(false);
 		setEditingItem(null);
 		setFormData({
+			title: '',
 			images: [],
 			descText: '',
 		});
@@ -126,6 +130,12 @@ export default function OfficialStore() {
 		setSubmitting(true);
 
 		try {
+			if (!formData.title.trim()) {
+				setError('Judul harus diisi');
+				setSubmitting(false);
+				return;
+			}
+
 			if (formData.images.length === 0) {
 				setError('Minimal satu gambar harus diupload');
 				setSubmitting(false);
@@ -139,6 +149,7 @@ export default function OfficialStore() {
 			}
 
 			const payload = {
+				title: formData.title.trim(),
 				images: formData.images,
 				descText: formData.descText.trim(),
 			};
@@ -241,6 +252,9 @@ export default function OfficialStore() {
 									<thead className="bg-gray-50">
 										<tr>
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+												Judul
+											</th>
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 												Gambar
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -261,7 +275,7 @@ export default function OfficialStore() {
 										{catalogues.length === 0 ? (
 											<tr>
 												<td
-													colSpan={5}
+													colSpan={6}
 													className="px-6 py-4 text-center text-gray-500"
 												>
 													Tidak ada data
@@ -270,6 +284,9 @@ export default function OfficialStore() {
 										) : (
 											catalogues.map((item) => (
 												<tr key={getItemId(item)} className="hover:bg-gray-50">
+													<td className="px-6 py-4 text-sm font-medium text-gray-900">
+														{item.title}
+													</td>
 													<td className="px-6 py-4 whitespace-nowrap">
 														<div className="flex gap-2 flex-wrap">
 															{item.images.slice(0, 3).map((img, idx) => (
@@ -333,6 +350,22 @@ export default function OfficialStore() {
 								{editingItem ? 'Edit Item' : 'Tambah Item Baru'}
 							</h2>
 							<form onSubmit={handleSubmit}>
+								<div className="mb-4">
+									<label className="block text-sm font-medium text-gray-700 mb-2">
+										Judul
+									</label>
+									<input
+										type="text"
+										value={formData.title}
+										onChange={(e) =>
+											setFormData({ ...formData, title: e.target.value })
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+										placeholder="Masukkan judul..."
+										required
+									/>
+								</div>
+
 								<div className="mb-4">
 									<label className="block text-sm font-medium text-gray-700 mb-2">
 										Gambar
