@@ -8,7 +8,10 @@ export interface NavItem {
 	submenu?: NavItem[];
 }
 
-export const ROLES: Record<number, string> = {
+export const ROLES: Record<
+	number,
+	string
+> = {
 	1: 'Sales Retail',
 	2: 'Sales Project',
 	3: 'Admin',
@@ -27,109 +30,135 @@ export const ROLES: Record<number, string> = {
 
 // All role numbers that exist (excluding 5 — superadmin always sees everything)
 export const ALL_ROLE_IDS = [
-	1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+	1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12,
+	13, 14,
 ];
 
 export const NAV_ITEMS: NavItem[] = [
 	{
 		name: 'Beranda',
 		href: '/dashboard',
-		defaultRoles: [3, 4, 5, 6, 7, 8, 9, 10],
+		defaultRoles: [
+			3, 4, 5, 6, 7, 8, 9, 10,
+		],
 	},
 	{
-		name: 'Produk',
-		href: '/products',
+		name: 'Inventory',
+		href: '/inventory',
 		defaultRoles: [3, 4, 5, 6, 7, 8, 9],
+		submenu: [
+			{
+				name: 'Produk',
+				href: '/products',
+				defaultRoles: [
+					3, 4, 5, 6, 7, 8, 9,
+				],
+			},
+			{
+				name: 'Stok Palet',
+				href: '/stocks',
+				defaultRoles: [3, 4, 5, 8],
+			},
+		],
 	},
 	{
-		name: 'Stok Palet',
-		href: '/stocks',
-		defaultRoles: [3, 4, 5, 8],
-	},
-	{
-		name: 'Toko',
-		href: '/stores',
-		defaultRoles: [4, 5],
-	},
-	{
-		name: 'Pesanan',
-		href: '/orders',
+		name: 'Sales Retail',
+		href: '/retail',
 		defaultRoles: [3, 4, 5, 6, 7, 8],
+		submenu: [
+			{
+				name: 'Laporan Visit',
+				href: '/reports',
+				defaultRoles: [4, 5, 10],
+			},
+			{
+				name: 'Pesanan',
+				href: '/orders',
+				defaultRoles: [
+					3, 4, 5, 6, 7, 8,
+				],
+			},
+			{
+				name: 'Toko',
+				href: '/stores',
+				defaultRoles: [4, 5],
+			},
+			{
+				name: 'Demo',
+				href: '/demo',
+				defaultRoles: [4, 5],
+			},
+		],
 	},
 	{
-		name: 'Pengguna',
-		href: '/users',
-		defaultRoles: [5],
+		name: 'Sales Project',
+		href: '/sales-project',
+		defaultRoles: [5, 9, 10, 3],
+		submenu: [
+			{
+				name: 'Laporan Project',
+				href: '/reports-project',
+				defaultRoles: [5, 9, 10],
+			},
+			{
+				name: 'Projects',
+				href: '/projects',
+				defaultRoles: [9, 5],
+			},
+			{
+				name: 'Quotation',
+				href: '/quotations',
+				defaultRoles: [5, 9, 3],
+			},
+		],
 	},
 	{
-		name: 'History',
-		href: '/history',
+		name: 'Admin',
+		href: '/admin',
 		defaultRoles: [5],
+		submenu: [
+			{
+				name: 'Pengguna',
+				href: '/users',
+				defaultRoles: [5],
+			},
+			{
+				name: 'History',
+				href: '/history',
+				defaultRoles: [5],
+			},
+			{
+				name: 'Hak Akses Menu',
+				href: '/menu-permissions',
+				defaultRoles: [5],
+			},
+			{
+				name: 'Point',
+				href: '/point',
+				defaultRoles: [5],
+			},
+		],
 	},
+
 	{
 		name: 'Profil',
 		href: '/profile',
 		defaultRoles: [5],
 	},
-	{
-		name: 'Quotation',
-		href: '/quotations',
-		defaultRoles: [5, 9, 3],
-	},
-	{
-		name: 'Laporan',
-		href: '/reports',
-		defaultRoles: [4, 5, 10],
-	},
-	{
-		name: 'Laporan Project',
-		href: '/reports-project',
-		defaultRoles: [5, 9, 10],
-	},
-	{
-		name: 'Demo',
-		href: '/demo',
-		defaultRoles: [4, 5],
-	},
-	{
-		name: 'Projects',
-		href: '/projects',
-		defaultRoles: [9, 5],
-	},
+
 	{
 		name: 'Kolektor',
 		href: '/kolektor',
 		defaultRoles: [6, 5],
 	},
-	{
-		name: 'Blogs',
-		href: '/blogs',
-		defaultRoles: [5, 12, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14],
-	},
-	{
-		name: 'Produk Web',
-		href: '/web-products',
-		defaultRoles: [5],
-	},
-	{
-		name: 'Hak Akses Menu',
-		href: '/menu-permissions',
-		defaultRoles: [5],
-	},
-	{
-		name: 'Point',
-		href: '/point',
-		defaultRoles: [5],
-	},
-	{
-		name: 'Upload Gambar',
-		href: '/upload-image',
-		defaultRoles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-	},
+
 	{
 		name: 'Website',
 		href: '/website',
-		defaultRoles: [5],
+		defaultRoles: [
+			5, 12, 1, 2, 3, 4, 6, 7, 8, 9, 10,
+			11, 13, 14,
+		],
 		submenu: [
 			{
 				name: 'Pesan',
@@ -154,6 +183,27 @@ export const NAV_ITEMS: NavItem[] = [
 			{
 				name: 'Karir',
 				href: '/jobs',
+				defaultRoles: [5],
+			},
+			{
+				name: 'Blogs',
+				href: '/blogs',
+				defaultRoles: [
+					5, 12, 1, 2, 3, 4, 6, 7, 8, 9,
+					10, 11, 13, 14,
+				],
+			},
+			{
+				name: 'Upload Gambar',
+				href: '/upload-image',
+				defaultRoles: [
+					1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+					11, 12, 13, 14,
+				],
+			},
+			{
+				name: 'Produk Web',
+				href: '/web-products',
 				defaultRoles: [5],
 			},
 		],
@@ -222,10 +272,16 @@ export const NAV_ITEMS: NavItem[] = [
 const STORAGE_KEY = 'menuPermissions';
 
 /** Returns the current role map: { [href]: number[] } */
-export function getMenuPermissions(): Record<string, number[]> {
-	if (typeof window === 'undefined') return buildDefault();
+export function getMenuPermissions(): Record<
+	string,
+	number[]
+> {
+	if (typeof window === 'undefined')
+		return buildDefault();
 	try {
-		const raw = localStorage.getItem(STORAGE_KEY);
+		const raw = localStorage.getItem(
+			STORAGE_KEY,
+		);
 		if (raw) return JSON.parse(raw);
 	} catch {
 		// fall through
@@ -236,15 +292,20 @@ export function getMenuPermissions(): Record<string, number[]> {
 export function saveMenuPermissions(
 	permissions: Record<string, number[]>,
 ): void {
-	if (typeof window === 'undefined') return;
+	if (typeof window === 'undefined')
+		return;
 	localStorage.setItem(
 		STORAGE_KEY,
 		JSON.stringify(permissions),
 	);
 }
 
-function buildDefault(): Record<string, number[]> {
-	const map: Record<string, number[]> = {};
+function buildDefault(): Record<
+	string,
+	number[]
+> {
+	const map: Record<string, number[]> =
+		{};
 	for (const item of NAV_ITEMS) {
 		map[item.href] = item.defaultRoles;
 	}
