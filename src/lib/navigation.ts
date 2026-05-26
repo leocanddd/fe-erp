@@ -64,7 +64,9 @@ export const NAV_ITEMS: NavItem[] = [
 	{
 		name: 'Sales Retail',
 		href: '/retail',
-		defaultRoles: [3, 4, 5, 6, 7, 8],
+		defaultRoles: [
+			3, 4, 5, 6, 7, 8, 10,
+		],
 		submenu: [
 			{
 				name: 'Laporan Visit',
