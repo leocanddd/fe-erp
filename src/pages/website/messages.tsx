@@ -18,6 +18,7 @@ export default function WebMessages() {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [total, setTotal] = useState(0);
+	const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
 	const limit = 10;
 
 	useEffect(() => {
@@ -155,8 +156,18 @@ export default function WebMessages() {
 															{message.company}
 														</td>
 														<td className="px-6 py-4 text-sm text-gray-500">
-															<div className="max-w-xs truncate" title={message.message}>
-																{message.message}
+															<div className="max-w-xs">
+																<div className={expandedMessageId === message._id ? '' : 'truncate'}>
+																	{message.message}
+																</div>
+																<button
+																	onClick={() => setExpandedMessageId(
+																		expandedMessageId === message._id ? null : message._id
+																	)}
+																	className="text-blue-600 hover:text-blue-800 text-xs mt-1"
+																>
+																	{expandedMessageId === message._id ? 'Sembunyikan' : 'Lihat Selengkapnya'}
+																</button>
 															</div>
 														</td>
 														<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
