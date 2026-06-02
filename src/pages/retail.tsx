@@ -1,8 +1,8 @@
 import MainLayout from '@/components/MainLayout';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getStores } from '@/lib/stores';
-import { getVisits } from '@/lib/visits';
+import { getVisits, Visit } from '@/lib/visits';
 
 interface RetailStats {
 	totalStores: number;
@@ -39,13 +39,7 @@ export default function RetailOverview() {
 		setStartDate(start.toISOString().split('T')[0]);
 	}, []);
 
-	useEffect(() => {
-		if (startDate && endDate) {
-			fetchRetailData();
-		}
-	}, [startDate, endDate]);
-
-	const fetchRetailData = async () => {
+	const fetchRetailData = useCallback(async () => {
 		setLoading(true);
 		try {
 			// Fetch stores data
@@ -83,9 +77,15 @@ export default function RetailOverview() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [startDate, endDate]);
 
-	const processVisitTrends = (visits: any[]): VisitTrend[] => {
+	useEffect(() => {
+		if (startDate && endDate) {
+			fetchRetailData();
+		}
+	}, [startDate, endDate, fetchRetailData]);
+
+	const processVisitTrends = (visits: Visit[]): VisitTrend[] => {
 		const trendMap = new Map<string, number>();
 
 		visits.forEach((visit) => {

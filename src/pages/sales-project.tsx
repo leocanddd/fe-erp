@@ -1,7 +1,7 @@
 import MainLayout from '@/components/MainLayout';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { getProjects } from '@/lib/projects';
+import { useCallback, useEffect, useState } from 'react';
+import { getProjects, Project } from '@/lib/projects';
 
 interface ProjectStats {
 	totalProjects: number;
@@ -36,13 +36,7 @@ export default function SalesProjectOverview() {
 		setStartDate(start.toISOString().split('T')[0]);
 	}, []);
 
-	useEffect(() => {
-		if (startDate && endDate) {
-			fetchProjectData();
-		}
-	}, [startDate, endDate]);
-
-	const fetchProjectData = async () => {
+	const fetchProjectData = useCallback(async () => {
 		setLoading(true);
 		try {
 			// Fetch all projects
@@ -76,9 +70,15 @@ export default function SalesProjectOverview() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [startDate, endDate]);
 
-	const processProjectTrends = (projects: any[]): ProjectTrend[] => {
+	useEffect(() => {
+		if (startDate && endDate) {
+			fetchProjectData();
+		}
+	}, [startDate, endDate, fetchProjectData]);
+
+	const processProjectTrends = (projects: Project[]): ProjectTrend[] => {
 		const trendMap = new Map<string, number>();
 
 		projects.forEach((project) => {
