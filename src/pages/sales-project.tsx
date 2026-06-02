@@ -82,6 +82,7 @@ export default function SalesProjectOverview() {
 		const trendMap = new Map<string, number>();
 
 		projects.forEach((project) => {
+			if (!project.createdAt) return;
 			const date = new Date(project.createdAt).toISOString().split('T')[0];
 			trendMap.set(date, (trendMap.get(date) || 0) + 1);
 		});
