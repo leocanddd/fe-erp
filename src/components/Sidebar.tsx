@@ -171,6 +171,21 @@ const ICONS: Record<
 			/>
 		</svg>
 	),
+	'/retail': (
+		<svg
+			className="w-5 h-5"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+			/>
+		</svg>
+	),
 	'/reports': (
 		<svg
 			className="w-5 h-5"
@@ -213,6 +228,21 @@ const ICONS: Record<
 				strokeLinejoin="round"
 				strokeWidth={2}
 				d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+			/>
+		</svg>
+	),
+	'/sales-project': (
+		<svg
+			className="w-5 h-5"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
 			/>
 		</svg>
 	),
@@ -451,15 +481,14 @@ export default function Sidebar({
 
 								return (
 									<div key={item.href} className="space-y-1">
-										<button
-											onClick={() => toggleDropdown(item.href)}
+										<div
 											className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
 												active
 													? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
 													: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
 											}`}
 										>
-											<div className="flex items-center space-x-3">
+											<Link href={item.href} className="flex items-center space-x-3 flex-1">
 												{ICONS[item.href] ?? (
 													<svg
 														className="w-5 h-5"
@@ -476,21 +505,26 @@ export default function Sidebar({
 													</svg>
 												)}
 												<span>{item.name}</span>
-											</div>
-											<svg
-												className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
+											</Link>
+											<button
+												onClick={() => toggleDropdown(item.href)}
+												className="p-1"
 											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M19 9l-7 7-7-7"
-												/>
-											</svg>
-										</button>
+												<svg
+													className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M19 9l-7 7-7-7"
+													/>
+												</svg>
+											</button>
+										</div>
 
 										{/* Submenu */}
 										{isOpen && (
