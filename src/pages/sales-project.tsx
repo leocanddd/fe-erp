@@ -81,11 +81,11 @@ export default function SalesProjectOverview() {
 
 	// Calculate max values for bar charts
 	const maxProjectsBySales = Math.max(
-		...summary.projectsBySales.map((s) => s.count),
+		...(summary.projectsBySales || []).map((s) => s.count),
 		1
 	);
 	const maxVisitsBySales = Math.max(
-		...summary.visitsBySales.map((s) => s.count),
+		...(summary.visitsBySales || []).map((s) => s.count),
 		1
 	);
 
@@ -283,13 +283,13 @@ export default function SalesProjectOverview() {
 									<h2 className="text-xl font-semibold text-gray-900 mb-6">
 										Projects by Status
 									</h2>
-									{summary.projectsByStatus.length === 0 ? (
+									{(summary.projectsByStatus || []).length === 0 ? (
 										<p className="text-gray-500 text-center py-8">
 											No data available
 										</p>
 									) : (
 										<div className="space-y-4">
-											{summary.projectsByStatus.map(
+											{(summary.projectsByStatus || []).map(
 												(status, index) => {
 													const total =
 														summary.totalProjects;
@@ -341,13 +341,13 @@ export default function SalesProjectOverview() {
 									<h2 className="text-xl font-semibold text-gray-900 mb-6">
 										Projects by Sales Person
 									</h2>
-									{summary.projectsBySales.length === 0 ? (
+									{(summary.projectsBySales || []).length === 0 ? (
 										<p className="text-gray-500 text-center py-8">
 											No data available
 										</p>
 									) : (
 										<div className="space-y-3">
-											{summary.projectsBySales.map(
+											{(summary.projectsBySales || []).map(
 												(sales, index) => (
 													<div
 														key={index}
@@ -389,13 +389,13 @@ export default function SalesProjectOverview() {
 								<h2 className="text-xl font-semibold text-gray-900 mb-6">
 									Visits by Sales Person
 								</h2>
-								{summary.visitsBySales.length === 0 ? (
+								{(summary.visitsBySales || []).length === 0 ? (
 									<p className="text-gray-500 text-center py-8">
 										No data available
 									</p>
 								) : (
 									<div className="space-y-3">
-										{summary.visitsBySales.map(
+										{(summary.visitsBySales || []).map(
 											(sales, index) => (
 												<div
 													key={index}
