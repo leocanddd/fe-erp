@@ -8,6 +8,10 @@ export interface Project {
 	location: string;
 	pic: string;
 	contact: string;
+	status?: string;
+	username?: string;
+	createdBy?: string;
+	updatedBy?: string;
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -171,4 +175,93 @@ export const formatDateShort = (
 		month: 'short',
 		day: 'numeric',
 	});
+};
+
+// Project Summary interfaces
+export interface StatusCount {
+	_id: string;
+	count: number;
+}
+
+export interface SalesCount {
+	_id: string;
+	count: number;
+}
+
+export interface ProjectSummary {
+	totalProjects: number;
+	totalVisits: number;
+	newProjects: number;
+	projectsByStatus: StatusCount[];
+	projectsBySales: SalesCount[];
+	visitsBySales: SalesCount[];
+}
+
+export interface SummaryFilters {
+	start_date?: string;
+	end_date?: string;
+	username?: string;
+}
+
+export const getProjectsSummary = async (
+	filters: SummaryFilters = {}
+): Promise<ApiResponse<ProjectSummary>> => {
+	try {
+		const params = new URLSearchParams();
+
+		if (filters.start_date)
+			params.append(
+				'start_date',
+				filters.start_date
+			);
+		if (filters.end_date)
+			params.append(
+				'end_date',
+				filters.end_date
+			);
+		if (filters.username)
+			params.append(
+				'username',
+				filters.username
+			);
+
+		const queryString = params.toString();
+		const url = `${API_BASE_URL}/api/projects/summary${
+			queryString ? `?${queryString}` : ''
+		}`;
+
+		const response = await fetch(url, {
+			method: 'GET',
+			headers: {
+				'Content-Type':
+					'application/json',
+			},
+		});
+
+		const data = await response.json();
+
+		if (
+			data.status === 'success' &&
+			data.statusCode === 200
+		) {
+			return {
+				statusCode: 200,
+				data: data.data,
+			};
+		} else {
+			return {
+				statusCode:
+					data.statusCode ||
+					response.status,
+				error:
+					data.message ||
+					`HTTP error! status: ${response.status}`,
+			};
+		}
+	} catch {
+		return {
+			statusCode: 500,
+			error: 'Failed to fetch project summary',
+		};
+	}
 };

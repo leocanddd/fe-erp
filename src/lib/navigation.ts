@@ -98,6 +98,11 @@ export const NAV_ITEMS: NavItem[] = [
 		defaultRoles: [5, 9, 10, 3],
 		submenu: [
 			{
+				name: 'Dashboard',
+				href: '/sales-project',
+				defaultRoles: [5, 9, 10, 3],
+			},
+			{
 				name: 'Laporan Project',
 				href: '/reports-project',
 				defaultRoles: [5, 9, 10],
