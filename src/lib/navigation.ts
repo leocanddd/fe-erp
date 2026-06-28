@@ -108,6 +108,13 @@ export const NAV_ITEMS: NavItem[] = [
 				defaultRoles: [5, 9, 10],
 			},
 			{
+				name: 'PO',
+				href: '/po',
+				defaultRoles: [
+					3, 5, 6, 7, 8, 9,
+				],
+			},
+			{
 				name: 'Projects',
 				href: '/projects',
 				defaultRoles: [9, 5],
@@ -156,7 +163,24 @@ export const NAV_ITEMS: NavItem[] = [
 	{
 		name: 'Kolektor',
 		href: '/kolektor',
-		defaultRoles: [6, 5],
+		defaultRoles: [6, 5, 11],
+		submenu: [
+			{
+				name: 'Dashboard',
+				href: '/kolektor',
+				defaultRoles: [5, 6, 11],
+			},
+			{
+				name: 'AR',
+				href: '/kolektor/ar',
+				defaultRoles: [5, 6, 11],
+			},
+			{
+				name: 'Visits',
+				href: '/kolektor/visits',
+				defaultRoles: [5, 6, 11],
+			},
+		],
 	},
 
 	{
@@ -259,6 +283,30 @@ export const NAV_ITEMS: NavItem[] = [
 	{
 		name: 'Pesanan: Kirim & Selesai',
 		href: '/orders/action/shipment',
+		defaultRoles: [5, 8],
+		permissionOnly: true,
+	},
+	{
+		name: 'PO: Setujui Harga',
+		href: '/po/action/price-approve',
+		defaultRoles: [5, 7],
+		permissionOnly: true,
+	},
+	{
+		name: 'PO: Setujui & Tolak',
+		href: '/po/action/approve',
+		defaultRoles: [5, 6],
+		permissionOnly: true,
+	},
+	{
+		name: 'PO: Proses',
+		href: '/po/action/process',
+		defaultRoles: [5, 3],
+		permissionOnly: true,
+	},
+	{
+		name: 'PO: Kirim & Selesai',
+		href: '/po/action/shipment',
 		defaultRoles: [5, 8],
 		permissionOnly: true,
 	},

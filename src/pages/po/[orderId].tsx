@@ -51,12 +51,12 @@ export default function OrderDetail() {
 			} else {
 				setError(
 					response.error ||
-						'Pesanan tidak ditemukan'
+						'PO tidak ditemukan'
 				);
 			}
 		} catch {
 			setError(
-				'Gagal memuat detail pesanan'
+				'Gagal memuat detail PO'
 			);
 		} finally {
 			setLoading(false);
@@ -177,12 +177,12 @@ export default function OrderDetail() {
 
 	if (loading) {
 		return (
-			<MainLayout title="Detail Pesanan">
+			<MainLayout title="Detail PO">
 				<div className="flex items-center justify-center min-h-[400px]">
 					<div className="flex items-center space-x-3">
 						<div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
 						<div className="text-lg text-gray-600 font-medium">
-							Memuat detail pesanan...
+							Memuat detail PO...
 						</div>
 					</div>
 				</div>
@@ -192,20 +192,20 @@ export default function OrderDetail() {
 
 	if (error || !order) {
 		return (
-			<MainLayout title="Detail Pesanan">
+			<MainLayout title="Detail PO">
 				<div className="max-w-4xl mx-auto">
 					<div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
 						<div className="text-red-600 font-medium text-lg mb-2">
 							{error ||
-								'Pesanan tidak ditemukan'}
+								'PO tidak ditemukan'}
 						</div>
 						<button
 							onClick={() =>
-								router.push('/orders')
+								router.push('/po')
 							}
 							className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
 						>
-							Kembali ke Daftar Pesanan
+							Kembali ke Daftar PO
 						</button>
 					</div>
 				</div>
@@ -215,19 +215,19 @@ export default function OrderDetail() {
 
 	return (
 		<MainLayout
-			title={`Detail Pesanan ${order.orderId}`}
+			title={`Detail PO ${order.orderId}`}
 		>
 			<div className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div className="mb-8 flex justify-between items-center">
 					<div>
 						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Detail Pesanan{' '}
+							Detail PO{' '}
 							{order.orderId}
 						</h2>
 						<p className="text-gray-600">
 							Detail lengkap informasi
-							pesanan
+							PO
 						</p>
 					</div>
 					<div className="flex gap-3">
@@ -245,7 +245,7 @@ export default function OrderDetail() {
 						)}
 						<button
 							onClick={() =>
-								router.push('/orders')
+								router.push('/po')
 							}
 							className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
 						>
@@ -265,7 +265,7 @@ export default function OrderDetail() {
 					{/* Order Information */}
 					<div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-white/20">
 						<h3 className="text-lg font-semibold text-gray-900 mb-6">
-							Informasi Pesanan
+							Informasi PO
 						</h3>
 
 						<div className="space-y-4">
@@ -295,7 +295,7 @@ export default function OrderDetail() {
 							</div>
 							<div>
 								<dt className="text-sm font-medium text-gray-500">
-									Tanggal Pesanan
+									Tanggal PO
 								</dt>
 								<dd className="text-sm font-semibold text-gray-900">
 									{new Date(
@@ -449,7 +449,7 @@ export default function OrderDetail() {
 					{/* Timeline Status */}
 					<div className="lg:col-span-2 bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-white/20">
 						<h3 className="text-lg font-semibold text-gray-900 mb-8">
-							Timeline Status Pesanan
+							Timeline Status PO
 						</h3>
 
 						<div className="relative">
@@ -478,7 +478,7 @@ export default function OrderDetail() {
 										<div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
 											<div className="flex items-center justify-between mb-2">
 												<h4 className="font-semibold text-blue-600">
-													Pesanan Dibuat
+													PO Dibuat
 												</h4>
 												<span className="text-xs text-gray-500">
 													{order.createdAt
@@ -504,7 +504,7 @@ export default function OrderDetail() {
 												</span>
 											</div>
 											<p className="text-sm text-gray-600">
-												Pesanan telah
+												PO telah
 												dibuat dan masuk
 												ke sistem
 											</p>
@@ -576,7 +576,7 @@ export default function OrderDetail() {
 													{order
 														.priceApproved
 														.description ||
-														'Harga pesanan telah disetujui'}
+														'Harga PO telah disetujui'}
 												</p>
 												<p className="text-xs text-gray-500 mt-2">
 													Oleh:{' '}
@@ -616,7 +616,7 @@ export default function OrderDetail() {
 											<div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
 												<div className="flex items-center justify-between mb-2">
 													<h4 className="font-semibold text-emerald-600">
-														Pesanan
+														PO
 														Disetujui
 													</h4>
 													<span className="text-xs text-gray-500">
@@ -649,7 +649,7 @@ export default function OrderDetail() {
 													{order
 														.approved
 														.description ||
-														'Pesanan telah disetujui dan akan diproses'}
+														'PO telah disetujui dan akan diproses'}
 												</p>
 												<p className="text-xs text-gray-500 mt-2">
 													Oleh:{' '}
@@ -689,7 +689,7 @@ export default function OrderDetail() {
 											<div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
 												<div className="flex items-center justify-between mb-2">
 													<h4 className="font-semibold text-orange-600">
-														Pesanan
+														PO
 														Ditolak
 													</h4>
 													<span className="text-xs text-gray-500">
@@ -722,7 +722,7 @@ export default function OrderDetail() {
 													{order
 														.rejected
 														.description ||
-														'Pesanan ditolak dan tidak dapat diproses'}
+														'PO ditolak dan tidak dapat diproses'}
 												</p>
 												<p className="text-xs text-gray-500 mt-2">
 													Oleh:{' '}
@@ -762,7 +762,7 @@ export default function OrderDetail() {
 											<div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
 												<div className="flex items-center justify-between mb-2">
 													<h4 className="font-semibold text-blue-600">
-														Pesanan
+														PO
 														Diproses
 													</h4>
 													<span className="text-xs text-gray-500">
@@ -795,7 +795,7 @@ export default function OrderDetail() {
 													{order
 														.processed
 														.description ||
-														'Pesanan sedang dalam tahap pemrosesan'}
+														'PO sedang dalam tahap pemrosesan'}
 												</p>
 												<p className="text-xs text-gray-500 mt-2">
 													Oleh:{' '}
@@ -835,7 +835,7 @@ export default function OrderDetail() {
 											<div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
 												<div className="flex items-center justify-between mb-2">
 													<h4 className="font-semibold text-teal-600">
-														Pesanan
+														PO
 														Dikirim
 													</h4>
 													<span className="text-xs text-gray-500">
@@ -868,7 +868,7 @@ export default function OrderDetail() {
 													{order
 														.shipment
 														.description ||
-														'Pesanan telah dikirim ke alamat tujuan'}
+														'PO telah dikirim ke alamat tujuan'}
 												</p>
 												<p className="text-xs text-gray-500 mt-2">
 													Oleh:{' '}
@@ -908,7 +908,7 @@ export default function OrderDetail() {
 											<div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
 												<div className="flex items-center justify-between mb-2">
 													<h4 className="font-semibold text-green-600">
-														Pesanan
+														PO
 														Selesai
 													</h4>
 													<span className="text-xs text-gray-500">
@@ -941,7 +941,7 @@ export default function OrderDetail() {
 													{order
 														.finished
 														.description ||
-														'Pesanan telah selesai dan berhasil diselesaikan'}
+														'PO telah selesai dan berhasil diselesaikan'}
 												</p>
 												<p className="text-xs text-gray-500 mt-2">
 													Oleh:{' '}
@@ -981,7 +981,7 @@ export default function OrderDetail() {
 											<div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
 												<div className="flex items-center justify-between mb-2">
 													<h4 className="font-semibold text-red-600">
-														Pesanan
+														PO
 														Dibatalkan
 													</h4>
 													<span className="text-xs text-gray-500">
@@ -1014,7 +1014,7 @@ export default function OrderDetail() {
 													{order
 														.cancelled
 														.description ||
-														'Pesanan telah dibatalkan'}
+														'PO telah dibatalkan'}
 												</p>
 												<p className="text-xs text-gray-500 mt-2">
 													Oleh:{' '}
@@ -1070,7 +1070,7 @@ export default function OrderDetail() {
 													Update Status
 												</h4>
 												<p className="text-sm text-gray-600">
-													Pesanan sedang
+													PO sedang
 													menunggu
 													update status
 													lebih lanjut

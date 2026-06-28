@@ -31,6 +31,8 @@ interface Order {
 	username?: string;
 	createdAt?: string;
 	updatedAt?: string;
+	collector?: string;
+	paymentDueDate?: string;
 	// Legacy fields for backward compatibility
 	isProcessed?: boolean;
 	isFinished?: boolean;
@@ -69,6 +71,33 @@ interface OrdersListResponse {
 		itemsPerPage: number;
 	};
 	error?: string;
+}
+
+interface AssignCollectorRequest {
+	collector: string;
+	sp: string;
+}
+
+interface AR {
+	id: string;
+	arItemId: string;
+	orderId: string;
+	source: string;
+	client: string;
+	contact: string;
+	status: string;
+	collector: string;
+}
+
+interface AssignCollectorResponse {
+	status: string;
+	statusCode: number;
+	message: string;
+	data: {
+		order: Order;
+		arCreated: boolean;
+		ar?: AR;
+	};
 }
 
 const getApiUrl = () => {
@@ -118,13 +147,15 @@ export const createOrder = async (
 export const getOrders = async (
 	page: number = 1,
 	limit: number = 10,
-	customer: string = ''
+	customer: string = '',
+	type?: string
 ): Promise<OrdersListResponse> => {
 	try {
 		const params = new URLSearchParams({
 			page: page.toString(),
 			limit: limit.toString(),
 			...(customer && { customer }),
+			...(type && { type }),
 		});
 
 		const response = await fetch(
@@ -229,6 +260,7 @@ export const updateOrder = async (
 			rejected?: OrderStatus;
 			shipment?: OrderStatus;
 			priceApproved?: OrderStatus;
+			paymentDueDate?: string;
 		}
 	>
 ): Promise<OrderResponse> => {
@@ -278,10 +310,45 @@ export const deleteOrder = async (
 	}
 };
 
+export const assignCollectorToOrder = async (
+	orderId: string,
+	collector: string,
+	sp: string
+): Promise<AssignCollectorResponse> => {
+	try {
+		const response = await fetch(
+			`${getApiUrl()}/api/orders/${orderId}/assign-collector`,
+			{
+				method: 'PUT',
+				headers: getAuthHeaders(),
+				body: JSON.stringify({
+					collector,
+					sp,
+				}),
+			}
+		);
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(
+				error.error ||
+					'Failed to assign collector'
+			);
+		}
+
+		return await response.json();
+	} catch (error) {
+		throw error;
+	}
+};
+
 export type {
 	Order,
 	OrderCreateRequest,
 	OrderProduct,
 	OrderResponse,
 	OrdersListResponse,
+	AssignCollectorRequest,
+	AssignCollectorResponse,
+	AR,
 };

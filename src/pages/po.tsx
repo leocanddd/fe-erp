@@ -41,7 +41,7 @@ interface User {
 	role: number;
 }
 
-export default function Orders() {
+export default function PO() {
 	const [orders, setOrders] = useState<
 		Order[]
 	>([]);
@@ -100,6 +100,8 @@ export default function Orders() {
 		useState<User | null>(null);
 	const [collectors, setCollectors] =
 		useState<Assignee[]>([]);
+	const [paymentDueDates, setPaymentDueDates] =
+		useState<Record<string, string>>({});
 	const [
 		canPriceApprove,
 		setCanPriceApprove,
@@ -202,28 +204,28 @@ export default function Orders() {
 			setCanPriceApprove(
 				(
 					perms[
-						'/orders/action/price-approve'
+						'/po/action/price-approve'
 					] ?? [5, 7]
 				).includes(r),
 			);
 			setCanApprove(
 				(
 					perms[
-						'/orders/action/approve'
+						'/po/action/approve'
 					] ?? [5, 6]
 				).includes(r),
 			);
 			setCanProcess(
 				(
 					perms[
-						'/orders/action/process'
+						'/po/action/process'
 					] ?? [5, 3]
 				).includes(r),
 			);
 			setCanShipment(
 				(
 					perms[
-						'/orders/action/shipment'
+						'/po/action/shipment'
 					] ?? [5, 8]
 				).includes(r),
 			);
@@ -339,15 +341,15 @@ export default function Orders() {
 		useCallback(async () => {
 			setLoading(true);
 			try {
-				// Orders page always uses type="retail" (under Sales Retail menu)
+				// PO page always uses type="project"
 				const response =
 					await getOrders(
 						currentPage,
 						10,
 						search,
-						'retail'
+						'project'
 					);
-				console.log('Orders API Response:', response);
+				console.log('PO API Response:', response);
 				if (
 					response.data &&
 					Array.isArray(response.data)
@@ -367,18 +369,18 @@ export default function Orders() {
 				} else {
 					setError(
 						response.error ||
-							'Failed to fetch orders',
+							'Failed to fetch PO',
 					);
 				}
 			} catch (err) {
 				console.error('Error fetching orders:', err);
 				setError(
-					'Failed to fetch orders',
+					'Failed to fetch PO',
 				);
 			} finally {
 				setLoading(false);
 			}
-		}, [currentPage, search]);
+		}, [currentPage, search, user]);
 
 	useEffect(() => {
 		fetchOrders();
@@ -649,12 +651,12 @@ export default function Orders() {
 			} else {
 				setError(
 					response.error ||
-						'Gagal menambah pesanan',
+						'Gagal menambah PO',
 				);
 			}
 		} catch {
 			setError(
-				'Gagal menambah pesanan',
+				'Gagal menambah PO',
 			);
 		} finally {
 			setIsSubmitting(false);
@@ -724,12 +726,12 @@ export default function Orders() {
 			} else {
 				setError(
 					response.error ||
-						'Gagal mengubah pesanan',
+						'Gagal mengubah PO',
 				);
 			}
 		} catch {
 			setError(
-				'Gagal mengubah pesanan',
+				'Gagal mengubah PO',
 			);
 		} finally {
 			setIsSubmitting(false);
@@ -778,7 +780,7 @@ export default function Orders() {
 
 		if (!scannedOrder) {
 			setScanError(
-				'Tidak ada pesanan yang dipilih',
+				'Tidak ada PO yang dipilih',
 			);
 			setIsProcessingScan(false);
 			return;
@@ -1170,12 +1172,12 @@ export default function Orders() {
 				} else {
 					setError(
 						response.error ||
-							'Gagal mengubah status pesanan',
+							'Gagal mengubah status PO',
 					);
 				}
 			} catch {
 				setError(
-					'Gagal mengubah status pesanan',
+					'Gagal mengubah status PO',
 				);
 			}
 		};
@@ -1186,8 +1188,28 @@ export default function Orders() {
 	) => {
 		console.log('handleCollectorAssign called', { orderId, collectorName });
 
+		// Check if payment due date is set
+		const paymentDueDate = paymentDueDates[orderId];
+		if (!paymentDueDate) {
+			alert('Please set the payment due date first before assigning a collector.');
+			return;
+		}
+
 		// Fetch salespeople to get a valid SP username (role=2)
 		try {
+			// First, update the order with the payment due date
+			const paymentDueDateISO = new Date(paymentDueDate).toISOString();
+			console.log('Updating payment due date:', { orderId, paymentDueDate: paymentDueDateISO });
+
+			const updateResponse = await updateOrder(orderId, {
+				paymentDueDate: paymentDueDateISO,
+			});
+
+			if (updateResponse.status !== 'success') {
+				alert('Failed to set payment due date. Cannot assign collector.');
+				return;
+			}
+
 			const response = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/users?role=2`,
 				{
@@ -1217,6 +1239,12 @@ export default function Orders() {
 				spUsername
 			);
 			console.log('API response:', apiResponse);
+
+			// Clear the payment due date from state
+			const newPaymentDueDates = { ...paymentDueDates };
+			delete newPaymentDueDates[orderId];
+			setPaymentDueDates(newPaymentDueDates);
+
 			// Refresh orders list
 			fetchOrders();
 		} catch (err) {
@@ -1300,16 +1328,16 @@ export default function Orders() {
 	};
 
 	return (
-		<MainLayout title="Pesanan">
+		<MainLayout title="PO (Purchase Order)">
 			<div className="max-w-7xl mx-auto">
 				{/* Header with search and add button */}
 				<div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 					<div>
 						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Pesanan
+							PO
 						</h2>
 						<p className="text-gray-600">
-							Kelola pesanan dan status
+							Kelola PO dan status
 							pengiriman
 						</p>
 					</div>
@@ -1320,7 +1348,7 @@ export default function Orders() {
 							}
 							className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
 						>
-							Tambah Pesanan
+							Tambah PO
 						</button>
 					</div>
 				</div>
@@ -1340,7 +1368,7 @@ export default function Orders() {
 										e.target.value,
 									)
 								}
-								placeholder="Cari pesanan berdasarkan nama customer..."
+								placeholder="Cari PO berdasarkan nama customer..."
 								className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
 							/>
 						</div>
@@ -1368,13 +1396,13 @@ export default function Orders() {
 							<div className="inline-flex items-center space-x-3">
 								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
 								<span className="text-gray-600">
-									Memuat pesanan...
+									Memuat PO...
 								</span>
 							</div>
 						</div>
 					) : orders.length === 0 ? (
 						<div className="p-8 text-center text-gray-500">
-							Tidak ada pesanan yang
+							Tidak ada PO yang
 							ditemukan
 						</div>
 					) : (
@@ -1400,6 +1428,9 @@ export default function Orders() {
 											</th>
 											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
 												Status
+											</th>
+											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+												Payment Due Date
 											</th>
 											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
 												Collector
@@ -1483,6 +1514,31 @@ export default function Orders() {
 														)}
 													</td>
 													<td className="px-6 py-4 whitespace-nowrap">
+														{order.paymentDueDate && order.paymentDueDate !== '0001-01-01T00:00:00Z' ? (
+															<span className="text-xs text-gray-700">
+																{new Date(order.paymentDueDate).toLocaleDateString('id-ID', {
+																	year: 'numeric',
+																	month: 'short',
+																	day: 'numeric'
+																})}
+															</span>
+														) : !order.collector && order.approved?.isActive && order.shipment?.isActive && !order.cancelled?.isActive ? (
+															<input
+																type="date"
+																value={paymentDueDates[order.id!] || ''}
+																onChange={(e) =>
+																	setPaymentDueDates({
+																		...paymentDueDates,
+																		[order.id!]: e.target.value,
+																	})
+																}
+																className="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+															/>
+														) : (
+															<span className="text-xs text-gray-400">-</span>
+														)}
+													</td>
+													<td className="px-6 py-4 whitespace-nowrap">
 														{order.collector ? (
 															<span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
 																{order.collector}
@@ -1519,10 +1575,10 @@ export default function Orders() {
 													<td className="px-6 py-4 whitespace-nowrap text-center">
 														<button
 															onClick={() =>
-																(window.location.href = `/orders/${order.orderId}`)
+																(window.location.href = `/po/${order.orderId}`)
 															}
 															className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 transition-colors duration-200"
-															title="Lihat detail pesanan"
+															title="Lihat detail PO"
 														>
 															<svg
 																className="w-4 h-4"
@@ -1951,7 +2007,7 @@ export default function Orders() {
 										<div className="w-full">
 											<div className="flex items-center justify-between mb-6">
 												<h3 className="text-2xl font-bold text-gray-900">
-													Tambah Pesanan
+													Tambah PO
 													Baru
 												</h3>
 												<button
@@ -2394,7 +2450,7 @@ export default function Orders() {
 												Menyimpan...
 											</div>
 										) : (
-											'Simpan Pesanan'
+											'Simpan PO'
 										)}
 									</button>
 									<button
@@ -2444,7 +2500,7 @@ export default function Orders() {
 											<div className="w-full">
 												<div className="flex items-center justify-between mb-6">
 													<h3 className="text-2xl font-bold text-gray-900">
-														Edit Pesanan
+														Edit PO
 													</h3>
 													<button
 														type="button"
@@ -2855,14 +2911,14 @@ export default function Orders() {
 									</div>
 									<div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
 										<h3 className="text-lg leading-6 font-medium text-gray-900">
-											Hapus Pesanan
+											Hapus PO
 										</h3>
 										<div className="mt-2">
 											<p className="text-sm text-gray-500">
 												Apakah Anda
 												yakin ingin
 												menghapus
-												pesanan dari
+												PO dari
 												&quot;
 												{
 													orderToDelete?.customer
@@ -2934,25 +2990,25 @@ export default function Orders() {
 											<h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
 												{descModalType ===
 													'isProcessed' &&
-													'Proses Pesanan'}
+													'Proses PO'}
 												{descModalType ===
 													'isFinished' &&
-													'Selesaikan Pesanan'}
+													'Selesaikan PO'}
 												{descModalType ===
 													'isCancelled' &&
-													'Batalkan Pesanan'}
+													'Batalkan PO'}
 												{descModalType ===
 													'isApproved' &&
-													'Setujui Pesanan'}
+													'Setujui PO'}
 												{descModalType ===
 													'isRejected' &&
-													'Tolak Pesanan'}
+													'Tolak PO'}
 												{descModalType ===
 													'isPriceApproved' &&
 													'Setujui Harga'}
 												{descModalType ===
 													'isShipment' &&
-													'Kirim Pesanan'}
+													'Kirim PO'}
 											</h3>
 											<div className="mt-2">
 												<p className="text-sm text-gray-500 mb-4">

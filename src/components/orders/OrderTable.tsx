@@ -77,6 +77,9 @@ export default function OrderTable({ orders, loading, onEdit, onDelete, onToggle
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
             </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Collector
+            </th>
             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Aksi
             </th>
@@ -114,6 +117,15 @@ export default function OrderTable({ orders, loading, onEdit, onDelete, onToggle
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {getStatusBadge(order)}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {order.collector ? (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    {order.collector}
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400">-</span>
+                )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex items-center justify-end space-x-2">
