@@ -26,7 +26,17 @@ export default function Jobs() {
 
 	const [jobData, setJobData] = useState<CreateJobData>({
 		title: '',
-		description: '',
+		department: '',
+		location: '',
+		locations: [],
+		type: 'Full Time',
+		salaryRange: '',
+		probationPeriod: '',
+		intro: '',
+		responsibilities: [],
+		qualifications: [],
+		outro: '',
+		isActive: true,
 	});
 
 	const fetchJobs = useCallback(async () => {
@@ -75,7 +85,20 @@ export default function Jobs() {
 			const result = await createJob(jobData);
 			if (result.status === 'success' && result.statusCode === 201) {
 				setShowModal(false);
-				setJobData({ title: '', description: '' });
+				setJobData({
+					title: '',
+					department: '',
+					location: '',
+					locations: [],
+					type: 'Full Time',
+					salaryRange: '',
+					probationPeriod: '',
+					intro: '',
+					responsibilities: [],
+					qualifications: [],
+					outro: '',
+					isActive: true,
+				});
 				fetchJobs();
 				setError('');
 			} else {
@@ -92,7 +115,17 @@ export default function Jobs() {
 		setEditingJob(job);
 		setJobData({
 			title: job.title,
-			description: job.description,
+			department: job.department,
+			location: job.location,
+			locations: job.locations,
+			type: job.type,
+			salaryRange: job.salaryRange,
+			probationPeriod: job.probationPeriod,
+			intro: job.intro,
+			responsibilities: job.responsibilities,
+			qualifications: job.qualifications,
+			outro: job.outro,
+			isActive: job.isActive,
 		});
 		setShowModal(true);
 	};
@@ -106,14 +139,37 @@ export default function Jobs() {
 		try {
 			const updateData: UpdateJobData = {
 				title: jobData.title,
-				description: jobData.description,
+				department: jobData.department,
+				location: jobData.location,
+				locations: jobData.locations,
+				type: jobData.type,
+				salaryRange: jobData.salaryRange,
+				probationPeriod: jobData.probationPeriod,
+				intro: jobData.intro,
+				responsibilities: jobData.responsibilities,
+				qualifications: jobData.qualifications,
+				outro: jobData.outro,
+				isActive: jobData.isActive,
 			};
 
-			const result = await updateJob(editingJob.id, updateData);
+			const result = await updateJob(editingJob._id, updateData);
 			if (result.status === 'success' && result.statusCode === 200) {
 				setShowModal(false);
 				setEditingJob(null);
-				setJobData({ title: '', description: '' });
+				setJobData({
+					title: '',
+					department: '',
+					location: '',
+					locations: [],
+					type: 'Full Time',
+					salaryRange: '',
+					probationPeriod: '',
+					intro: '',
+					responsibilities: [],
+					qualifications: [],
+					outro: '',
+					isActive: true,
+				});
 				fetchJobs();
 				setError('');
 			} else {
@@ -163,7 +219,20 @@ export default function Jobs() {
 						<button
 							onClick={() => {
 								setEditingJob(null);
-								setJobData({ title: '', description: '' });
+								setJobData({
+									title: '',
+									department: '',
+									location: '',
+									locations: [],
+									type: 'Full Time',
+									salaryRange: '',
+									probationPeriod: '',
+									intro: '',
+									responsibilities: [],
+									qualifications: [],
+									outro: '',
+									isActive: true,
+								});
 								setShowModal(true);
 							}}
 							className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -239,10 +308,19 @@ export default function Jobs() {
 												Judul
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Deskripsi
+												Department
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Dibuat
+												Lokasi
+											</th>
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+												Type
+											</th>
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+												Salary Range
+											</th>
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+												Status
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 												Actions
@@ -251,21 +329,40 @@ export default function Jobs() {
 									</thead>
 									<tbody className="bg-white divide-y divide-gray-200">
 										{jobs.map((job) => (
-											<tr key={job.id} className="hover:bg-gray-50">
+											<tr key={job._id} className="hover:bg-gray-50">
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm font-medium text-gray-900">
 														{job.title}
 													</div>
 												</td>
-												<td className="px-6 py-4">
-													<div className="text-sm text-gray-900 max-w-md truncate">
-														{job.description}
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-900">
+														{job.department}
 													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-500">
-														{new Date(job.createdAt).toLocaleDateString('id-ID')}
+													<div className="text-sm text-gray-900">
+														{job.location}
 													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-900">
+														{job.type}
+													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-900">
+														{job.salaryRange}
+													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+														job.isActive
+															? 'bg-green-100 text-green-800'
+															: 'bg-gray-100 text-gray-800'
+													}`}>
+														{job.isActive ? 'Active' : 'Inactive'}
+													</span>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
 													<div className="flex space-x-2">
@@ -289,7 +386,7 @@ export default function Jobs() {
 															</svg>
 														</button>
 														<button
-															onClick={() => setDeleteConfirm(job.id)}
+															onClick={() => setDeleteConfirm(job._id)}
 															className="text-red-600 hover:text-red-900 transition-colors duration-200"
 															title="Delete job"
 														>
@@ -373,8 +470,8 @@ export default function Jobs() {
 
 			{/* Create/Edit Job Modal */}
 			{showModal && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+					<div className="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
 						<div className="flex justify-between items-center mb-6">
 							<h3 className="text-lg font-semibold text-gray-900">
 								{editingJob ? 'Edit Job' : 'Tambah Job Baru'}
@@ -383,7 +480,20 @@ export default function Jobs() {
 								onClick={() => {
 									setShowModal(false);
 									setEditingJob(null);
-									setJobData({ title: '', description: '' });
+									setJobData({
+										title: '',
+										department: '',
+										location: '',
+										locations: [],
+										type: 'Full Time',
+										salaryRange: '',
+										probationPeriod: '',
+										intro: '',
+										responsibilities: [],
+										qualifications: [],
+										outro: '',
+										isActive: true,
+									});
 								}}
 								className="text-gray-400 hover:text-gray-600 transition-colors"
 							>
@@ -406,44 +516,232 @@ export default function Jobs() {
 							onSubmit={editingJob ? handleUpdateJob : handleCreateJob}
 							className="space-y-4"
 						>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">
+										Judul Pekerjaan *
+									</label>
+									<input
+										type="text"
+										required
+										value={jobData.title}
+										onChange={(e) =>
+											setJobData((prev) => ({ ...prev, title: e.target.value }))
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+									/>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">
+										Department *
+									</label>
+									<input
+										type="text"
+										required
+										value={jobData.department}
+										onChange={(e) =>
+											setJobData((prev) => ({ ...prev, department: e.target.value }))
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+									/>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">
+										Type *
+									</label>
+									<select
+										required
+										value={jobData.type}
+										onChange={(e) =>
+											setJobData((prev) => ({ ...prev, type: e.target.value }))
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+									>
+										<option value="Full Time">Full Time</option>
+										<option value="Part Time">Part Time</option>
+										<option value="Contract">Contract</option>
+										<option value="Internship">Internship</option>
+									</select>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">
+										Probation Period *
+									</label>
+									<input
+										type="text"
+										required
+										placeholder="e.g., 3 Months"
+										value={jobData.probationPeriod}
+										onChange={(e) =>
+											setJobData((prev) => ({ ...prev, probationPeriod: e.target.value }))
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+									/>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">
+										Primary Location *
+									</label>
+									<input
+										type="text"
+										required
+										value={jobData.location}
+										onChange={(e) =>
+											setJobData((prev) => ({ ...prev, location: e.target.value }))
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+									/>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">
+										Salary Range *
+									</label>
+									<input
+										type="text"
+										required
+										placeholder="e.g., Rp 5,000,000 - Rp 7,000,000"
+										value={jobData.salaryRange}
+										onChange={(e) =>
+											setJobData((prev) => ({ ...prev, salaryRange: e.target.value }))
+										}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+									/>
+								</div>
+							</div>
+
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Judul Pekerjaan
+									Additional Locations (comma-separated)
 								</label>
 								<input
 									type="text"
-									required
-									value={jobData.title}
-									onChange={(e) =>
-										setJobData((prev) => ({ ...prev, title: e.target.value }))
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Deskripsi
-								</label>
-								<textarea
-									required
-									rows={4}
-									value={jobData.description}
+									placeholder="e.g., Jakarta Barat, Tangerang Kota"
+									value={jobData.locations.join(', ')}
 									onChange={(e) =>
 										setJobData((prev) => ({
 											...prev,
-											description: e.target.value,
+											locations: e.target.value.split(',').map(s => s.trim()).filter(s => s),
 										}))
 									}
 									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
 								/>
 							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Introduction *
+								</label>
+								<textarea
+									required
+									rows={3}
+									value={jobData.intro}
+									onChange={(e) =>
+										setJobData((prev) => ({
+											...prev,
+											intro: e.target.value,
+										}))
+									}
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+								/>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Responsibilities (one per line) *
+								</label>
+								<textarea
+									required
+									rows={5}
+									placeholder="Enter each responsibility on a new line"
+									value={jobData.responsibilities.join('\n')}
+									onChange={(e) =>
+										setJobData((prev) => ({
+											...prev,
+											responsibilities: e.target.value.split('\n').filter(s => s.trim()),
+										}))
+									}
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+								/>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Qualifications (one per line) *
+								</label>
+								<textarea
+									required
+									rows={5}
+									placeholder="Enter each qualification on a new line"
+									value={jobData.qualifications.join('\n')}
+									onChange={(e) =>
+										setJobData((prev) => ({
+											...prev,
+											qualifications: e.target.value.split('\n').filter(s => s.trim()),
+										}))
+									}
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+								/>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Closing Statement *
+								</label>
+								<textarea
+									required
+									rows={3}
+									value={jobData.outro}
+									onChange={(e) =>
+										setJobData((prev) => ({
+											...prev,
+											outro: e.target.value,
+										}))
+									}
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+								/>
+							</div>
+
+							<div className="flex items-center">
+								<input
+									type="checkbox"
+									id="isActive"
+									checked={jobData.isActive}
+									onChange={(e) =>
+										setJobData((prev) => ({ ...prev, isActive: e.target.checked }))
+									}
+									className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+								/>
+								<label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
+									Active Job Posting
+								</label>
+							</div>
+
 							<div className="flex space-x-3 pt-4">
 								<button
 									type="button"
 									onClick={() => {
 										setShowModal(false);
 										setEditingJob(null);
-										setJobData({ title: '', description: '' });
+										setJobData({
+											title: '',
+											department: '',
+											location: '',
+											locations: [],
+											type: 'Full Time',
+											salaryRange: '',
+											probationPeriod: '',
+											intro: '',
+											responsibilities: [],
+											qualifications: [],
+											outro: '',
+											isActive: true,
+										});
 									}}
 									className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
 								>

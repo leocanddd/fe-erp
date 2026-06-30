@@ -3,21 +3,51 @@ const API_BASE_URL =
 	'http://localhost:3001';
 
 export interface Job {
-	id: string;
+	_id: string;
 	title: string;
-	description: string;
+	department: string;
+	location: string;
+	locations: string[];
+	type: string;
+	salaryRange: string;
+	probationPeriod: string;
+	intro: string;
+	responsibilities: string[];
+	qualifications: string[];
+	outro: string;
+	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;
 }
 
 export interface CreateJobData {
 	title: string;
-	description: string;
+	department: string;
+	location: string;
+	locations: string[];
+	type: string;
+	salaryRange: string;
+	probationPeriod: string;
+	intro: string;
+	responsibilities: string[];
+	qualifications: string[];
+	outro: string;
+	isActive?: boolean;
 }
 
 export interface UpdateJobData {
 	title?: string;
-	description?: string;
+	department?: string;
+	location?: string;
+	locations?: string[];
+	type?: string;
+	salaryRange?: string;
+	probationPeriod?: string;
+	intro?: string;
+	responsibilities?: string[];
+	qualifications?: string[];
+	outro?: string;
+	isActive?: boolean;
 }
 
 interface ApiResponse<T> {
@@ -46,7 +76,7 @@ export const getJobs = async (
 		if (title) params.append('title', title);
 
 		const queryString = params.toString();
-		const url = `${API_BASE_URL}/api/jobs?${queryString}`;
+		const url = `${API_BASE_URL}/api/careers?${queryString}`;
 
 		const response = await fetch(url, {
 			method: 'GET',
@@ -82,7 +112,7 @@ export const getJobs = async (
 
 export const getJobById = async (id: string): Promise<ApiResponse<Job>> => {
 	try {
-		const response = await fetch(`${API_BASE_URL}/api/jobs/${id}`, {
+		const response = await fetch(`${API_BASE_URL}/api/careers/${id}`, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
@@ -117,7 +147,7 @@ export const createJob = async (
 	jobData: CreateJobData
 ): Promise<ApiResponse<Job>> => {
 	try {
-		const response = await fetch(`${API_BASE_URL}/api/jobs`, {
+		const response = await fetch(`${API_BASE_URL}/api/careers`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -155,7 +185,7 @@ export const updateJob = async (
 	jobData: UpdateJobData
 ): Promise<ApiResponse<Job>> => {
 	try {
-		const response = await fetch(`${API_BASE_URL}/api/jobs/${id}`, {
+		const response = await fetch(`${API_BASE_URL}/api/careers/${id}`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
@@ -190,7 +220,7 @@ export const updateJob = async (
 
 export const deleteJob = async (id: string): Promise<ApiResponse<null>> => {
 	try {
-		const response = await fetch(`${API_BASE_URL}/api/jobs/${id}`, {
+		const response = await fetch(`${API_BASE_URL}/api/careers/${id}`, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',
