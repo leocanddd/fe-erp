@@ -517,7 +517,7 @@ function CreatePOModal({
 								onChange={(e) =>
 									handleStatusChange(
 										e.target
-											.value as any,
+											.value as 'processing' | 'delivered' | 'cancelled',
 									)
 								}
 								required
