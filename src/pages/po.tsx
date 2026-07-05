@@ -1,3497 +1,2403 @@
-import BarcodeScanner from '@/components/BarcodeScanner';
 import MainLayout from '@/components/MainLayout';
-import { getStoredUser } from '@/lib/auth';
-import { getMenuPermissions } from '@/lib/navigation';
 import {
-	createOrder,
-	deleteOrder,
-	getOrders,
-	Order,
-	OrderProduct,
-	updateOrder,
-	assignCollectorToOrder,
-} from '@/lib/orders';
+	createPO,
+	getPOs,
+	updatePOStatus,
+	SALESPEOPLE,
+	type CreatePORequest,
+	type PerSales,
+	type PO,
+	type POItem,
+	type SalespersonUsername,
+	type UpdatePOStatusRequest,
+	type ValueSummary,
+} from '@/lib/po';
 import { getCollectors, type Assignee } from '@/lib/kolektor';
-import {
-	addOutgoingStock,
-	getPalet,
-	getStocks,
-	Stock,
-} from '@/lib/palets';
-import {
-	getProducts,
-	Product,
-} from '@/lib/products';
-import {
-	getStores,
-	Store,
-} from '@/lib/stores';
 import {
 	useCallback,
 	useEffect,
-	useRef,
 	useState,
 } from 'react';
 
-interface User {
-	id?: string;
-	username: string;
-	firstName: string;
-	lastName: string;
-	role: number;
+const STATUS_LABEL = {
+	processing: 'Processing',
+	delivered: 'Delivered',
+	cancelled: 'Cancelled',
+};
+
+const formatRupiah = (
+	n: number,
+): string => {
+	return (
+		'Rp ' + n.toLocaleString('id-ID')
+	);
+};
+
+// Substatus options based on status
+const SUBSTATUS_OPTIONS = {
+	processing: [
+		'PO Confirmed',
+		'In Production',
+		'Out for Delivery',
+	],
+	delivered: [
+		'Delivered — Signed',
+		'Delivered',
+	],
+	cancelled: [
+		'Cancelled by Client',
+		'Cancelled — Stock',
+	],
+};
+
+// Status Edit Form Component
+function StatusEditForm({
+	po,
+	onSave,
+	onCancel,
+	updating
+}: {
+	po: PO;
+	onSave: (data: UpdatePOStatusRequest) => void;
+	onCancel: () => void;
+	updating: boolean;
+}) {
+	const [status, setStatus] = useState<'processing' | 'delivered' | 'cancelled'>(po.status);
+	const [substatus, setSubstatus] = useState(po.substatus);
+	const [collector, setCollector] = useState('');
+	const [collectors, setCollectors] = useState<Assignee[]>([]);
+	const [loadingCollectors, setLoadingCollectors] = useState(false);
+
+	// Fetch collectors when status is delivered
+	useEffect(() => {
+		if (status === 'delivered') {
+			setLoadingCollectors(true);
+			getCollectors()
+				.then((response) => {
+					if (response.status === 'success' && response.data) {
+						setCollectors(response.data);
+					}
+				})
+				.catch((err) => console.error('Error fetching collectors:', err))
+				.finally(() => setLoadingCollectors(false));
+		}
+	}, [status]);
+
+	const handleStatusChange = (newStatus: 'processing' | 'delivered' | 'cancelled') => {
+		setStatus(newStatus);
+		setSubstatus(SUBSTATUS_OPTIONS[newStatus][0]);
+		// Reset collector when changing away from delivered
+		if (newStatus !== 'delivered') {
+			setCollector('');
+		}
+	};
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		const data: UpdatePOStatusRequest = { status, substatus };
+		// Include collector if status is delivered and collector is selected
+		if (status === 'delivered' && collector) {
+			data.collector = collector;
+		}
+		onSave(data);
+	};
+
+	return (
+		<form onSubmit={handleSubmit} className="status-edit-form">
+			<div className="status-edit-field">
+				<label>Status</label>
+				<select value={status} onChange={(e) => handleStatusChange(e.target.value as 'processing' | 'delivered' | 'cancelled')} disabled={updating}>
+					<option value="processing">Processing</option>
+					<option value="delivered">Delivered</option>
+					<option value="cancelled">Cancelled</option>
+				</select>
+			</div>
+			<div className="status-edit-field">
+				<label>Substatus</label>
+				<select value={substatus} onChange={(e) => setSubstatus(e.target.value)} disabled={updating}>
+					{SUBSTATUS_OPTIONS[status].map((option) => (
+						<option key={option} value={option}>{option}</option>
+					))}
+				</select>
+			</div>
+
+			{/* Show collector dropdown when status is delivered */}
+			{status === 'delivered' && (
+				<div className="status-edit-field">
+					<label>Assign Collector {!collector && <span style={{color: '#fe2c23'}}>*</span>}</label>
+					{loadingCollectors ? (
+						<div style={{ padding: '8px 12px', color: '#9a9a9a', fontSize: '13px' }}>Loading collectors...</div>
+					) : (
+						<select
+							value={collector}
+							onChange={(e) => setCollector(e.target.value)}
+							disabled={updating}
+							required={status === 'delivered'}
+						>
+							<option value="">Select a collector</option>
+							{collectors.map((c) => (
+								<option key={c.username || c.name} value={c.username}>
+									{c.name}
+								</option>
+							))}
+						</select>
+					)}
+				</div>
+			)}
+
+			<div className="status-edit-actions">
+				<button type="button" onClick={onCancel} disabled={updating} className="btn-cancel-status">
+					Cancel
+				</button>
+				<button type="submit" disabled={updating} className="btn-save-status">
+					{updating ? 'Saving...' : 'Save'}
+				</button>
+			</div>
+		</form>
+	);
 }
 
-export default function PO() {
-	const [orders, setOrders] = useState<
-		Order[]
-	>([]);
-	const [loading, setLoading] =
-		useState(true);
-	const [error, setError] =
+// Create PO Modal Component
+function CreatePOModal({
+	onClose,
+	onSubmit,
+	creating,
+}: {
+	onClose: () => void;
+	onSubmit: (
+		data: CreatePORequest,
+	) => void;
+	creating: boolean;
+}) {
+	// Internal state uses YYYY-MM-DD format for date inputs
+	const [dateISO, setDateISO] =
 		useState('');
-	const [search, setSearch] =
+	const [deliveryISO, setDeliveryISO] =
 		useState('');
-	const [currentPage, setCurrentPage] =
-		useState(1);
-	const [totalPages, setTotalPages] =
-		useState(0);
-	const [totalItems, setTotalItems] =
-		useState(0);
 	const [
-		showDeleteModal,
-		setShowDeleteModal,
-	] = useState(false);
-	const [
-		orderToDelete,
-		setOrderToDelete,
-	] = useState<Order | null>(null);
-	const [
-		showAddModal,
-		setShowAddModal,
-	] = useState(false);
-	const [
-		showEditModal,
-		setShowEditModal,
-	] = useState(false);
-	const [
-		editingOrder,
-		setEditingOrder,
-	] = useState<Order | null>(null);
-	const [
-		isSubmitting,
-		setIsSubmitting,
-	] = useState(false);
+		deliveryFullISO,
+		setDeliveryFullISO,
+	] = useState('');
+
 	const [formData, setFormData] =
-		useState({
-			customer: '',
-			contact: '',
-			shipmentTime: '',
-			store: '',
-			type: 'Project' as 'Retail' | 'Project' | 'Order',
-			paymentDueDate: '',
-			termin: 0, // Payment terms in days for project orders
-			products: [
+		useState<CreatePORequest>({
+			client: '',
+			project: '',
+			date: '',
+			delivery: '',
+			value: 0,
+			username: 'tonosutono',
+			status: 'processing',
+			substatus: 'PO Confirmed',
+			addr: '',
+			dateAdded: new Date()
+				.toISOString()
+				.split('T')[0]
+				.replace(/-/g, '/'),
+			deliveryFull: '',
+			top: '30d',
+			items: [
 				{
-					product: '',
-					quantity: 1,
-					value: 0,
+					name: '',
+					qty: 1,
+					unit: 0,
+					total: 0,
 				},
-			] as OrderProduct[],
+			],
+			total: 0,
 		});
 
-	const [user, setUser] =
-		useState<User | null>(null);
-	const [collectors, setCollectors] =
-		useState<Assignee[]>([]);
-	const [paymentDueDates, setPaymentDueDates] =
-		useState<Record<string, string>>({});
-	const [
-		canPriceApprove,
-		setCanPriceApprove,
-	] = useState(false);
-	const [canApprove, setCanApprove] =
-		useState(false);
-	const [canProcess, setCanProcess] =
-		useState(false);
-	const [canShipment, setCanShipment] =
-		useState(false);
-	const [
-		showDescModal,
-		setShowDescModal,
-	] = useState(false);
-	const [
-		descModalType,
-		setDescModalType,
-	] = useState<
-		| 'isProcessed'
-		| 'isFinished'
-		| 'isCancelled'
-		| 'isApproved'
-		| 'isRejected'
-		| 'isPriceApproved'
-		| 'isShipment'
-		| 'isReceived'
-		| null
-	>(null);
-	const [
-		selectedOrder,
-		setSelectedOrder,
-	] = useState<Order | null>(null);
-	const [description, setDescription] =
-		useState('');
-	const [products, setProducts] =
-		useState<Product[]>([]);
-	const [
-		productSearch,
-		setProductSearch,
-	] = useState<string[]>([]);
-	const [
-		showProductDropdown,
-		setShowProductDropdown,
-	] = useState<number | null>(null);
-	const [stores, setStores] = useState<
-		Store[]
-	>([]);
-	const [storeSearch, setStoreSearch] =
-		useState('');
-	const [
-		showStoreDropdown,
-		setShowStoreDropdown,
-	] = useState(false);
-	const [
-		loadingStores,
-		setLoadingStores,
-	] = useState(false);
-	const storeDropdownRef =
-		useRef<HTMLDivElement>(null);
-	const debounceTimerRef =
-		useRef<NodeJS.Timeout | null>(null);
-	const [
-		showBarcodeScanModal,
-		setShowBarcodeScanModal,
-	] = useState(false);
-	const [
-		scannedOrder,
-		setScannedOrder,
-	] = useState<Order | null>(null);
-	const [scanError, setScanError] =
-		useState('');
-	const [
-		scannedPallets,
-		setScannedPallets,
-	] = useState<
-		{
-			paletId: string;
-			paletName: string;
-			products: {
-				name: string;
-				code: string;
-				scanned: number;
-				needed: number;
-			}[];
-		}[]
-	>([]);
-	const [
-		isProcessingScan,
-		setIsProcessingScan,
-	] = useState(false);
-	const dropdownRef =
-		useRef<HTMLDivElement>(null);
+	// Convert YYYY-MM-DD to DD/MM/YYYY
+	const convertToDDMMYYYY = (
+		isoDate: string,
+	): string => {
+		if (!isoDate) return '';
+		const [year, month, day] =
+			isoDate.split('-');
+		return `${day}/${month}/${year}`;
+	};
 
-	useEffect(() => {
-		const userData = getStoredUser();
-		if (userData) {
-			setUser(userData);
-			const perms =
-				getMenuPermissions();
-			const r = userData.role;
-			setCanPriceApprove(
-				(
-					perms[
-						'/po/action/price-approve'
-					] ?? [5, 7]
-				).includes(r),
-			);
-			setCanApprove(
-				(
-					perms[
-						'/po/action/approve'
-					] ?? [5, 6]
-				).includes(r),
-			);
-			setCanProcess(
-				(
-					perms[
-						'/po/action/process'
-					] ?? [5, 3]
-				).includes(r),
-			);
-			setCanShipment(
-				(
-					perms[
-						'/po/action/shipment'
-					] ?? [5, 8]
-				).includes(r),
-			);
+	// Convert YYYY-MM-DD to YYYY/MM/DD
+	const convertToYYYYMMDD = (
+		isoDate: string,
+	): string => {
+		if (!isoDate) return '';
+		return isoDate.replace(/-/g, '/');
+	};
+
+	// Update substatus when status changes
+	const handleStatusChange = (
+		newStatus:
+			| 'processing'
+			| 'delivered'
+			| 'cancelled',
+	) => {
+		setFormData({
+			...formData,
+			status: newStatus,
+			substatus:
+				SUBSTATUS_OPTIONS[newStatus][0], // Set to first option of new status
+		});
+	};
+
+	// Handle date changes
+	const handleDateChange = (
+		isoDate: string,
+	) => {
+		setDateISO(isoDate);
+		setFormData({
+			...formData,
+			date: convertToDDMMYYYY(isoDate),
+		});
+	};
+
+	const handleDeliveryChange = (
+		isoDate: string,
+	) => {
+		setDeliveryISO(isoDate);
+		setFormData({
+			...formData,
+			delivery:
+				convertToDDMMYYYY(isoDate),
+		});
+	};
+
+	const handleDeliveryFullChange = (
+		isoDate: string,
+	) => {
+		setDeliveryFullISO(isoDate);
+		setFormData({
+			...formData,
+			deliveryFull:
+				convertToYYYYMMDD(isoDate),
+		});
+	};
+
+	const handleItemChange = (
+		index: number,
+		field: keyof POItem,
+		value: string | number,
+	) => {
+		const newItems = [
+			...formData.items,
+		];
+		newItems[index] = {
+			...newItems[index],
+			[field]: value,
+		};
+
+		// Auto-calculate total for this item
+		if (
+			field === 'qty' ||
+			field === 'unit'
+		) {
+			newItems[index].total =
+				newItems[index].qty *
+				newItems[index].unit;
 		}
 
-		// Fetch collectors list
-		const fetchCollectors = async () => {
-			const response = await getCollectors();
-			if (response.status === 'success' && response.data) {
-				setCollectors(response.data);
-			}
-		};
-		fetchCollectors();
-	}, []);
-
-	// Close dropdown when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (
-			event: MouseEvent,
-		) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(
-					event.target as Node,
-				)
-			) {
-				setShowProductDropdown(null);
-			}
-			if (
-				storeDropdownRef.current &&
-				!storeDropdownRef.current.contains(
-					event.target as Node,
-				)
-			) {
-				setShowStoreDropdown(false);
-			}
-		};
-
-		document.addEventListener(
-			'mousedown',
-			handleClickOutside,
+		// Calculate overall total
+		const total = newItems.reduce(
+			(sum, item) => sum + item.total,
+			0,
 		);
-		return () => {
-			document.removeEventListener(
-				'mousedown',
-				handleClickOutside,
+
+		setFormData({
+			...formData,
+			items: newItems,
+			total,
+			value: total,
+		});
+	};
+
+	const addItem = () => {
+		setFormData({
+			...formData,
+			items: [
+				...formData.items,
+				{
+					name: '',
+					qty: 1,
+					unit: 0,
+					total: 0,
+				},
+			],
+		});
+	};
+
+	const removeItem = (
+		index: number,
+	) => {
+		if (formData.items.length > 1) {
+			const newItems =
+				formData.items.filter(
+					(_, i) => i !== index,
+				);
+			const total = newItems.reduce(
+				(sum, item) => sum + item.total,
+				0,
 			);
-		};
-	}, []);
+			setFormData({
+				...formData,
+				items: newItems,
+				total,
+				value: total,
+			});
+		}
+	};
 
-	const fetchProducts =
-		useCallback(async () => {
-			try {
-				const response =
-					await getProducts(1, 100, ''); // Fetch first 100 products
-				if (
-					response.statusCode === 200
-				) {
-					setProducts(
-						response.data || [],
-					);
-				}
-			} catch {
-				console.error(
-					'Failed to fetch products',
-				);
-			}
-		}, []);
+	const handleSubmit = (
+		e: React.FormEvent,
+	) => {
+		e.preventDefault();
+		onSubmit(formData);
+	};
 
-	const fetchStores = useCallback(
-		async (searchTerm: string) => {
-			setLoadingStores(true);
-			try {
-				const response =
-					await getStores(
-						1,
-						20,
-						searchTerm,
-					);
-				if (
-					response.statusCode === 200
-				) {
-					setStores(
-						response.data || [],
-					);
+	return (
+		<div
+			className="modal-overlay"
+			onClick={onClose}
+		>
+			<div
+				className="modal-content"
+				onClick={(e) =>
+					e.stopPropagation()
 				}
-			} catch {
-				console.error(
-					'Failed to fetch stores',
-				);
-			} finally {
-				setLoadingStores(false);
-			}
-		},
+			>
+				<div className="modal-header">
+					<h2>Create New PO</h2>
+					<button
+						onClick={onClose}
+						className="modal-close"
+					>
+						&times;
+					</button>
+				</div>
+				<form
+					onSubmit={handleSubmit}
+					className="modal-form"
+				>
+					<div className="form-grid">
+						<div className="form-group">
+							<label>Client *</label>
+							<input
+								type="text"
+								value={formData.client}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										client:
+											e.target.value,
+									})
+								}
+								required
+							/>
+						</div>
+						<div className="form-group">
+							<label>Project *</label>
+							<input
+								type="text"
+								value={formData.project}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										project:
+											e.target.value,
+									})
+								}
+								required
+							/>
+						</div>
+						<div className="form-group">
+							<label>
+								Salesperson *
+							</label>
+							<select
+								value={
+									formData.username
+								}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										username:
+											e.target.value,
+									})
+								}
+								required
+							>
+								{Object.entries(
+									SALESPEOPLE,
+								).map(
+									([
+										username,
+										displayName,
+									]) => (
+										<option
+											key={username}
+											value={username}
+										>
+											{displayName}
+										</option>
+									),
+								)}
+							</select>
+						</div>
+						<div className="form-group">
+							<label>PO Date *</label>
+							<input
+								type="date"
+								value={dateISO}
+								onChange={(e) =>
+									handleDateChange(
+										e.target.value,
+									)
+								}
+								required
+							/>
+						</div>
+						<div className="form-group">
+							<label>
+								Delivery Date *
+							</label>
+							<input
+								type="date"
+								value={deliveryISO}
+								onChange={(e) =>
+									handleDeliveryChange(
+										e.target.value,
+									)
+								}
+								required
+							/>
+						</div>
+						<div className="form-group">
+							<label>
+								Delivery Full *
+							</label>
+							<input
+								type="date"
+								value={deliveryFullISO}
+								onChange={(e) =>
+									handleDeliveryFullChange(
+										e.target.value,
+									)
+								}
+								required
+							/>
+						</div>
+						<div className="form-group">
+							<label>
+								Terms of Payment *
+							</label>
+							<select
+								value={formData.top}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										top: e.target.value,
+									})
+								}
+								required
+							>
+								<option value="30d">
+									30 Days
+								</option>
+								<option value="45d">
+									45 Days
+								</option>
+								<option value="60d">
+									60 Days
+								</option>
+							</select>
+						</div>
+						<div className="form-group">
+							<label>Status *</label>
+							<select
+								value={formData.status}
+								onChange={(e) =>
+									handleStatusChange(
+										e.target
+											.value as any,
+									)
+								}
+								required
+							>
+								<option value="processing">
+									Processing
+								</option>
+								<option value="delivered">
+									Delivered
+								</option>
+								<option value="cancelled">
+									Cancelled
+								</option>
+							</select>
+						</div>
+						<div className="form-group full-width">
+							<label>
+								Delivery Address *
+							</label>
+							<textarea
+								value={formData.addr}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										addr: e.target
+											.value,
+									})
+								}
+								required
+								rows={2}
+							/>
+						</div>
+						<div className="form-group full-width">
+							<label>Substatus *</label>
+							<select
+								value={
+									formData.substatus
+								}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										substatus:
+											e.target.value,
+									})
+								}
+								required
+							>
+								{SUBSTATUS_OPTIONS[
+									formData.status
+								].map((option) => (
+									<option
+										key={option}
+										value={option}
+									>
+										{option}
+									</option>
+								))}
+							</select>
+						</div>
+					</div>
+
+					<div className="items-section">
+						<div className="items-header">
+							<h3>Items</h3>
+							<button
+								type="button"
+								onClick={addItem}
+								className="add-item-btn"
+							>
+								+ Add Item
+							</button>
+						</div>
+						{formData.items.map(
+							(item, idx) => (
+								<div
+									key={idx}
+									className="item-row"
+								>
+									<input
+										type="text"
+										placeholder="Product name"
+										value={item.name}
+										onChange={(e) =>
+											handleItemChange(
+												idx,
+												'name',
+												e.target.value,
+											)
+										}
+										required
+									/>
+									<input
+										type="number"
+										placeholder="Qty"
+										value={item.qty}
+										onChange={(e) =>
+											handleItemChange(
+												idx,
+												'qty',
+												Number(
+													e.target
+														.value,
+												),
+											)
+										}
+										required
+										min="1"
+									/>
+									<input
+										type="number"
+										placeholder="Unit price"
+										value={item.unit}
+										onChange={(e) =>
+											handleItemChange(
+												idx,
+												'unit',
+												Number(
+													e.target
+														.value,
+												),
+											)
+										}
+										required
+										min="0"
+									/>
+									<div className="item-total">
+										{formatRupiah(
+											item.total,
+										)}
+									</div>
+									{formData.items
+										.length > 1 && (
+										<button
+											type="button"
+											onClick={() =>
+												removeItem(idx)
+											}
+											className="remove-item-btn"
+										>
+											×
+										</button>
+									)}
+								</div>
+							),
+						)}
+						<div className="total-row">
+							<strong>Total:</strong>
+							<strong>
+								{formatRupiah(
+									formData.total,
+								)}
+							</strong>
+						</div>
+					</div>
+
+					<div className="modal-actions">
+						<button
+							type="button"
+							onClick={onClose}
+							className="btn-cancel"
+							disabled={creating}
+						>
+							Cancel
+						</button>
+						<button
+							type="submit"
+							className="btn-submit"
+							disabled={creating}
+						>
+							{creating
+								? 'Creating...'
+								: 'Create PO'}
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}
+
+export default function POPage() {
+	// State
+	const [pos, setPOs] = useState<PO[]>(
 		[],
 	);
+	const [perSales, setPerSales] =
+		useState<PerSales[]>([]);
+	const [
+		valueSummary,
+		setValueSummary,
+	] = useState<ValueSummary>({
+		total: 0,
+		processing: 0,
+		realized: 0,
+		target: 0,
+	});
+	const [totalItems, setTotalItems] =
+		useState(0);
+	const [loading, setLoading] =
+		useState(true);
+	const [error, setError] = useState<
+		string | null
+	>(null);
 
-	useEffect(() => {
-		if (showAddModal || showEditModal) {
-			fetchProducts();
-			setProductSearch(
-				formData.products.map(() => ''),
-			);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		showAddModal,
-		showEditModal,
-		fetchProducts,
-	]);
+	const [activeSP, setActiveSP] =
+		useState<Set<string>>(
+			new Set([
+				'tonosutono',
+				'taufik',
+				'feri',
+			]),
+		);
+	const [curStatus, setCurStatus] =
+		useState<string>('all');
+	const [openRow, setOpenRow] =
+		useState<string | null>(null);
+	const [currentPage, setCurrentPage] =
+		useState(1);
+	const perPage = 10;
 
-	const fetchOrders =
+	// Create PO Modal State
+	const [
+		showCreateModal,
+		setShowCreateModal,
+	] = useState(false);
+	const [creating, setCreating] =
+		useState(false);
+
+	// Update Status State
+	const [editingStatusPO, setEditingStatusPO] = useState<string | null>(null);
+	const [updating, setUpdating] = useState(false);
+
+	// Fetch data from API
+	const fetchPOs =
 		useCallback(async () => {
 			setLoading(true);
+			setError(null);
+
 			try {
-				// PO page always uses type="project"
-				const response =
-					await getOrders(
-						currentPage,
-						10,
-						search,
-						'project'
-					);
-				console.log('PO API Response:', response);
-				if (
-					response.data &&
-					Array.isArray(response.data)
-				) {
-					setOrders(
-						response.data || [],
-					);
-					setTotalPages(
-						response.pagination
-							?.totalPages || 0,
-					);
-					setTotalItems(
-						response.pagination
-							?.totalItems || 0,
-					);
-					setError('');
-				} else {
-					setError(
-						response.error ||
-							'Failed to fetch PO',
-					);
-				}
+				const repsArray =
+					Array.from(activeSP);
+				const response = await getPOs(
+					repsArray,
+					curStatus,
+					currentPage,
+					perPage,
+				);
+
+				setPOs(response.rows || []);
+				setPerSales(
+					response.perSales || [],
+				);
+				setValueSummary(
+					response.value || {
+						total: 0,
+						processing: 0,
+						realized: 0,
+						target: 0,
+					},
+				);
+				setTotalItems(
+					response.total || 0,
+				);
 			} catch (err) {
-				console.error('Error fetching orders:', err);
+				console.error(
+					'Error fetching POs:',
+					err,
+				);
 				setError(
-					'Failed to fetch PO',
+					'Failed to load Purchase Orders. Please try again.',
 				);
 			} finally {
 				setLoading(false);
 			}
-		}, [currentPage, search, user]);
-
-	useEffect(() => {
-		fetchOrders();
-	}, [fetchOrders]);
-
-	const handleSearch = (
-		e: React.FormEvent,
-	) => {
-		e.preventDefault();
-		setCurrentPage(1);
-		fetchOrders();
-	};
-
-	// const handleDelete = async (
-	//	order: Order
-	// ) => {
-	//	setOrderToDelete(order);
-	//	setShowDeleteModal(true);
-	// };
-
-	const confirmDelete = async () => {
-		if (!orderToDelete) return;
-
-		try {
-			const response =
-				await deleteOrder(
-					orderToDelete.id!,
-				);
-			if (response.statusCode === 200) {
-				fetchOrders();
-				setShowDeleteModal(false);
-				setOrderToDelete(null);
-			} else {
-				setError(
-					response.error ||
-						'Failed to delete order',
-				);
-			}
-		} catch {
-			setError(
-				'Failed to delete order',
-			);
-		}
-	};
-
-	const handleInputChange = (
-		e: React.ChangeEvent<
-			| HTMLInputElement
-			| HTMLTextAreaElement
-			| HTMLSelectElement
-		>,
-	) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-	};
-
-	const handleProductChange = (
-		index: number,
-		field: keyof OrderProduct,
-		value: string | number,
-	) => {
-		const updatedProducts = [
-			...formData.products,
-		];
-		updatedProducts[index] = {
-			...updatedProducts[index],
-			[field]: value,
-		};
-		setFormData((prev) => ({
-			...prev,
-			products: updatedProducts,
-		}));
-	};
-
-	const addProduct = () => {
-		setFormData((prev) => ({
-			...prev,
-			products: [
-				...prev.products,
-				{
-					product: '',
-					quantity: 1,
-					value: 0,
-				},
-			],
-		}));
-		setProductSearch([
-			...productSearch,
-			'',
+		}, [
+			activeSP,
+			curStatus,
+			currentPage,
+			perPage,
 		]);
-	};
 
-	const handleProductSelect = (
-		index: number,
-		product: Product,
+	// Fetch data on mount and when filters change
+	useEffect(() => {
+		fetchPOs();
+	}, [fetchPOs]);
+
+	// Toggle salesperson
+	const toggleSP = (
+		username: string,
 	) => {
-		const updatedProducts = [
-			...formData.products,
-		];
-		updatedProducts[index] = {
-			...updatedProducts[index],
-			product: product.name,
-			value: product.price,
-		};
-		setFormData((prev) => ({
-			...prev,
-			products: updatedProducts,
-		}));
-
-		const updatedSearch = [
-			...productSearch,
-		];
-		updatedSearch[index] = product.name;
-		setProductSearch(updatedSearch);
-		setShowProductDropdown(null);
-	};
-
-	const handleProductSearchChange = (
-		index: number,
-		value: string,
-	) => {
-		const updatedSearch = [
-			...productSearch,
-		];
-		updatedSearch[index] = value;
-		setProductSearch(updatedSearch);
-		setShowProductDropdown(index);
-
-		// Update the product name in form data
-		handleProductChange(
-			index,
-			'product',
-			value,
-		);
-	};
-
-	const getFilteredProducts = (
-		index: number,
-	) => {
-		const searchTerm =
-			productSearch[
-				index
-			]?.toLowerCase() || '';
-		if (!searchTerm) return products;
-		return products.filter(
-			(p) =>
-				p.name
-					.toLowerCase()
-					.includes(searchTerm) ||
-				p.brand
-					.toLowerCase()
-					.includes(searchTerm) ||
-				p.code
-					.toLowerCase()
-					.includes(searchTerm),
-		);
-	};
-
-	const handleStoreSearchChange = (
-		value: string,
-	) => {
-		setStoreSearch(value);
-		setFormData((prev) => ({
-			...prev,
-			store: value,
-		}));
-		setShowStoreDropdown(true);
-
-		// Debounce the API call
-		if (debounceTimerRef.current) {
-			clearTimeout(
-				debounceTimerRef.current,
-			);
-		}
-
-		debounceTimerRef.current =
-			setTimeout(() => {
-				fetchStores(value);
-			}, 300);
-	};
-
-	const handleStoreSelect = (
-		store: Store,
-	) => {
-		setFormData((prev) => ({
-			...prev,
-			store: store.name,
-		}));
-		setStoreSearch(store.name);
-		setShowStoreDropdown(false);
-	};
-
-	const removeProduct = (
-		index: number,
-	) => {
-		if (formData.products.length > 1) {
-			const updatedProducts =
-				formData.products.filter(
-					(_, i) => i !== index,
-				);
-			setFormData((prev) => ({
-				...prev,
-				products: updatedProducts,
-			}));
-		}
-	};
-
-	const resetForm = () => {
-		setFormData({
-			customer: '',
-			contact: '',
-			shipmentTime: '',
-			store: '',
-			type: 'Project' as 'Retail' | 'Project' | 'Order',
-			paymentDueDate: '',
-			termin: 0,
-			products: [
-				{
-					product: '',
-					quantity: 1,
-					value: 0,
-				},
-			],
+		setActiveSP((prev) => {
+			const newSet = new Set(prev);
+			if (newSet.has(username)) {
+				// Don't allow deselecting all
+				if (newSet.size > 1) {
+					newSet.delete(username);
+				}
+			} else {
+				newSet.add(username);
+			}
+			return newSet;
 		});
-		setStoreSearch('');
+		setCurrentPage(1);
 	};
 
-	const handleAddOrder = async (
-		e: React.FormEvent,
-	) => {
-		e.preventDefault();
-		setIsSubmitting(true);
-		setError('');
-
-		try {
-			const orderData = {
-				customer:
-					formData.customer.trim(),
-				contact:
-					formData.contact.trim(),
-				orderDate:
-					new Date().toISOString(),
-				shipmentTime:
-					formData.shipmentTime,
-				...(formData.store && {
-					store: formData.store.trim(),
-				}),
-				type: formData.type,
-				// For project orders, include termin; for retail, include paymentDueDate
-				...(formData.type === 'Project' && formData.termin > 0 && {
-					termin: formData.termin,
-				}),
-				...(formData.type !== 'Project' && formData.paymentDueDate && {
-					paymentDueDate: new Date(formData.paymentDueDate + 'T00:00:00Z').toISOString(),
-				}),
-				products: formData.products.map(
-					(p) => ({
-						product: p.product.trim(),
-						quantity: Number(
-							p.quantity,
-						),
-						value: Number(p.value),
-					}),
-				),
-				createdBy: `${
-					user!.firstName
-				} ${user!.lastName}`,
-				username: user!.username,
-			};
-
-			const response =
-				await createOrder(orderData);
-			if (response.statusCode === 201) {
-				fetchOrders();
-				setShowAddModal(false);
-				resetForm();
-			} else {
-				setError(
-					response.error ||
-						'Gagal menambah PO',
-				);
-			}
-		} catch {
-			setError(
-				'Gagal menambah PO',
-			);
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
-
-	// const handleEdit = (order: Order) => {
-	//	setEditingOrder(order);
-	//	setFormData({
-	//		customer: order.customer,
-	//		contact: order.contact,
-	//		orderDate:
-	//			order.orderDate.split('T')[0], // Convert to YYYY-MM-DD format
-	//		shipmentTime: order.shipmentTime,
-	//		products: order.products,
-	//	});
-	//	setShowEditModal(true);
-	// };
-
-	const handleUpdateOrder = async (
-		e: React.FormEvent,
-	) => {
-		e.preventDefault();
-		if (!editingOrder) return;
-
-		setIsSubmitting(true);
-		setError('');
-
-		try {
-			const orderData = {
-				customer:
-					formData.customer.trim(),
-				contact:
-					formData.contact.trim(),
-				orderDate:
-					editingOrder.orderDate,
-				shipmentTime:
-					formData.shipmentTime,
-				...(formData.store && {
-					store: formData.store.trim(),
-				}),
-				// For project orders, include termin; for retail, include paymentDueDate
-				...(formData.type === 'Project' && formData.termin > 0 && {
-					termin: formData.termin,
-				}),
-				...(formData.type !== 'Project' && formData.paymentDueDate && {
-					paymentDueDate: new Date(formData.paymentDueDate + 'T00:00:00Z').toISOString(),
-				}),
-				products: formData.products.map(
-					(p) => ({
-						product: p.product.trim(),
-						quantity: Number(
-							p.quantity,
-						),
-						value: Number(p.value),
-					}),
-				),
-				createdBy: `${
-					user!.firstName
-				} ${user!.lastName}`,
-				username: user!.username,
-			};
-
-			const response =
-				await updateOrder(
-					editingOrder.id!,
-					orderData,
-				);
-			if (response.statusCode === 200) {
-				fetchOrders();
-				setShowEditModal(false);
-				setEditingOrder(null);
-				resetForm();
-			} else {
-				setError(
-					response.error ||
-						'Gagal mengubah PO',
-				);
-			}
-		} catch {
-			setError(
-				'Gagal mengubah PO',
-			);
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
-
-	const toggleOrderStatus = (
-		order: Order,
-		field:
-			| 'isProcessed'
-			| 'isFinished'
-			| 'isCancelled'
-			| 'isApproved'
-			| 'isRejected'
-			| 'isPriceApproved'
-			| 'isShipment'
-			| 'isReceived',
-	) => {
-		setSelectedOrder(order);
-		setDescModalType(field);
-		setDescription('');
-		setShowDescModal(true);
-	};
-
-	const handleBarcodeScanned = async (
-		decodedText: string,
-	) => {
-		// Prevent multiple scans in quick succession
-		if (isProcessingScan) {
-			return;
-		}
-
-		setIsProcessingScan(true);
-		setScanError('');
-
-		// Extract pallet ID from URL if it's a full URL
-		let paletId = decodedText;
-		try {
-			const url = new URL(decodedText);
-			const pathParts =
-				url.pathname.split('/');
-			paletId =
-				pathParts[pathParts.length - 1];
-		} catch {
-			// Not a URL, use as is
-		}
-
-		if (!scannedOrder) {
-			setScanError(
-				'Tidak ada PO yang dipilih',
-			);
-			setIsProcessingScan(false);
-			return;
-		}
-
-		// Check if pallet already scanned
-		if (
-			scannedPallets.some(
-				(p) => p.paletId === paletId,
-			)
-		) {
-			setScanError(
-				'Palet ini sudah di-scan',
-			);
-			setIsProcessingScan(false);
-			return;
-		}
-
-		try {
-			// Fetch pallet info
-			const paletResponse =
-				await getPalet(paletId);
-			if (
-				paletResponse.statusCode !== 200
-			) {
-				setScanError(
-					'Palet tidak ditemukan',
-				);
-				setIsProcessingScan(false);
-				return;
-			}
-
-			// Fetch stocks from the pallet
-			const stocksResponse =
-				await getStocks(
-					paletId,
-					1,
-					100,
-					'',
-				);
-
-			if (
-				stocksResponse.statusCode !==
-				200
-			) {
-				setScanError(
-					'Gagal memuat stok palet',
-				);
-				setIsProcessingScan(false);
-				return;
-			}
-
-			const paletStocks =
-				stocksResponse.data || [];
-
-			// Check if pallet has the products from the order
-			const orderedProducts =
-				scannedOrder.products || [];
-			const foundProducts: {
-				name: string;
-				code: string;
-				scanned: number;
-				needed: number;
-			}[] = [];
-			const missingProducts: string[] =
-				[];
-
-			for (const orderedProduct of orderedProducts) {
-				const stockItem =
-					paletStocks.find(
-						(stock: Stock) =>
-							stock.name ===
-							orderedProduct.product,
-					);
-
-				if (
-					stockItem &&
-					stockItem.palletStock > 0
-				) {
-					foundProducts.push({
-						name: orderedProduct.product,
-						code: stockItem.code,
-						scanned: Math.min(
-							stockItem.palletStock,
-							orderedProduct.quantity,
-						),
-						needed:
-							orderedProduct.quantity,
-					});
-				} else {
-					missingProducts.push(
-						orderedProduct.product,
-					);
-				}
-			}
-
-			if (foundProducts.length === 0) {
-				setScanError(
-					`Palet tidak memiliki produk yang dipesan: ${missingProducts.join(', ')}`,
-				);
-				setIsProcessingScan(false);
-				return;
-			}
-
-			// Add pallet to scanned list
-			setScannedPallets((prev) => [
-				...prev,
-				{
-					paletId,
-					paletName:
-						paletResponse.data?.name ||
-						paletId,
-					products: foundProducts,
-				},
-			]);
-
-			// Clear error if successful
-			setScanError('');
-
-			// Allow next scan after a short delay (1 second)
-			setTimeout(() => {
-				setIsProcessingScan(false);
-			}, 1000);
-		} catch (error) {
-			console.error(
-				'Error checking pallet stocks:',
-				error,
-			);
-			setScanError(
-				'Terjadi kesalahan saat memeriksa stok palet',
-			);
-			setIsProcessingScan(false);
-		}
-	};
-
-	const checkIfAllProductsFulfilled =
-		() => {
-			if (
-				!scannedOrder ||
-				scannedPallets.length === 0
-			)
-				return false;
-
-			const orderedProducts =
-				scannedOrder.products || [];
-			const productTotals: {
-				[key: string]: {
-					scanned: number;
-					needed: number;
-				};
-			} = {};
-
-			// Initialize with ordered products
-			orderedProducts.forEach((p) => {
-				productTotals[p.product] = {
-					scanned: 0,
-					needed: p.quantity,
-				};
-			});
-
-			// Sum up scanned quantities
-			scannedPallets.forEach(
-				(pallet) => {
-					pallet.products.forEach(
-						(p) => {
-							if (
-								productTotals[p.name]
-							) {
-								productTotals[
-									p.name
-								].scanned += p.scanned;
-							}
-						},
-					);
-				},
-			);
-
-			// Check if all products are fulfilled
-			const unfulfilled =
-				Object.entries(
-					productTotals,
-				).filter(
-					([, totals]) =>
-						totals.scanned <
-						totals.needed,
-				);
-
-			return unfulfilled.length === 0;
-		};
-
-	const handleFinishScanning =
-		async () => {
-			// Check if all products are fulfilled
-			if (!scannedOrder) return;
-
-			const orderedProducts =
-				scannedOrder.products || [];
-			const productTotals: {
-				[key: string]: {
-					scanned: number;
-					needed: number;
-				};
-			} = {};
-
-			// Initialize with ordered products
-			orderedProducts.forEach((p) => {
-				productTotals[p.product] = {
-					scanned: 0,
-					needed: p.quantity,
-				};
-			});
-
-			// Sum up scanned quantities
-			scannedPallets.forEach(
-				(pallet) => {
-					pallet.products.forEach(
-						(p) => {
-							if (
-								productTotals[p.name]
-							) {
-								productTotals[
-									p.name
-								].scanned += p.scanned;
-							}
-						},
-					);
-				},
-			);
-
-			// Check if all products are fulfilled
-			const unfulfilled =
-				Object.entries(
-					productTotals,
-				).filter(
-					([, totals]) =>
-						totals.scanned <
-						totals.needed,
-				);
-
-			if (unfulfilled.length > 0) {
-				const details = unfulfilled
-					.map(
-						([name, totals]) =>
-							`${name} (butuh ${totals.needed}, terscan ${totals.scanned})`,
-					)
-					.join(', ');
-				setScanError(
-					`Masih ada produk yang kurang: ${details}`,
-				);
-				return;
-			}
-
-			try {
-				// Reduce stock from each pallet
-				for (const pallet of scannedPallets) {
-					for (const product of pallet.products) {
-						// Reduce stock using outgoing-stock API
-						const outgoingResponse =
-							await addOutgoingStock(
-								pallet.paletId,
-								{
-									productCode:
-										product.code,
-									outgoingStock:
-										product.scanned,
-								},
-							);
-
-						if (
-							outgoingResponse.statusCode !==
-							200
-						) {
-							setScanError(
-								`Gagal mengurangi stok ${product.name} dari palet ${pallet.paletName}: ${outgoingResponse.error || 'Unknown error'}`,
-							);
-							return;
-						}
-					}
-				}
-
-				// All products fulfilled and stock reduced, mark as shipment
-				if (scannedOrder) {
-					toggleOrderStatus(
-						scannedOrder,
-						'isShipment',
-					);
-					setShowBarcodeScanModal(
-						false,
-					);
-					setScannedOrder(null);
-					setScannedPallets([]);
-					setScanError('');
-				}
-			} catch (error) {
-				console.error(
-					'Error reducing stock:',
-					error,
-				);
-				setScanError(
-					'Terjadi kesalahan saat mengurangi stok',
-				);
-			}
-		};
-
-	const handleDescriptionSubmit =
-		async () => {
-			if (
-				!selectedOrder ||
-				!descModalType ||
-				!user
-			)
-				return;
-
-			try {
-				const currentUserName = `${user.firstName} ${user.lastName}`;
-
-				const getStatusField = (
-					type: string,
-				) => {
-					switch (type) {
-						case 'isProcessed':
-							return 'processed';
-						case 'isFinished':
-							return 'finished';
-						case 'isCancelled':
-							return 'cancelled';
-						case 'isApproved':
-							return 'approved';
-						case 'isRejected':
-							return 'rejected';
-						case 'isPriceApproved':
-							return 'priceApproved';
-						case 'isShipment':
-							return 'shipment';
-						case 'isReceived':
-							return 'received';
-						default:
-							return '';
-					}
-				};
-
-				const statusField =
-					getStatusField(descModalType);
-				const currentStatus =
-					selectedOrder[
-						statusField as keyof Order
-					] as { isActive?: boolean };
-				const isCurrentlyActive =
-					currentStatus?.isActive ||
-					selectedOrder[
-						descModalType as keyof Order
-					];
-
-				const updateData = {
-					customer:
-						selectedOrder.customer,
-					contact:
-						selectedOrder.contact,
-					products:
-						selectedOrder.products,
-					orderDate:
-						selectedOrder.orderDate,
-					shipmentTime:
-						selectedOrder.shipmentTime,
-					createdBy:
-						selectedOrder.createdBy,
-					username:
-						selectedOrder.username ||
-						user.username,
-					[statusField]: {
-						isActive:
-							!isCurrentlyActive,
-						description: description,
-						actionBy: currentUserName,
-					},
-				};
-
-				const response =
-					await updateOrder(
-						selectedOrder.id!,
-						updateData,
-					);
-				if (
-					response.statusCode === 200
-				) {
-					setShowDescModal(false);
-					setSelectedOrder(null);
-					setDescModalType(null);
-					setDescription('');
-					fetchOrders();
-				} else {
-					setError(
-						response.error ||
-							'Gagal mengubah status PO',
-					);
-				}
-			} catch {
-				setError(
-					'Gagal mengubah status PO',
-				);
-			}
-		};
-
-	const handleCollectorAssign = async (
-		orderId: string,
-		collectorName: string
-	) => {
-		console.log('handleCollectorAssign called', { orderId, collectorName });
-
-		// Check if payment due date is set
-		const paymentDueDate = paymentDueDates[orderId];
-		if (!paymentDueDate) {
-			alert('Please set the payment due date first before assigning a collector.');
-			return;
-		}
-
-		// Fetch salespeople to get a valid SP username (role=2)
-		try {
-			// First, update the order with the payment due date
-			const paymentDueDateISO = new Date(paymentDueDate).toISOString();
-			console.log('Updating payment due date:', { orderId, paymentDueDate: paymentDueDateISO });
-
-			const updateResponse = await updateOrder(orderId, {
-				paymentDueDate: paymentDueDateISO,
-			});
-
-			if (updateResponse.status !== 'success') {
-				alert('Failed to set payment due date. Cannot assign collector.');
-				return;
-			}
-
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/users?role=2`,
-				{
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						...(localStorage.getItem('accessToken') && {
-							Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-						}),
-					},
-				}
-			);
-			const data = await response.json();
-
-			if (!data.data || data.data.length === 0) {
-				alert('No salesperson found. Cannot assign collector.');
-				return;
-			}
-
-			// Use the first salesperson's username as default
-			const spUsername = data.data[0].username;
-
-			console.log('Calling API with:', { orderId, collectorName, sp: spUsername });
-			const apiResponse = await assignCollectorToOrder(
-				orderId,
-				collectorName,
-				spUsername
-			);
-			console.log('API response:', apiResponse);
-
-			// Clear the payment due date from state
-			const newPaymentDueDates = { ...paymentDueDates };
-			delete newPaymentDueDates[orderId];
-			setPaymentDueDates(newPaymentDueDates);
-
-			// Refresh orders list
-			fetchOrders();
-		} catch (err) {
-			console.error('Failed to assign collector:', err);
-			alert(`Failed to assign collector: ${err}`);
-		}
-	};
-
-	const getStatusBadge = (
-		order: Order,
-	) => {
-		if (
-			order.cancelled?.isActive ||
-			order.isCancelled
-		) {
-			return (
-				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-					Dibatalkan
-				</span>
-			);
-		}
-		if (
-			order.finished?.isActive ||
-			order.isFinished
-		) {
-			return (
-				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-					Selesai
-				</span>
-			);
-		}
-		if (order.shipment?.isActive) {
-			return (
-				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-teal-100 text-teal-800">
-					Dikirim
-				</span>
-			);
-		}
-		if (
-			order.processed?.isActive ||
-			order.isProcessed
-		) {
-			return (
-				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-					Diproses
-				</span>
-			);
-		}
-		if (
-			order.approved?.isActive ||
-			order.isApproved
-		) {
-			return (
-				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
-					Disetujui
-				</span>
-			);
-		}
-		if (order.priceApproved?.isActive) {
-			return (
-				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
-					Harga Disetujui
-				</span>
-			);
-		}
-		if (
-			order.rejected?.isActive ||
-			order.isRejected
-		) {
-			return (
-				<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
-					Ditolak
-				</span>
-			);
-		}
-		return (
-			<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-				Pending
-			</span>
+	// Toggle row expansion
+	const toggleRow = (poId: string) => {
+		setOpenRow((prev) =>
+			prev === poId ? null : poId,
 		);
 	};
+
+	// Change status filter
+	const handleStatusChange = (
+		status: string,
+	) => {
+		setCurStatus(status);
+		setCurrentPage(1);
+	};
+
+	// Handle create PO
+	const handleCreatePO = async (
+		formData: CreatePORequest,
+	) => {
+		setCreating(true);
+		try {
+			await createPO(formData);
+			setShowCreateModal(false);
+			fetchPOs(); // Refresh the list
+		} catch (err) {
+			console.error(
+				'Error creating PO:',
+				err,
+			);
+			alert(
+				'Failed to create PO. Please try again.',
+			);
+		} finally {
+			setCreating(false);
+		}
+	};
+
+	// Handle update PO status
+	const handleUpdateStatus = async (poId: string, data: UpdatePOStatusRequest) => {
+		setUpdating(true);
+		try {
+			await updatePOStatus(poId, data);
+			setEditingStatusPO(null);
+			fetchPOs(); // Refresh the list
+		} catch (err) {
+			console.error('Error updating PO status:', err);
+			alert('Failed to update PO status. Please try again.');
+		} finally {
+			setUpdating(false);
+		}
+	};
+
+	// Calculate pagination
+	const totalPages = Math.ceil(
+		totalItems / perPage,
+	);
+	const pct = valueSummary.target
+		? Math.min(
+				100,
+				Math.round(
+					(valueSummary.total /
+						valueSummary.target) *
+						100,
+				),
+			)
+		: 0;
+
+	if (loading && pos.length === 0) {
+		return (
+			<MainLayout title="Purchase Orders">
+				<div className="flex items-center justify-center min-h-[400px]">
+					<div className="flex items-center space-x-3">
+						<div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+						<div className="text-lg text-gray-600 font-medium">
+							Loading Purchase Orders...
+						</div>
+					</div>
+				</div>
+			</MainLayout>
+		);
+	}
 
 	return (
-		<MainLayout title="PO (Purchase Order)">
-			<div className="max-w-7xl mx-auto">
-				{/* Header with search and add button */}
-				<div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+		<MainLayout title="Purchase Orders">
+			<div className="po-container">
+				{/* Page Header */}
+				<div className="po-header">
 					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							PO
-						</h2>
+						<h1 className="text-3xl font-bold text-gray-900 mb-2">
+							Purchase Orders
+						</h1>
 						<p className="text-gray-600">
-							Kelola PO dan status
-							pengiriman
+							Manage and track purchase
+							orders
 						</p>
 					</div>
-					<div className="mt-4 sm:mt-0">
-						<button
-							onClick={() =>
-								setShowAddModal(true)
-							}
-							className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-						>
-							Tambah PO
-						</button>
-					</div>
-				</div>
-
-				{/* Search */}
-				<div className="mb-6">
-					<form
-						onSubmit={handleSearch}
-						className="flex gap-4"
+					<button
+						onClick={() =>
+							setShowCreateModal(true)
+						}
+						className="create-po-btn"
 					>
-						<div className="flex-1">
-							<input
-								type="text"
-								value={search}
-								onChange={(e) =>
-									setSearch(
-										e.target.value,
-									)
-								}
-								placeholder="Cari PO berdasarkan nama customer..."
-								className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-							/>
-						</div>
-						<button
-							type="submit"
-							className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							className="w-5 h-5"
 						>
-							Cari
-						</button>
-					</form>
+							<path d="M12 5v14M5 12h14" />
+						</svg>
+						Create PO
+					</button>
 				</div>
 
+				{/* Error Message */}
 				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
+					<div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+						<div className="text-red-600 font-medium">
 							{error}
 						</div>
+						<button
+							onClick={fetchPOs}
+							className="mt-2 text-red-600 hover:text-red-700 underline text-sm"
+						>
+							Retry
+						</button>
 					</div>
 				)}
 
-				{/* Orders table */}
-				<div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat PO...
-								</span>
-							</div>
-						</div>
-					) : orders.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada PO yang
-							ditemukan
-						</div>
-					) : (
-						<>
-							<div className="overflow-x-auto">
-								<table className="min-w-full">
-									<thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-										<tr>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Order ID
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Total Value
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Tanggal
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Produk
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Sales
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Status
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Payment Due Date
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Collector
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Deskripsi
-											</th>
-											<th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Detail
-											</th>
-											<th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Print
-											</th>
-											<th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-												Actions
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-100">
-										{orders.map(
-											(order) => (
-												<tr
-													key={order.id}
-													className="hover:bg-blue-50/50 transition-colors duration-200"
-												>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm font-semibold text-gray-900">
-															{order.orderId ||
-																'N/A'}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm font-semibold text-gray-900">
-															Rp{' '}
-															{order.totalValue.toLocaleString(
-																'id-ID',
-															)}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm text-gray-900">
-															{new Date(
-																order.orderDate,
-															).toLocaleDateString(
-																'id-ID',
-															)}
-														</div>
-														{order.shipmentTime && (
-															<div className="text-xs text-gray-500">
-																{
-																	order.shipmentTime
-																}
-															</div>
-														)}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm text-gray-900">
-															{order
-																?.products
-																?.length ||
-																0}{' '}
-															item
-															{(order
-																?.products
-																?.length ||
-																0) !== 1
-																? ''
-																: ''}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm text-gray-900">
-															{
-																order.createdBy
-															}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														{getStatusBadge(
-															order,
-														)}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														{order.paymentDueDate && order.paymentDueDate !== '0001-01-01T00:00:00Z' ? (
-															<span className="text-xs text-gray-700">
-																{new Date(order.paymentDueDate).toLocaleDateString('id-ID', {
-																	year: 'numeric',
-																	month: 'short',
-																	day: 'numeric'
-																})}
-															</span>
-														) : !order.collector && order.approved?.isActive && order.shipment?.isActive && !order.cancelled?.isActive ? (
-															<input
-																type="date"
-																value={paymentDueDates[order.id!] || ''}
-																onChange={(e) =>
-																	setPaymentDueDates({
-																		...paymentDueDates,
-																		[order.id!]: e.target.value,
-																	})
-																}
-																className="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-															/>
-														) : (
-															<span className="text-xs text-gray-400">-</span>
-														)}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														{order.collector ? (
-															<span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-																{order.collector}
-															</span>
-														) : (
-															order.approved?.isActive && order.shipment?.isActive && !order.cancelled?.isActive ? (
-																<select
-																	onChange={(e) =>
-																		handleCollectorAssign(order.id!, e.target.value)
-																	}
-																	className="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-																	defaultValue=""
-																>
-																	<option value="" disabled>
-																		Assign...
-																	</option>
-																	{collectors.map((col) => (
-																		<option key={col.name} value={col.name}>
-																			{col.name}
-																		</option>
-																	))}
-																</select>
-															) : (
-																<span className="text-xs text-gray-400">-</span>
-															)
-														)}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-[#000000]">
-														{
-															order.description
-														}
-													</td>
-													{/* Detail Column */}
-													<td className="px-6 py-4 whitespace-nowrap text-center">
-														<button
-															onClick={() =>
-																(window.location.href = `/po/${order.orderId}`)
-															}
-															className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 transition-colors duration-200"
-															title="Lihat detail PO"
-														>
-															<svg
-																className="w-4 h-4"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-																/>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-																/>
-															</svg>
-														</button>
-													</td>
-
-													{/* Print Column */}
-													<td className="px-6 py-4 whitespace-nowrap text-center">
-														<button
-															onClick={() =>
-																window.open(
-																	`/orders/${order.orderId}/print`,
-																	'_blank',
-																)
-															}
-															className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 hover:text-purple-700 transition-colors duration-200"
-															title="Print to PDF"
-														>
-															<svg
-																className="w-4 h-4"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-																/>
-															</svg>
-														</button>
-													</td>
-
-													{/* Actions Column */}
-													<td className="px-6 py-4 whitespace-nowrap text-center">
-														<div className="flex items-center justify-center space-x-2">
-															{/* Price Approval Button - Pricing (Only for non-project orders) */}
-															{order.type?.toLowerCase() !== 'project' &&
-																canPriceApprove &&
-																!order
-																	.priceApproved
-																	?.isActive &&
-																!(
-																	order
-																		.cancelled
-																		?.isActive ||
-																	order.isCancelled
-																) &&
-																!(
-																	order
-																		.finished
-																		?.isActive ||
-																	order.isFinished
-																) && (
-																	<button
-																		onClick={() =>
-																			toggleOrderStatus(
-																				order,
-																				'isPriceApproved',
-																			)
-																		}
-																		className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
-																	>
-																		Setujui
-																		Harga
-																	</button>
-																)}
-
-															{/* Received Button - For Project Orders */}
-															{order.type?.toLowerCase() === 'project' &&
-																!(
-																	order
-																		.cancelled
-																		?.isActive ||
-																	order.isCancelled
-																) &&
-																!(
-																	order
-																		.finished
-																		?.isActive ||
-																	order.isFinished
-																) && (
-																	<button
-																		onClick={() =>
-																			toggleOrderStatus(
-																				order,
-																				'isReceived',
-																			)
-																		}
-																		className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
-																			order.received?.isActive
-																				? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-																				: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-																		}`}
-																	>
-																		{order.received?.isActive
-																			? 'Diterima'
-																			: 'Terima'}
-																	</button>
-																)}
-
-															{/* General Approval Buttons - Approver (Only for non-project orders) */}
-															{order.type?.toLowerCase() !== 'project' &&
-																canApprove &&
-																!(
-																	order
-																		.approved
-																		?.isActive ||
-																	order.isApproved
-																) &&
-																!(
-																	order
-																		.rejected
-																		?.isActive ||
-																	order.isRejected
-																) &&
-																!(
-																	order
-																		.cancelled
-																		?.isActive ||
-																	order.isCancelled
-																) &&
-																!(
-																	order
-																		.finished
-																		?.isActive ||
-																	order.isFinished
-																) && (
-																	<>
-																		<button
-																			onClick={() =>
-																				toggleOrderStatus(
-																					order,
-																					'isApproved',
-																				)
-																			}
-																			className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-																		>
-																			Setujui
-																		</button>
-																		<button
-																			onClick={() =>
-																				toggleOrderStatus(
-																					order,
-																					'isRejected',
-																				)
-																			}
-																			className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-orange-100 text-orange-700 hover:bg-orange-200"
-																		>
-																			Tolak
-																		</button>
-																	</>
-																)}
-
-															{/* Processing Buttons - Admin */}
-															{canProcess &&
-																!(
-																	order
-																		.cancelled
-																		?.isActive ||
-																	order.isCancelled
-																) &&
-																!(
-																	order
-																		.finished
-																		?.isActive ||
-																	order.isFinished
-																) && (
-																	<button
-																		onClick={() =>
-																			toggleOrderStatus(
-																				order,
-																				'isProcessed',
-																			)
-																		}
-																		className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
-																			order
-																				.processed
-																				?.isActive ||
-																			order.isProcessed
-																				? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-																				: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-																		}`}
-																	>
-																		{order
-																			.processed
-																			?.isActive ||
-																		order.isProcessed
-																			? 'Batal Proses'
-																			: 'Proses'}
-																	</button>
-																)}
-
-															{/* Shipment and Finish Buttons - Gudang */}
-															{canShipment &&
-																(order
-																	.approved
-																	?.isActive ||
-																	order.isApproved) &&
-																!(
-																	order
-																		.cancelled
-																		?.isActive ||
-																	order.isCancelled
-																) &&
-																!(
-																	order
-																		.finished
-																		?.isActive ||
-																	order.isFinished
-																) && (
-																	<>
-																		<button
-																			onClick={() => {
-																				setScannedOrder(
-																					order,
-																				);
-																				setScannedPallets(
-																					[],
-																				);
-																				setScanError(
-																					'',
-																				);
-																				setIsProcessingScan(
-																					false,
-																				);
-																				setShowBarcodeScanModal(
-																					true,
-																				);
-																			}}
-																			className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-purple-100 text-purple-700 hover:bg-purple-200"
-																		>
-																			Scan
-																			Barcode
-																		</button>
-																		{!order
-																			.shipment
-																			?.isActive ? (
-																			<button
-																				onClick={() =>
-																					toggleOrderStatus(
-																						order,
-																						'isShipment',
-																					)
-																				}
-																				className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
-																			>
-																				Kirim
-																			</button>
-																		) : (
-																			<button
-																				onClick={() =>
-																					toggleOrderStatus(
-																						order,
-																						'isFinished',
-																					)
-																				}
-																				className="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 bg-green-100 text-green-700 hover:bg-green-200"
-																			>
-																				Selesai
-																			</button>
-																		)}
-																	</>
-																)}
-
-															{/* Cancel Button - Available to all roles when appropriate */}
-															{!(
-																order
-																	.finished
-																	?.isActive ||
-																order.isFinished
-															) && (
-																<button
-																	onClick={() =>
-																		toggleOrderStatus(
-																			order,
-																			'isCancelled',
-																		)
-																	}
-																	className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
-																		order
-																			.cancelled
-																			?.isActive ||
-																		order.isCancelled
-																			? 'bg-red-100 text-red-700 hover:bg-red-200'
-																			: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-																	}`}
-																>
-																	{order
-																		.cancelled
-																		?.isActive ||
-																	order.isCancelled
-																		? 'Batal Pembatalan'
-																		: 'Batalkan'}
-																</button>
-															)}
-														</div>
-													</td>
-												</tr>
-											),
-										)}
-									</tbody>
-								</table>
-							</div>
-
-							{/* Pagination */}
-							<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-								<div className="flex-1 flex justify-between sm:hidden">
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.max(
-													1,
-													currentPage -
-														1,
-												),
-											)
-										}
-										disabled={
-											currentPage === 1
-										}
-										className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Sebelumnya
-									</button>
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.min(
-													totalPages,
-													currentPage +
-														1,
-												),
-											)
-										}
-										disabled={
-											currentPage ===
-											totalPages
-										}
-										className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Berikutnya
-									</button>
-								</div>
-								<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-									<div>
-										<p className="text-sm text-gray-700">
-											Menampilkan{' '}
-											<span className="font-medium">
-												{(currentPage -
-													1) *
-													10 +
-													1}
-											</span>{' '}
-											sampai{' '}
-											<span className="font-medium">
-												{Math.min(
-													currentPage *
-														10,
-													totalItems,
-												)}
-											</span>{' '}
-											dari{' '}
-											<span className="font-medium">
-												{totalItems}
-											</span>{' '}
-											hasil
-										</p>
-									</div>
-									<div>
-										<nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-											<button
-												onClick={() =>
-													setCurrentPage(
-														Math.max(
-															1,
-															currentPage -
-																1,
-														),
-													)
-												}
-												disabled={
-													currentPage ===
-													1
-												}
-												className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-											>
-												Sebelumnya
-											</button>
-											<button
-												onClick={() =>
-													setCurrentPage(
-														Math.min(
-															totalPages,
-															currentPage +
-																1,
-														),
-													)
-												}
-												disabled={
-													currentPage ===
-													totalPages
-												}
-												className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-											>
-												Berikutnya
-											</button>
-										</nav>
-									</div>
-								</div>
-							</div>
-						</>
-					)}
+				{/* Salesperson Filter */}
+				<div className="filter-row">
+					<div className="sp-filter">
+						{Object.entries(
+							SALESPEOPLE,
+						).map(
+							([
+								username,
+								displayName,
+							]) => (
+								<button
+									key={username}
+									className={`sp-pill ${activeSP.has(username) ? 'active' : ''}`}
+									onClick={() =>
+										toggleSP(username)
+									}
+									disabled={loading}
+								>
+									<span className="dot"></span>
+									{displayName}
+								</button>
+							),
+						)}
+					</div>
 				</div>
-			</div>
 
-			{/* Add Order Modal */}
-			{showAddModal && (
-				<div className="fixed inset-0 z-[60] overflow-y-auto">
-					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-						<div
-							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-							onClick={() => {
-								setShowAddModal(false);
-								resetForm();
-								setError('');
-							}}
-						></div>
-						<div className="relative inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-							<form
-								onSubmit={
-									handleAddOrder
-								}
+				{/* Salesperson Summary Cards */}
+				<div className="summary-row">
+					{perSales
+						.filter((s) =>
+							activeSP.has(s.rep),
+						)
+						.map((s) => (
+							<div
+								key={s.rep}
+								className="sum-card"
 							>
-								<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-h-[80vh] overflow-y-auto">
-									<div className="sm:flex sm:items-start">
-										<div className="w-full">
-											<div className="flex items-center justify-between mb-6">
-												<h3 className="text-2xl font-bold text-gray-900">
-													Tambah PO
-													Baru
-												</h3>
-												<button
-													type="button"
-													onClick={() => {
-														setShowAddModal(
-															false,
-														);
-														resetForm();
-														setError(
-															'',
-														);
-													}}
-													className="text-gray-400 hover:text-gray-600 transition-colors"
+								<div className="sum-top">
+									<div className="sum-avatar">
+										{SALESPEOPLE[
+											s.rep as SalespersonUsername
+										]
+											?.charAt(0)
+											.toUpperCase() ||
+											'S'}
+									</div>
+									<div className="sum-name">
+										{SALESPEOPLE[
+											s.rep as SalespersonUsername
+										] || s.rep}
+									</div>
+								</div>
+								<div className="sum-stat">
+									<span className="k">
+										Open POs
+									</span>
+									<span className="v">
+										{s.count}
+									</span>
+								</div>
+								<div className="sum-stat">
+									<span className="k">
+										Value
+									</span>
+									<span className="v-small">
+										{formatRupiah(
+											s.value,
+										)}
+									</span>
+								</div>
+							</div>
+						))}
+				</div>
+
+				{/* Value Summary */}
+				<div className="val-summary">
+					<div className="vs-head">
+						<div>
+							<span className="vs-lbl">
+								Total PO Value
+							</span>
+							<span className="vs-amt grad">
+								{formatRupiah(
+									valueSummary.total,
+								)}
+							</span>
+						</div>
+					</div>
+					<div className="vs-track">
+						<div
+							className="vs-fill"
+							style={{
+								width: `${pct}%`,
+							}}
+						></div>
+					</div>
+					<div className="vs-cap">
+						<b>{pct}%</b> of target
+					</div>
+					<div className="vs-subs">
+						<div className="vs-sub">
+							<span className="dot pend"></span>
+							<span className="k">
+								Processing Value
+							</span>
+							<span className="v">
+								{formatRupiah(
+									valueSummary.processing,
+								)}
+							</span>
+						</div>
+						<div className="vs-sub">
+							<span className="dot real"></span>
+							<span className="k">
+								Realized Value
+							</span>
+							<span className="v">
+								{formatRupiah(
+									valueSummary.realized,
+								)}
+							</span>
+						</div>
+						<div className="vs-sub">
+							<span className="dot tgt"></span>
+							<span className="k">
+								Target
+							</span>
+							<span className="v">
+								{formatRupiah(
+									valueSummary.target,
+								)}
+							</span>
+						</div>
+					</div>
+				</div>
+
+				{/* Status Filter */}
+				<div className="status-filter">
+					{[
+						'all',
+						'processing',
+						'delivered',
+						'cancelled',
+					].map((status) => (
+						<button
+							key={status}
+							className={`sf-pill ${curStatus === status ? 'active' : ''}`}
+							onClick={() =>
+								handleStatusChange(
+									status,
+								)
+							}
+							disabled={loading}
+						>
+							{status === 'all'
+								? 'All'
+								: STATUS_LABEL[
+										status as keyof typeof STATUS_LABEL
+									]}
+						</button>
+					))}
+				</div>
+
+				{/* Loading State for Table */}
+				{loading && (
+					<div className="text-center py-8">
+						<div className="inline-flex items-center space-x-2">
+							<div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+							<span className="text-gray-600">
+								Loading...
+							</span>
+						</div>
+					</div>
+				)}
+
+				{/* PO Table */}
+				{!loading &&
+				pos.length === 0 ? (
+					<div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+						<div className="text-gray-500 text-lg">
+							No Purchase Orders found
+						</div>
+						<p className="text-gray-400 mt-2">
+							Try adjusting your filters
+						</p>
+					</div>
+				) : (
+					<div className="po-table">
+						{pos.map((po) => (
+							<div
+								key={po.poId}
+								className="v-rowwrap"
+							>
+								<div
+									className="v-row"
+									onClick={() =>
+										toggleRow(po.poId)
+									}
+								>
+									<div className="v-id">
+										{po.poId}
+									</div>
+									<div className="v-main">
+										<div className="v-client">
+											{po.client}
+										</div>
+										<div className="v-proj">
+											{po.project}
+										</div>
+									</div>
+									<div className="v-meta">
+										<div>
+											{SALESPEOPLE[
+												po.sp as SalespersonUsername
+											] || po.sp}
+										</div>
+										<div>{po.date}</div>
+									</div>
+									<div className="v-val">
+										{formatRupiah(
+											po.value,
+										)}
+									</div>
+									<button
+										className={`v-chev ${openRow === po.poId ? 'open' : ''}`}
+									>
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											strokeWidth="2"
+										>
+											<polyline points="6 9 12 15 18 9" />
+										</svg>
+									</button>
+								</div>
+
+								{openRow === po.poId && (
+									<div className="v-ex">
+										<div className="v-ex-left">
+											<div className="v-ex-id">
+												{po.poId}
+											</div>
+											<div className="v-ex-store">
+												{po.client}
+											</div>
+											<div className="v-ex-addrlabel">
+												Alamat
+												Pengiriman
+											</div>
+											<div className="v-ex-addr">
+												{po.addr}
+											</div>
+											<div className="v-ex-meta">
+												<div>
+													<b>Sales:</b>{' '}
+													{SALESPEOPLE[
+														po.sp as SalespersonUsername
+													] || po.sp}
+												</div>
+												<div>
+													<b>
+														PO Date:
+													</b>{' '}
+													{po.date}
+												</div>
+												<div>
+													<b>
+														Delivery:
+													</b>{' '}
+													{po.delivery}
+												</div>
+												<div>
+													<b>T.O.P:</b>{' '}
+													{po.top}
+												</div>
+											</div>
+											<div
+												className={`v-ex-pill ${po.status}`}
+											>
+												<span className="pdot"></span>
+												{
+													STATUS_LABEL[
+														po.status
+													]
+												}
+											</div>
+											<div className="v-ex-substatus">
+												<div className="sk">
+													STATUS
+												</div>
+												<div
+													className={`sv ${po.status}`}
 												>
-													<svg
-														className="w-6 h-6"
-														fill="none"
-														stroke="currentColor"
-														viewBox="0 0 24 24"
-													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															strokeWidth={
-																2
-															}
-															d="M6 18L18 6M6 6l12 12"
-														/>
-													</svg>
-												</button>
+													{po.substatus}
+												</div>
 											</div>
 
-											{error && (
-												<div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4">
-													<div className="text-sm text-red-600 font-medium">
-														{error}
-													</div>
-												</div>
+											{editingStatusPO === po.poId ? (
+												<StatusEditForm
+													po={po}
+													onSave={(data) => handleUpdateStatus(po.poId, data)}
+													onCancel={() => setEditingStatusPO(null)}
+													updating={updating}
+												/>
+											) : (
+												<button
+													onClick={() => setEditingStatusPO(po.poId)}
+													className="edit-status-btn"
+												>
+													Edit Status
+												</button>
 											)}
-
-											{/* Products Section */}
-											<div>
-												<div className="flex items-center justify-between mb-4">
-													<h4 className="text-lg font-semibold text-gray-900">
-														Produk
-													</h4>
-													<button
-														type="button"
-														onClick={
-															addProduct
-														}
-														className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
+										</div>
+										<div className="v-ex-right">
+											{po.items.map(
+												(item, idx) => (
+													<div
+														key={idx}
+														className="li-row"
 													>
-														Tambah
-														Produk
-													</button>
-												</div>
-
-												{formData.products.map(
-													(
-														product,
-														index,
-													) => (
-														<div
-															key={
-																index
-															}
-															className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-2xl"
-														>
-															<div className="md:col-span-2 relative">
-																<label className="block text-sm font-medium text-gray-700 mb-1">
-																	Nama
-																	Produk
-																	*
-																</label>
-																<input
-																	type="text"
-																	required
-																	value={
-																		productSearch[
-																			index
-																		] ||
-																		product.product
-																	}
-																	onChange={(
-																		e,
-																	) =>
-																		handleProductSearchChange(
-																			index,
-																			e
-																				.target
-																				.value,
-																		)
-																	}
-																	onFocus={() =>
-																		setShowProductDropdown(
-																			index,
-																		)
-																	}
-																	className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-																	placeholder="Cari produk..."
-																/>
-																{showProductDropdown ===
-																	index && (
-																	<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-																		{getFilteredProducts(
-																			index,
-																		)
-																			.length >
-																		0 ? (
-																			getFilteredProducts(
-																				index,
-																			).map(
-																				(
-																					p,
-																				) => (
-																					<div
-																						key={
-																							p.id
-																						}
-																						onClick={() =>
-																							handleProductSelect(
-																								index,
-																								p,
-																							)
-																						}
-																						className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-																					>
-																						<div className="font-medium text-gray-900">
-																							{
-																								p.name
-																							}
-																						</div>
-																						<div className="text-xs text-gray-500">
-																							{
-																								p.brand
-																							}{' '}
-																							-{' '}
-																							{
-																								p.code
-																							}
-																						</div>
-																						<div className="text-sm text-blue-600 font-medium">
-																							Rp{' '}
-																							{p.price.toLocaleString(
-																								'id-ID',
-																							)}
-																						</div>
-																					</div>
-																				),
-																			)
-																		) : (
-																			<div className="px-4 py-3 text-gray-500 text-sm">
-																				Tidak
-																				ada
-																				produk
-																				ditemukan
-																			</div>
-																		)}
-																	</div>
-																)}
+														<div className="li-main">
+															<div className="li-name">
+																{
+																	item.name
+																}
 															</div>
-															<div>
-																<label className="block text-sm font-medium text-gray-700 mb-1">
-																	Jumlah
-																	*
-																</label>
-																<input
-																	type="number"
-																	required
-																	min="1"
-																	value={
-																		product.quantity
-																	}
-																	onChange={(
-																		e,
-																	) =>
-																		handleProductChange(
-																			index,
-																			'quantity',
-																			parseInt(
-																				e
-																					.target
-																					.value,
-																			),
-																		)
-																	}
-																	className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-																/>
-															</div>
-															<div className="flex items-end">
-																<div className="flex-1">
-																	<label className="block text-sm font-medium text-gray-700 mb-1">
-																		Harga
-																		(Rp)
-																		*
-																	</label>
-																	<input
-																		type="number"
-																		required
-																		min="0"
-																		step="0.01"
-																		value={
-																			product.value
-																		}
-																		onChange={(
-																			e,
-																		) =>
-																			handleProductChange(
-																				index,
-																				'value',
-																				parseFloat(
-																					e
-																						.target
-																						.value,
-																				),
-																			)
-																		}
-																		className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-																	/>
-																</div>
-																{formData
-																	.products
-																	.length >
-																	1 && (
-																	<button
-																		type="button"
-																		onClick={() =>
-																			removeProduct(
-																				index,
-																			)
-																		}
-																		className="ml-2 p-2 text-red-600 hover:text-red-800"
-																		title="Hapus produk"
-																	>
-																		<svg
-																			className="w-5 h-5"
-																			fill="none"
-																			stroke="currentColor"
-																			viewBox="0 0 24 24"
-																		>
-																			<path
-																				strokeLinecap="round"
-																				strokeLinejoin="round"
-																				strokeWidth={
-																					2
-																				}
-																				d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																			/>
-																		</svg>
-																	</button>
-																)}
+															<div className="li-unit">
+																{formatRupiah(
+																	item.unit,
+																)}{' '}
+																/ unit
 															</div>
 														</div>
-													),
-												)}
-											</div>
-
-											<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-												<div>
-													<label
-														htmlFor="customer"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Nama
-														Customer *
-													</label>
-													<input
-														type="text"
-														id="customer"
-														name="customer"
-														required
-														value={
-															formData.customer
-														}
-														onChange={
-															handleInputChange
-														}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														placeholder="Masukkan nama customer"
-													/>
-												</div>
-
-												<div>
-													<label
-														htmlFor="contact"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Kontak *
-													</label>
-													<input
-														type="text"
-														id="contact"
-														name="contact"
-														required
-														value={
-															formData.contact
-														}
-														onChange={
-															handleInputChange
-														}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														placeholder="Masukkan nomor telepon/email"
-													/>
-												</div>
-
-												<div>
-													<label
-														htmlFor="shipmentTime"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Waktu
-														Pengiriman *
-													</label>
-													<input
-														type="text"
-														id="shipmentTime"
-														name="shipmentTime"
-														required
-														value={
-															formData.shipmentTime
-														}
-														onChange={
-															handleInputChange
-														}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														placeholder="Contoh: 08:00-10:00"
-													/>
-												</div>
-
-												<div
-													className="relative"
-													ref={
-														storeDropdownRef
-													}
-												>
-													<label
-														htmlFor="store"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Toko
-														(Opsional)
-													</label>
-													<input
-														type="text"
-														id="store"
-														name="store"
-														value={
-															storeSearch
-														}
-														onChange={(
-															e,
-														) =>
-															handleStoreSearchChange(
-																e.target
-																	.value,
-															)
-														}
-														onFocus={() => {
-															setShowStoreDropdown(
-																true,
-															);
-															if (
-																!storeSearch
-															) {
-																fetchStores(
-																	'',
-																);
-															}
-														}}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														placeholder="Cari toko..."
-													/>
-													{showStoreDropdown && (
-														<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-															{loadingStores ? (
-																<div className="px-4 py-3 text-gray-500 text-sm text-center">
-																	<div className="inline-flex items-center">
-																		<div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2"></div>
-																		Memuat...
-																	</div>
-																</div>
-															) : stores.length >
-															  0 ? (
-																stores.map(
-																	(
-																		s,
-																	) => (
-																		<div
-																			key={
-																				s.id
-																			}
-																			onClick={() =>
-																				handleStoreSelect(
-																					s,
-																				)
-																			}
-																			className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-																		>
-																			<div className="font-medium text-gray-900">
-																				{
-																					s.name
-																				}
-																			</div>
-																			<div className="text-xs text-gray-500">
-																				{
-																					s.location
-																				}
-																			</div>
-																		</div>
-																	),
-																)
-															) : (
-																<div className="px-4 py-3 text-gray-500 text-sm">
-																	Tidak
-																	ada
-																	toko
-																	ditemukan
-																</div>
+														<div className="li-qty">
+															{item.qty}
+															×
+														</div>
+														<div className="li-total">
+															{formatRupiah(
+																item.total,
 															)}
 														</div>
-													)}
-												</div>
-
-												<div>
-													<label
-														htmlFor="type"
-														className="block text-sm font-semibold text-gray-700 mb-2"
-													>
-														Tipe *
-													</label>
-													<select
-														id="type"
-														name="type"
-														required
-														value={
-															formData.type
-														}
-														onChange={
-															handleInputChange
-														}
-														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-													>
-														<option value="Project">
-															Project
-														</option>
-														<option value="Retail">
-															Retail
-														</option>
-														<option value="Order">
-															Order
-														</option>
-													</select>
-												</div>
-
-												{/* For Project Orders: Show Termin */}
-												{formData.type === 'Project' && (
-													<div>
-														<label
-															htmlFor="termin"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Termin (Hari)
-															<span className="text-xs text-gray-500 ml-1">(Opsional)</span>
-														</label>
-														<input
-															type="number"
-															id="termin"
-															name="termin"
-															min="0"
-															value={
-																formData.termin
-															}
-															onChange={(e) =>
-																setFormData({
-																	...formData,
-																	termin: Number(e.target.value),
-																})
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-															placeholder="Contoh: 10 untuk 10 hari setelah diterima"
-														/>
 													</div>
-												)}
-
-												{/* For Non-Project Orders: Show Payment Due Date */}
-												{formData.type !== 'Project' && (
-													<div>
-														<label
-															htmlFor="paymentDueDate"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Tanggal Jatuh Tempo
-														</label>
-														<input
-															type="date"
-															id="paymentDueDate"
-															name="paymentDueDate"
-															value={
-																formData.paymentDueDate
-															}
-															onChange={
-																handleInputChange
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-														/>
-													</div>
-												)}
-											</div>
-										</div>
-									</div>
-								</div>
-								<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-3xl">
-									<button
-										type="submit"
-										disabled={
-											isSubmitting
-										}
-										className="w-full inline-flex justify-center rounded-2xl border border-transparent shadow-sm px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-semibold text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-									>
-										{isSubmitting ? (
-											<div className="flex items-center">
-												<div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-												Menyimpan...
-											</div>
-										) : (
-											'Simpan PO'
-										)}
-									</button>
-									<button
-										type="button"
-										onClick={() => {
-											setShowAddModal(
-												false,
-											);
-											resetForm();
-											setError('');
-										}}
-										className="mt-3 w-full inline-flex justify-center rounded-2xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200"
-									>
-										Batal
-									</button>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-			)}
-
-			{/* Edit Order Modal */}
-			{showEditModal &&
-				editingOrder && (
-					<div className="fixed inset-0 z-[60] overflow-y-auto">
-						<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-							<div
-								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-								onClick={() => {
-									setShowEditModal(
-										false,
-									);
-									setEditingOrder(null);
-									resetForm();
-									setError('');
-								}}
-							></div>
-							<div className="relative inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-								<form
-									onSubmit={
-										handleUpdateOrder
-									}
-								>
-									<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-h-[80vh] overflow-y-auto">
-										<div className="sm:flex sm:items-start">
-											<div className="w-full">
-												<div className="flex items-center justify-between mb-6">
-													<h3 className="text-2xl font-bold text-gray-900">
-														Edit PO
-													</h3>
-													<button
-														type="button"
-														onClick={() => {
-															setShowEditModal(
-																false,
-															);
-															setEditingOrder(
-																null,
-															);
-															resetForm();
-															setError(
-																'',
-															);
-														}}
-														className="text-gray-400 hover:text-gray-600 transition-colors"
-													>
-														<svg
-															className="w-6 h-6"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24"
-														>
-															<path
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																strokeWidth={
-																	2
-																}
-																d="M6 18L18 6M6 6l12 12"
-															/>
-														</svg>
-													</button>
-												</div>
-
-												{error && (
-													<div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4">
-														<div className="text-sm text-red-600 font-medium">
-															{error}
-														</div>
-													</div>
-												)}
-
-												{/* Products Section */}
-												<div>
-													<div className="flex items-center justify-between mb-4">
-														<h4 className="text-lg font-semibold text-gray-900">
-															Produk
-														</h4>
-														<button
-															type="button"
-															onClick={
-																addProduct
-															}
-															className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
-														>
-															Tambah
-															Produk
-														</button>
-													</div>
-
-													{formData.products.map(
-														(
-															product,
-															index,
-														) => (
-															<div
-																key={
-																	index
-																}
-																className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-2xl"
-															>
-																<div className="md:col-span-2 relative">
-																	<label className="block text-sm font-medium text-gray-700 mb-1">
-																		Nama
-																		Produk
-																		*
-																	</label>
-																	<input
-																		type="text"
-																		required
-																		value={
-																			productSearch[
-																				index
-																			] ||
-																			product.product
-																		}
-																		onChange={(
-																			e,
-																		) =>
-																			handleProductSearchChange(
-																				index,
-																				e
-																					.target
-																					.value,
-																			)
-																		}
-																		onFocus={() =>
-																			setShowProductDropdown(
-																				index,
-																			)
-																		}
-																		className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-																		placeholder="Cari produk..."
-																	/>
-																	{showProductDropdown ===
-																		index && (
-																		<div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-																			{getFilteredProducts(
-																				index,
-																			)
-																				.length >
-																			0 ? (
-																				getFilteredProducts(
-																					index,
-																				).map(
-																					(
-																						p,
-																					) => (
-																						<div
-																							key={
-																								p.id
-																							}
-																							onClick={() =>
-																								handleProductSelect(
-																									index,
-																									p,
-																								)
-																							}
-																							className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-																						>
-																							<div className="font-medium text-gray-900">
-																								{
-																									p.name
-																								}
-																							</div>
-																							<div className="text-xs text-gray-500">
-																								{
-																									p.brand
-																								}{' '}
-																								-{' '}
-																								{
-																									p.code
-																								}
-																							</div>
-																							<div className="text-sm text-blue-600 font-medium">
-																								Rp{' '}
-																								{p.price.toLocaleString(
-																									'id-ID',
-																								)}
-																							</div>
-																						</div>
-																					),
-																				)
-																			) : (
-																				<div className="px-4 py-3 text-gray-500 text-sm">
-																					Tidak
-																					ada
-																					produk
-																					ditemukan
-																				</div>
-																			)}
-																		</div>
-																	)}
-																</div>
-																<div>
-																	<label className="block text-sm font-medium text-gray-700 mb-1">
-																		Jumlah
-																		*
-																	</label>
-																	<input
-																		type="number"
-																		required
-																		min="1"
-																		value={
-																			product.quantity
-																		}
-																		onChange={(
-																			e,
-																		) =>
-																			handleProductChange(
-																				index,
-																				'quantity',
-																				parseInt(
-																					e
-																						.target
-																						.value,
-																				),
-																			)
-																		}
-																		className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-																	/>
-																</div>
-																<div className="flex items-end">
-																	<div className="flex-1">
-																		<label className="block text-sm font-medium text-gray-700 mb-1">
-																			Harga
-																			(Rp)
-																			*
-																		</label>
-																		<input
-																			type="number"
-																			required
-																			min="0"
-																			step="0.01"
-																			value={
-																				product.value
-																			}
-																			onChange={(
-																				e,
-																			) =>
-																				handleProductChange(
-																					index,
-																					'value',
-																					parseFloat(
-																						e
-																							.target
-																							.value,
-																					),
-																				)
-																			}
-																			className="w-full px-3 py-2 bg-gray-50 border-0 rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-																		/>
-																	</div>
-																	{formData
-																		.products
-																		.length >
-																		1 && (
-																		<button
-																			type="button"
-																			onClick={() =>
-																				removeProduct(
-																					index,
-																				)
-																			}
-																			className="ml-2 p-2 text-red-600 hover:text-red-800"
-																			title="Hapus produk"
-																		>
-																			<svg
-																				className="w-5 h-5"
-																				fill="none"
-																				stroke="currentColor"
-																				viewBox="0 0 24 24"
-																			>
-																				<path
-																					strokeLinecap="round"
-																					strokeLinejoin="round"
-																					strokeWidth={
-																						2
-																					}
-																					d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																				/>
-																			</svg>
-																		</button>
-																	)}
-																</div>
-															</div>
-														),
-													)}
-												</div>
-
-												<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-													<div>
-														<label
-															htmlFor="edit-customer"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Nama
-															Customer *
-														</label>
-														<input
-															type="text"
-															id="edit-customer"
-															name="customer"
-															required
-															value={
-																formData.customer
-															}
-															onChange={
-																handleInputChange
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-															placeholder="Masukkan nama customer"
-														/>
-													</div>
-
-													<div>
-														<label
-															htmlFor="edit-contact"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Kontak *
-														</label>
-														<input
-															type="text"
-															id="edit-contact"
-															name="contact"
-															required
-															value={
-																formData.contact
-															}
-															onChange={
-																handleInputChange
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-															placeholder="Masukkan nomor telepon/email"
-														/>
-													</div>
-
-													<div>
-														<label
-															htmlFor="edit-shipmentTime"
-															className="block text-sm font-semibold text-gray-700 mb-2"
-														>
-															Waktu
-															Pengiriman
-															*
-														</label>
-														<input
-															type="text"
-															id="edit-shipmentTime"
-															name="shipmentTime"
-															required
-															value={
-																formData.shipmentTime
-															}
-															onChange={
-																handleInputChange
-															}
-															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
-															placeholder="Contoh: 08:00-10:00"
-														/>
-													</div>
-												</div>
-											</div>
-										</div>
-									</div>
-									<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-3xl">
-										<button
-											type="submit"
-											disabled={
-												isSubmitting
-											}
-											className="w-full inline-flex justify-center rounded-2xl border border-transparent shadow-sm px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-semibold text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-										>
-											{isSubmitting ? (
-												<div className="flex items-center">
-													<div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-													Menyimpan...
-												</div>
-											) : (
-												'Simpan Perubahan'
+												),
 											)}
-										</button>
-										<button
-											type="button"
-											onClick={() => {
-												setShowEditModal(
-													false,
-												);
-												setEditingOrder(
-													null,
-												);
-												resetForm();
-												setError('');
-											}}
-											className="mt-3 w-full inline-flex justify-center rounded-2xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200"
-										>
-											Batal
-										</button>
-									</div>
-								</form>
-							</div>
-						</div>
-					</div>
-				)}
-
-			{/* Delete confirmation modal */}
-			{showDeleteModal && (
-				<div className="fixed inset-0 z-[60] overflow-y-auto">
-					<div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-						<div
-							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-							onClick={() => {
-								setShowDeleteModal(
-									false,
-								);
-								setOrderToDelete(null);
-							}}
-						></div>
-						<div className="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-							<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-								<div className="sm:flex sm:items-start">
-									<div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-										<svg
-											className="h-6 w-6 text-red-600"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-											/>
-										</svg>
-									</div>
-									<div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-										<h3 className="text-lg leading-6 font-medium text-gray-900">
-											Hapus PO
-										</h3>
-										<div className="mt-2">
-											<p className="text-sm text-gray-500">
-												Apakah Anda
-												yakin ingin
-												menghapus
-												PO dari
-												&quot;
-												{
-													orderToDelete?.customer
-												}
-												&quot;? Tindakan
-												ini tidak dapat
-												dibatalkan.
-											</p>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-								<button
-									onClick={
-										confirmDelete
-									}
-									className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
-								>
-									Hapus
-								</button>
-								<button
-									onClick={() => {
-										setShowDeleteModal(
-											false,
-										);
-										setOrderToDelete(
-											null,
-										);
-									}}
-									className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-								>
-									Batal
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
-
-			{/* Description Modal */}
-			{showDescModal &&
-				selectedOrder &&
-				descModalType && (
-					<div className="fixed inset-0 z-[60] overflow-y-auto">
-						<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-							<div
-								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-								onClick={() => {
-									setShowDescModal(
-										false,
-									);
-									setSelectedOrder(
-										null,
-									);
-									setDescModalType(
-										null,
-									);
-									setDescription('');
-								}}
-							></div>
-							<span className="hidden sm:inline-block sm:align-middle sm:h-screen">
-								&#8203;
-							</span>
-							<div className="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-								<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-									<div className="sm:flex sm:items-start">
-										<div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-											<h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-												{descModalType ===
-													'isProcessed' &&
-													'Proses PO'}
-												{descModalType ===
-													'isFinished' &&
-													'Selesaikan PO'}
-												{descModalType ===
-													'isCancelled' &&
-													'Batalkan PO'}
-												{descModalType ===
-													'isApproved' &&
-													'Setujui PO'}
-												{descModalType ===
-													'isRejected' &&
-													'Tolak PO'}
-												{descModalType ===
-													'isPriceApproved' &&
-													'Setujui Harga'}
-												{descModalType ===
-													'isShipment' &&
-													'Kirim PO'}
-												{descModalType ===
-													'isReceived' &&
-													'Terima PO'}
-											</h3>
-											<div className="mt-2">
-												<p className="text-sm text-gray-500 mb-4">
-													Berikan
-													deskripsi
-													untuk tindakan
-													ini:
-												</p>
-												<textarea
-													value={
-														description
-													}
-													onChange={(
-														e,
-													) =>
-														setDescription(
-															e.target
-																.value,
-														)
-													}
-													placeholder="Masukkan deskripsi..."
-													rows={4}
-													className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 resize-none"
-												/>
+											<div className="li-totalrow">
+												<div className="tl">
+													TOTAL
+												</div>
+												<div className="tv">
+													{formatRupiah(
+														po.total,
+													)}
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
-								<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-									<button
-										onClick={
-											handleDescriptionSubmit
-										}
-										disabled={
-											!description.trim()
-										}
-										className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										{descModalType ===
-											'isProcessed' &&
-											(selectedOrder
-												.processed
-												?.isActive ||
-											selectedOrder.isProcessed
-												? 'Batalkan Proses'
-												: 'Proses')}
-										{descModalType ===
-											'isFinished' &&
-											(selectedOrder
-												.finished
-												?.isActive ||
-											selectedOrder.isFinished
-												? 'Batalkan Selesai'
-												: 'Selesaikan')}
-										{descModalType ===
-											'isCancelled' &&
-											(selectedOrder
-												.cancelled
-												?.isActive ||
-											selectedOrder.isCancelled
-												? 'Batalkan Pembatalan'
-												: 'Batalkan')}
-										{descModalType ===
-											'isApproved' &&
-											'Setujui'}
-										{descModalType ===
-											'isRejected' &&
-											'Tolak'}
-										{descModalType ===
-											'isPriceApproved' &&
-											'Setujui Harga'}
-										{descModalType ===
-											'isShipment' &&
-											(selectedOrder
-												.shipment
-												?.isActive
-												? 'Batalkan Pengiriman'
-												: 'Kirim')}
-									</button>
-									<button
-										onClick={() => {
-											setShowDescModal(
-												false,
-											);
-											setSelectedOrder(
-												null,
-											);
-											setDescModalType(
-												null,
-											);
-											setDescription(
-												'',
-											);
-										}}
-										className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-									>
-										Batal
-									</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				)}
-
-			{/* Barcode Scanner Modal */}
-			{showBarcodeScanModal && (
-				<div className="fixed inset-0 z-[60] overflow-y-auto">
-					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-						<div
-							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-							onClick={() => {
-								setShowBarcodeScanModal(
-									false,
-								);
-								setScannedOrder(null);
-								setScannedPallets([]);
-								setScanError('');
-								setIsProcessingScan(
-									false,
-								);
-							}}
-						></div>
-						<span className="hidden sm:inline-block sm:align-middle sm:h-screen">
-							&#8203;
-						</span>
-						<div className="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-							<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-								<div className="sm:flex sm:items-start">
-									<div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-										<div className="flex items-center justify-between mb-4">
-											<h3 className="text-lg leading-6 font-medium text-gray-900">
-												Scan Barcode
-												Palet
-											</h3>
-											<button
-												type="button"
-												onClick={() => {
-													setShowBarcodeScanModal(
-														false,
-													);
-													setScannedOrder(
-														null,
-													);
-													setScannedPallets(
-														[],
-													);
-													setScanError(
-														'',
-													);
-													setIsProcessingScan(
-														false,
-													);
-												}}
-												className="text-gray-400 hover:text-gray-600 transition-colors"
-											>
-												<svg
-													className="w-6 h-6"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={
-															2
-														}
-														d="M6 18L18 6M6 6l12 12"
-													/>
-												</svg>
-											</button>
-										</div>
-
-										{scannedOrder && (
-											<div className="mb-4 p-3 bg-blue-50 rounded-lg">
-												<p className="text-sm font-medium text-gray-900">
-													Order ID:{' '}
-													{
-														scannedOrder.orderId
-													}
-												</p>
-												<p className="text-xs text-gray-600 mt-1">
-													Customer:{' '}
-													{
-														scannedOrder.customer
-													}
-												</p>
-												<p className="text-xs text-gray-600">
-													Produk:{' '}
-													{scannedOrder.products
-														?.map(
-															(p) =>
-																`${p.product} (${p.quantity})`,
-														)
-														.join(', ')}
-												</p>
-											</div>
-										)}
-
-										{scanError && (
-											<div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-												<p className="text-sm text-red-600">
-													{scanError}
-												</p>
-											</div>
-										)}
-
-										{scannedPallets.length >
-											0 && (
-											<div className="mb-4 space-y-2">
-												<h4 className="text-sm font-semibold text-gray-900">
-													Palet yang
-													sudah di-scan:
-												</h4>
-												{scannedPallets.map(
-													(
-														pallet,
-														idx,
-													) => (
-														<div
-															key={idx}
-															className="p-3 bg-green-50 border border-green-200 rounded-lg"
-														>
-															<p className="text-sm font-medium text-green-900">
-																{
-																	pallet.paletName
-																}
-															</p>
-															<div className="mt-1 space-y-1">
-																{pallet.products.map(
-																	(
-																		prod,
-																		pidx,
-																	) => (
-																		<p
-																			key={
-																				pidx
-																			}
-																			className="text-xs text-green-700"
-																		>
-																			✓{' '}
-																			{
-																				prod.name
-																			}
-																			:{' '}
-																			{
-																				prod.scanned
-																			}
-																			/
-																			{
-																				prod.needed
-																			}
-																		</p>
-																	),
-																)}
-															</div>
-														</div>
-													),
-												)}
-											</div>
-										)}
-
-										{!checkIfAllProductsFulfilled() && (
-											<div className="mt-2">
-												<BarcodeScanner
-													onScan={
-														handleBarcodeScanned
-													}
-													onError={(
-														error,
-													) =>
-														console.error(
-															error,
-														)
-													}
-												/>
-											</div>
-										)}
-
-										{checkIfAllProductsFulfilled() && (
-											<div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-lg">
-												<p className="text-sm font-semibold text-green-800 text-center">
-													✅ Semua
-													produk sudah
-													terpenuhi!
-													Klik
-													&quot;Selesai
-													dan
-													Kirim&quot;
-													untuk
-													melanjutkan.
-												</p>
-											</div>
-										)}
-									</div>
-								</div>
-							</div>
-							<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3 rounded-b-2xl">
-								{scannedPallets.length >
-									0 && (
-									<button
-										onClick={
-											handleFinishScanning
-										}
-										className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-medium text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm"
-									>
-										Selesai dan Kirim
-									</button>
 								)}
-								<button
-									onClick={() => {
-										setShowBarcodeScanModal(
-											false,
-										);
-										setScannedOrder(
-											null,
-										);
-										setScannedPallets(
-											[],
-										);
-										setScanError('');
-										setIsProcessingScan(
-											false,
-										);
-									}}
-									className="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm"
-								>
-									Tutup
-								</button>
 							</div>
-						</div>
+						))}
 					</div>
-				</div>
-			)}
+				)}
+
+				{/* Pagination */}
+				{!loading && pos.length > 0 && (
+					<div className="pagination">
+						<span className="pg-info">
+							Showing {pos.length} of{' '}
+							{totalItems} POs (Page{' '}
+							{currentPage} of{' '}
+							{totalPages})
+						</span>
+						{totalPages > 1 &&
+							Array.from(
+								{
+									length: Math.min(
+										totalPages,
+										10,
+									),
+								},
+								(_, i) => i + 1,
+							).map((page) => (
+								<button
+									key={page}
+									className={`pg-btn ${currentPage === page ? 'active' : ''}`}
+									onClick={() =>
+										setCurrentPage(page)
+									}
+									disabled={loading}
+								>
+									{page}
+								</button>
+							))}
+						{totalPages > 10 &&
+							currentPage <
+								totalPages && (
+								<>
+									<span className="pg-info">
+										...
+									</span>
+									<button
+										className="pg-btn"
+										onClick={() =>
+											setCurrentPage(
+												totalPages,
+											)
+										}
+										disabled={loading}
+									>
+										{totalPages}
+									</button>
+								</>
+							)}
+					</div>
+				)}
+
+				{/* Create PO Modal */}
+				{showCreateModal && (
+					<CreatePOModal
+						onClose={() =>
+							setShowCreateModal(false)
+						}
+						onSubmit={handleCreatePO}
+						creating={creating}
+					/>
+				)}
+
+				<style jsx global>{`
+					/* Modal Styles */
+					.modal-overlay {
+						position: fixed;
+						top: 0;
+						left: 0;
+						right: 0;
+						bottom: 0;
+						background: rgba(
+							0,
+							0,
+							0,
+							0.5
+						);
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						z-index: 1000;
+						padding: 20px;
+					}
+
+					.modal-content {
+						background: white;
+						border-radius: 16px;
+						max-width: 800px;
+						width: 100%;
+						max-height: 90vh;
+						overflow-y: auto;
+						box-shadow: 0 8px 32px
+							rgba(0, 0, 0, 0.2);
+					}
+
+					.modal-header {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						padding: 24px;
+						border-bottom: 1px solid
+							#e0e0e0;
+					}
+
+					.modal-header h2 {
+						font-size: 24px;
+						font-weight: 700;
+						color: #111;
+						margin: 0;
+					}
+
+					.modal-close {
+						background: none;
+						border: none;
+						font-size: 32px;
+						color: #9a9a9a;
+						cursor: pointer;
+						line-height: 1;
+						padding: 0;
+						width: 32px;
+						height: 32px;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+					}
+
+					.modal-close:hover {
+						color: #111;
+					}
+
+					.modal-form {
+						padding: 24px;
+					}
+
+					.form-grid {
+						display: grid;
+						grid-template-columns: 1fr 1fr;
+						gap: 16px;
+						margin-bottom: 24px;
+					}
+
+					.form-group {
+						display: flex;
+						flex-direction: column;
+						gap: 8px;
+					}
+
+					.form-group.full-width {
+						grid-column: 1 / -1;
+					}
+
+					.form-group label {
+						font-size: 13px;
+						font-weight: 600;
+						color: #111;
+					}
+
+					.form-group input,
+					.form-group select,
+					.form-group textarea {
+						padding: 10px 12px;
+						border: 1px solid #e0e0e0;
+						border-radius: 8px;
+						font-size: 14px;
+						font-family: inherit;
+						color: #111;
+					}
+
+					.form-group input:focus,
+					.form-group select:focus,
+					.form-group textarea:focus {
+						outline: none;
+						border-color: #1ca7ec;
+					}
+
+					.items-section {
+						margin-bottom: 24px;
+						padding: 20px;
+						background: #f8f9fa;
+						border-radius: 12px;
+					}
+
+					.items-header {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						margin-bottom: 16px;
+					}
+
+					.items-header h3 {
+						font-size: 16px;
+						font-weight: 700;
+						color: #111;
+						margin: 0;
+					}
+
+					.add-item-btn {
+						padding: 6px 12px;
+						background: #1ca7ec;
+						color: white;
+						border: none;
+						border-radius: 6px;
+						font-size: 13px;
+						font-weight: 600;
+						cursor: pointer;
+					}
+
+					.add-item-btn:hover {
+						background: #1590cd;
+					}
+
+					.item-row {
+						display: grid;
+						grid-template-columns: 2fr 100px 120px 120px 40px;
+						gap: 8px;
+						margin-bottom: 8px;
+						align-items: center;
+					}
+
+					.item-row input {
+						padding: 8px 10px;
+						border: 1px solid #e0e0e0;
+						border-radius: 6px;
+						font-size: 13px;
+						color: #111;
+					}
+
+					.item-total {
+						font-size: 13px;
+						font-weight: 600;
+						color: #121567;
+					}
+
+					.remove-item-btn {
+						background: #fe2c23;
+						color: white;
+						border: none;
+						border-radius: 4px;
+						width: 30px;
+						height: 30px;
+						cursor: pointer;
+						font-size: 20px;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+					}
+
+					.total-row {
+						display: flex;
+						justify-content: space-between;
+						margin-top: 16px;
+						padding-top: 16px;
+						border-top: 2px solid
+							#e0e0e0;
+						font-size: 16px;
+						color: #121567;
+					}
+
+					.modal-actions {
+						display: flex;
+						gap: 12px;
+						justify-content: flex-end;
+					}
+
+					.btn-cancel,
+					.btn-submit {
+						padding: 10px 24px;
+						border: none;
+						border-radius: 8px;
+						font-size: 14px;
+						font-weight: 600;
+						cursor: pointer;
+					}
+
+					.btn-cancel {
+						background: #e0e0e0;
+						color: #111;
+					}
+
+					.btn-cancel:hover {
+						background: #d0d0d0;
+					}
+
+					.btn-submit {
+						background: linear-gradient(
+							90deg,
+							#61bedf 0%,
+							#1ca7ec 50%,
+							#1590cd 100%
+						);
+						color: white;
+					}
+
+					.btn-submit:hover {
+						box-shadow: 0 4px 12px
+							rgba(28, 167, 236, 0.3);
+					}
+
+					.btn-submit:disabled,
+					.btn-cancel:disabled {
+						opacity: 0.5;
+						cursor: not-allowed;
+					}
+
+					/* Status Edit Styles */
+					.edit-status-btn {
+						margin-top: 16px;
+						padding: 8px 16px;
+						background: #1ca7ec;
+						color: white;
+						border: none;
+						border-radius: 6px;
+						font-size: 13px;
+						font-weight: 600;
+						cursor: pointer;
+						transition: background 0.2s;
+					}
+
+					.edit-status-btn:hover {
+						background: #1590cd;
+					}
+
+					.status-edit-form {
+						margin-top: 16px;
+						padding: 16px;
+						background: #f8f9fa;
+						border-radius: 8px;
+						border: 1px solid #e0e0e0;
+					}
+
+					.status-edit-field {
+						margin-bottom: 12px;
+					}
+
+					.status-edit-field label {
+						display: block;
+						font-size: 12px;
+						font-weight: 600;
+						color: #111;
+						margin-bottom: 6px;
+						text-transform: uppercase;
+						letter-spacing: 0.05em;
+					}
+
+					.status-edit-field select {
+						width: 100%;
+						padding: 8px 12px;
+						border: 1px solid #e0e0e0;
+						border-radius: 6px;
+						font-size: 13px;
+						color: #111;
+						background: white;
+					}
+
+					.status-edit-field select:focus {
+						outline: none;
+						border-color: #1ca7ec;
+					}
+
+					.status-edit-field select:disabled {
+						opacity: 0.5;
+						cursor: not-allowed;
+					}
+
+					.status-edit-actions {
+						display: flex;
+						gap: 8px;
+						margin-top: 16px;
+					}
+
+					.btn-cancel-status,
+					.btn-save-status {
+						flex: 1;
+						padding: 8px 16px;
+						border: none;
+						border-radius: 6px;
+						font-size: 13px;
+						font-weight: 600;
+						cursor: pointer;
+					}
+
+					.btn-cancel-status {
+						background: #e0e0e0;
+						color: #111;
+					}
+
+					.btn-cancel-status:hover {
+						background: #d0d0d0;
+					}
+
+					.btn-save-status {
+						background: linear-gradient(90deg, #61bedf 0%, #1ca7ec 50%, #1590cd 100%);
+						color: white;
+					}
+
+					.btn-save-status:hover {
+						box-shadow: 0 4px 12px rgba(28, 167, 236, 0.3);
+					}
+
+					.btn-cancel-status:disabled,
+					.btn-save-status:disabled {
+						opacity: 0.5;
+						cursor: not-allowed;
+					}
+
+					@media (max-width: 768px) {
+						.form-grid {
+							grid-template-columns: 1fr;
+						}
+
+						.item-row {
+							grid-template-columns: 1fr;
+						}
+
+						.item-total {
+							text-align: right;
+						}
+					}
+				`}</style>
+
+				<style jsx>{`
+					.po-container {
+						max-width: 1400px;
+						margin: 0 auto;
+						padding: 24px;
+					}
+
+					.po-header {
+						margin-bottom: 32px;
+						display: flex;
+						justify-content: space-between;
+						align-items: flex-start;
+					}
+
+					.create-po-btn {
+						display: inline-flex;
+						align-items: center;
+						gap: 8px;
+						padding: 10px 20px;
+						background: linear-gradient(
+							90deg,
+							#61bedf 0%,
+							#1ca7ec 50%,
+							#1590cd 100%
+						);
+						color: white;
+						border: none;
+						border-radius: 8px;
+						font-weight: 600;
+						font-size: 14px;
+						cursor: pointer;
+						transition:
+							transform 0.2s,
+							box-shadow 0.2s;
+					}
+
+					.create-po-btn:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 4px 12px
+							rgba(28, 167, 236, 0.3);
+					}
+
+					.filter-row {
+						margin-bottom: 20px;
+					}
+
+					.sp-filter {
+						display: flex;
+						gap: 8px;
+						flex-wrap: wrap;
+					}
+
+					.sp-pill {
+						display: inline-flex;
+						align-items: center;
+						gap: 8px;
+						padding: 8px 16px;
+						border-radius: 100px;
+						border: 2px solid #e0e0e0;
+						background: #fff;
+						color: #9a9a9a;
+						font-weight: 600;
+						font-size: 13px;
+						cursor: pointer;
+						transition: all 0.2s;
+					}
+
+					.sp-pill:disabled {
+						opacity: 0.5;
+						cursor: not-allowed;
+					}
+
+					.sp-pill .dot {
+						width: 8px;
+						height: 8px;
+						border-radius: 50%;
+						background: currentColor;
+						opacity: 0.3;
+					}
+
+					.sp-pill.active {
+						border-color: #1ca7ec;
+						color: #1ca7ec;
+					}
+
+					.sp-pill.active .dot {
+						opacity: 1;
+					}
+
+					.summary-row {
+						display: flex;
+						gap: 12px;
+						margin-bottom: 20px;
+						flex-wrap: wrap;
+					}
+
+					.sum-card {
+						flex: 1;
+						min-width: 140px;
+						background: #fff;
+						border-radius: 16px;
+						padding: 16px;
+						box-shadow: 0 2px 8px
+							rgba(0, 0, 0, 0.08);
+						border: 1px solid #e0e0e0;
+					}
+
+					.sum-top {
+						display: flex;
+						align-items: center;
+						gap: 12px;
+						margin-bottom: 12px;
+					}
+
+					.sum-avatar {
+						width: 36px;
+						height: 36px;
+						border-radius: 50%;
+						background: linear-gradient(
+							135deg,
+							#61bedf 0%,
+							#1ca7ec 100%
+						);
+						color: #fff;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						font-weight: 700;
+						font-size: 14px;
+					}
+
+					.sum-name {
+						font-weight: 600;
+						font-size: 14px;
+						color: #111;
+					}
+
+					.sum-stat {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						margin-bottom: 4px;
+					}
+
+					.sum-stat:last-child {
+						margin-bottom: 0;
+					}
+
+					.sum-stat .k {
+						font-size: 12px;
+						color: #9a9a9a;
+					}
+
+					.sum-stat .v {
+						font-weight: 700;
+						font-size: 18px;
+						color: #121567;
+					}
+
+					.sum-stat .v-small {
+						font-weight: 600;
+						font-size: 13px;
+						color: #121567;
+					}
+
+					.val-summary {
+						background: #fff;
+						border-radius: 20px;
+						padding: 24px;
+						margin-bottom: 20px;
+						box-shadow: 0 2px 12px
+							rgba(0, 0, 0, 0.08);
+						border: 1px solid #e0e0e0;
+					}
+
+					.vs-head {
+						margin-bottom: 16px;
+					}
+
+					.vs-lbl {
+						display: block;
+						font-size: 13px;
+						color: #9a9a9a;
+						font-weight: 500;
+						margin-bottom: 8px;
+					}
+
+					.vs-amt {
+						font-size: 32px;
+						font-weight: 800;
+						background: linear-gradient(
+							90deg,
+							#61bedf 0%,
+							#1ca7ec 50%,
+							#1590cd 100%
+						);
+						-webkit-background-clip: text;
+						-webkit-text-fill-color: transparent;
+						background-clip: text;
+					}
+
+					.vs-track {
+						height: 12px;
+						background: #e0e0e0;
+						border-radius: 6px;
+						overflow: hidden;
+						margin-bottom: 8px;
+					}
+
+					.vs-fill {
+						height: 100%;
+						background: linear-gradient(
+							90deg,
+							#61bedf 0%,
+							#1ca7ec 50%,
+							#1590cd 100%
+						);
+						transition: width 0.5s ease;
+					}
+
+					.vs-cap {
+						font-size: 13px;
+						color: #9a9a9a;
+						margin-bottom: 16px;
+					}
+
+					.vs-cap b {
+						color: #121567;
+						font-weight: 700;
+					}
+
+					.vs-subs {
+						display: flex;
+						gap: 24px;
+						flex-wrap: wrap;
+					}
+
+					.vs-sub {
+						display: flex;
+						align-items: center;
+						gap: 8px;
+					}
+
+					.vs-sub .dot {
+						width: 10px;
+						height: 10px;
+						border-radius: 50%;
+					}
+
+					.vs-sub .dot.pend {
+						background: #f5a623;
+					}
+
+					.vs-sub .dot.real {
+						background: #27ae60;
+					}
+
+					.vs-sub .dot.tgt {
+						background: #121567;
+					}
+
+					.vs-sub .k {
+						font-size: 13px;
+						color: #9a9a9a;
+					}
+
+					.vs-sub .v {
+						font-weight: 700;
+						font-size: 15px;
+						color: #121567;
+					}
+
+					.status-filter {
+						display: flex;
+						gap: 8px;
+						margin-bottom: 20px;
+						flex-wrap: wrap;
+					}
+
+					.sf-pill {
+						padding: 8px 20px;
+						border-radius: 100px;
+						border: 2px solid #e0e0e0;
+						background: #fff;
+						color: #9a9a9a;
+						font-weight: 600;
+						font-size: 14px;
+						cursor: pointer;
+						transition: all 0.2s;
+					}
+
+					.sf-pill:disabled {
+						opacity: 0.5;
+						cursor: not-allowed;
+					}
+
+					.sf-pill.active {
+						background: linear-gradient(
+							90deg,
+							#61bedf 0%,
+							#1ca7ec 50%,
+							#1590cd 100%
+						);
+						border-color: transparent;
+						color: #fff;
+					}
+
+					.po-table {
+						display: flex;
+						flex-direction: column;
+						gap: 12px;
+					}
+
+					.v-rowwrap {
+						background: #fff;
+						border-radius: 16px;
+						overflow: hidden;
+						box-shadow: 0 2px 8px
+							rgba(0, 0, 0, 0.08);
+						border: 1px solid #e0e0e0;
+					}
+
+					.v-row {
+						display: flex;
+						align-items: center;
+						gap: 16px;
+						padding: 20px;
+						cursor: pointer;
+						transition: background 0.2s;
+					}
+
+					.v-row:hover {
+						background: #f8f9fa;
+					}
+
+					.v-id {
+						font-weight: 800;
+						font-size: 16px;
+						color: #121567;
+						min-width: 100px;
+					}
+
+					.v-main {
+						flex: 1;
+						min-width: 0;
+					}
+
+					.v-client {
+						font-weight: 700;
+						font-size: 15px;
+						color: #111;
+						margin-bottom: 4px;
+					}
+
+					.v-proj {
+						font-weight: 500;
+						font-size: 13px;
+						color: #9a9a9a;
+					}
+
+					.v-meta {
+						font-size: 13px;
+						color: #9a9a9a;
+						text-align: right;
+						min-width: 100px;
+					}
+
+					.v-val {
+						font-weight: 700;
+						font-size: 16px;
+						color: #121567;
+						min-width: 140px;
+						text-align: right;
+					}
+
+					.v-chev {
+						width: 24px;
+						height: 24px;
+						border: none;
+						background: transparent;
+						cursor: pointer;
+						color: #9a9a9a;
+						transition: transform 0.3s;
+					}
+
+					.v-chev.open {
+						transform: rotate(180deg);
+					}
+
+					.v-chev svg {
+						width: 100%;
+						height: 100%;
+					}
+
+					.v-ex {
+						display: flex;
+						gap: 24px;
+						padding: 0 20px 20px;
+						border-top: 1px solid
+							#e0e0e0;
+						animation: slideDown 0.3s
+							ease;
+					}
+
+					@keyframes slideDown {
+						from {
+							opacity: 0;
+							max-height: 0;
+						}
+						to {
+							opacity: 1;
+							max-height: 1000px;
+						}
+					}
+
+					.v-ex-left {
+						flex: 0 0 300px;
+					}
+
+					.v-ex-id {
+						font-weight: 800;
+						font-size: 22px;
+						color: #121567;
+						margin-bottom: 12px;
+					}
+
+					.v-ex-store {
+						font-weight: 700;
+						font-size: 16px;
+						color: #111;
+					}
+
+					.v-ex-addrlabel {
+						font-weight: 500;
+						font-style: italic;
+						font-size: 13px;
+						color: #9a9a9a;
+						margin-top: 12px;
+					}
+
+					.v-ex-addr {
+						font-weight: 400;
+						font-size: 13px;
+						color: #111;
+						line-height: 1.6;
+						margin-bottom: 16px;
+					}
+
+					.v-ex-meta {
+						font-weight: 400;
+						font-size: 13px;
+						color: #111;
+						line-height: 1.9;
+					}
+
+					.v-ex-pill {
+						display: inline-flex;
+						align-items: center;
+						gap: 8px;
+						margin-top: 12px;
+						padding: 6px 20px;
+						border-radius: 100px;
+						color: #fff;
+						font-weight: 700;
+						font-size: 13px;
+					}
+
+					.v-ex-pill.processing {
+						background: #f5a623;
+					}
+
+					.v-ex-pill.delivered {
+						background: #27ae60;
+					}
+
+					.v-ex-pill.cancelled {
+						background: #fe2c23;
+					}
+
+					.v-ex-pill .pdot {
+						width: 8px;
+						height: 8px;
+						border-radius: 50%;
+						background: rgba(
+							0,
+							0,
+							0,
+							0.28
+						);
+					}
+
+					.v-ex-substatus {
+						display: flex;
+						flex-direction: column;
+						gap: 2px;
+						margin-top: 12px;
+					}
+
+					.v-ex-substatus .sk {
+						font-weight: 500;
+						font-size: 12px;
+						color: #9a9a9a;
+						text-transform: uppercase;
+						letter-spacing: 0.06em;
+					}
+
+					.v-ex-substatus .sv {
+						font-weight: 700;
+						font-size: 14px;
+					}
+
+					.v-ex-substatus
+						.sv.processing {
+						color: #f5a623;
+					}
+
+					.v-ex-substatus
+						.sv.delivered {
+						color: #27ae60;
+					}
+
+					.v-ex-substatus
+						.sv.cancelled {
+						color: #fe2c23;
+					}
+
+					.v-ex-right {
+						flex: 1;
+						min-width: 0;
+					}
+
+					.li-row {
+						display: flex;
+						align-items: flex-start;
+						gap: 12px;
+						padding: 8px 0;
+						border-bottom: 1px solid
+							#e0e0e0;
+					}
+
+					.li-main {
+						flex: 1;
+						min-width: 0;
+					}
+
+					.li-name {
+						font-weight: 600;
+						font-size: 14px;
+						color: #111;
+					}
+
+					.li-unit {
+						font-weight: 400;
+						font-size: 12px;
+						color: #9a9a9a;
+						margin-top: 2px;
+					}
+
+					.li-qty {
+						font-weight: 400;
+						font-size: 13px;
+						color: #9a9a9a;
+						min-width: 30px;
+						text-align: center;
+					}
+
+					.li-total {
+						font-weight: 600;
+						font-size: 14px;
+						color: #111;
+						min-width: 110px;
+						text-align: right;
+					}
+
+					.li-totalrow {
+						display: flex;
+						align-items: center;
+						justify-content: space-between;
+						margin-top: 8px;
+					}
+
+					.li-totalrow .tl {
+						font-weight: 700;
+						font-size: 15px;
+						color: #111;
+					}
+
+					.li-totalrow .tv {
+						font-weight: 800;
+						font-size: 15px;
+						color: #121567;
+					}
+
+					.pagination {
+						display: flex;
+						align-items: center;
+						justify-content: flex-end;
+						gap: 8px;
+						margin-top: 20px;
+						flex-wrap: wrap;
+					}
+
+					.pg-info {
+						font-weight: 400;
+						font-size: 13px;
+						color: #9a9a9a;
+						margin-right: 8px;
+					}
+
+					.pg-btn {
+						height: 30px;
+						padding: 0 14px;
+						border: 1px solid #e0e0e0;
+						background: #fff;
+						border-radius: 6px;
+						cursor: pointer;
+						font-weight: 500;
+						font-size: 13px;
+						color: #9a9a9a;
+						transition: 0.2s;
+					}
+
+					.pg-btn:disabled {
+						opacity: 0.5;
+						cursor: not-allowed;
+					}
+
+					.pg-btn:hover:not(
+							.active
+						):not(:disabled) {
+						border-color: #1ca7ec;
+						color: #1ca7ec;
+					}
+
+					.pg-btn.active {
+						background: linear-gradient(
+							90deg,
+							#61bedf 0%,
+							#1ca7ec 50%,
+							#1590cd 100%
+						);
+						border-color: transparent;
+						color: #fff;
+					}
+
+					@media (max-width: 768px) {
+						.v-row {
+							flex-wrap: wrap;
+						}
+
+						.v-ex {
+							flex-direction: column;
+						}
+
+						.v-ex-left {
+							flex: 1;
+						}
+					}
+				`}</style>
+			</div>
 		</MainLayout>
 	);
 }
