@@ -87,6 +87,9 @@ export default function PO() {
 			contact: '',
 			shipmentTime: '',
 			store: '',
+			type: 'Project' as 'Retail' | 'Project' | 'Order',
+			paymentDueDate: '',
+			termin: 0, // Payment terms in days for project orders
 			products: [
 				{
 					product: '',
@@ -127,6 +130,7 @@ export default function PO() {
 		| 'isRejected'
 		| 'isPriceApproved'
 		| 'isShipment'
+		| 'isReceived'
 		| null
 	>(null);
 	const [
@@ -430,6 +434,7 @@ export default function PO() {
 		e: React.ChangeEvent<
 			| HTMLInputElement
 			| HTMLTextAreaElement
+			| HTMLSelectElement
 		>,
 	) => {
 		const { name, value } = e.target;
@@ -596,6 +601,9 @@ export default function PO() {
 			contact: '',
 			shipmentTime: '',
 			store: '',
+			type: 'Project' as 'Retail' | 'Project' | 'Order',
+			paymentDueDate: '',
+			termin: 0,
 			products: [
 				{
 					product: '',
@@ -626,6 +634,14 @@ export default function PO() {
 					formData.shipmentTime,
 				...(formData.store && {
 					store: formData.store.trim(),
+				}),
+				type: formData.type,
+				// For project orders, include termin; for retail, include paymentDueDate
+				...(formData.type === 'Project' && formData.termin > 0 && {
+					termin: formData.termin,
+				}),
+				...(formData.type !== 'Project' && formData.paymentDueDate && {
+					paymentDueDate: new Date(formData.paymentDueDate + 'T00:00:00Z').toISOString(),
 				}),
 				products: formData.products.map(
 					(p) => ({
@@ -698,6 +714,13 @@ export default function PO() {
 				...(formData.store && {
 					store: formData.store.trim(),
 				}),
+				// For project orders, include termin; for retail, include paymentDueDate
+				...(formData.type === 'Project' && formData.termin > 0 && {
+					termin: formData.termin,
+				}),
+				...(formData.type !== 'Project' && formData.paymentDueDate && {
+					paymentDueDate: new Date(formData.paymentDueDate + 'T00:00:00Z').toISOString(),
+				}),
 				products: formData.products.map(
 					(p) => ({
 						product: p.product.trim(),
@@ -747,7 +770,8 @@ export default function PO() {
 			| 'isApproved'
 			| 'isRejected'
 			| 'isPriceApproved'
-			| 'isShipment',
+			| 'isShipment'
+			| 'isReceived',
 	) => {
 		setSelectedOrder(order);
 		setDescModalType(field);
@@ -1115,6 +1139,8 @@ export default function PO() {
 							return 'priceApproved';
 						case 'isShipment':
 							return 'shipment';
+						case 'isReceived':
+							return 'received';
 						default:
 							return '';
 					}
@@ -1639,8 +1665,9 @@ export default function PO() {
 													{/* Actions Column */}
 													<td className="px-6 py-4 whitespace-nowrap text-center">
 														<div className="flex items-center justify-center space-x-2">
-															{/* Price Approval Button - Pricing */}
-															{canPriceApprove &&
+															{/* Price Approval Button - Pricing (Only for non-project orders) */}
+															{order.type?.toLowerCase() !== 'project' &&
+																canPriceApprove &&
 																!order
 																	.priceApproved
 																	?.isActive &&
@@ -1670,8 +1697,42 @@ export default function PO() {
 																	</button>
 																)}
 
-															{/* General Approval Buttons - Approver */}
-															{canApprove &&
+															{/* Received Button - For Project Orders */}
+															{order.type?.toLowerCase() === 'project' &&
+																!(
+																	order
+																		.cancelled
+																		?.isActive ||
+																	order.isCancelled
+																) &&
+																!(
+																	order
+																		.finished
+																		?.isActive ||
+																	order.isFinished
+																) && (
+																	<button
+																		onClick={() =>
+																			toggleOrderStatus(
+																				order,
+																				'isReceived',
+																			)
+																		}
+																		className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${
+																			order.received?.isActive
+																				? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+																				: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+																		}`}
+																	>
+																		{order.received?.isActive
+																			? 'Diterima'
+																			: 'Terima'}
+																	</button>
+																)}
+
+															{/* General Approval Buttons - Approver (Only for non-project orders) */}
+															{order.type?.toLowerCase() !== 'project' &&
+																canApprove &&
 																!(
 																	order
 																		.approved
@@ -2432,6 +2493,91 @@ export default function PO() {
 														</div>
 													)}
 												</div>
+
+												<div>
+													<label
+														htmlFor="type"
+														className="block text-sm font-semibold text-gray-700 mb-2"
+													>
+														Tipe *
+													</label>
+													<select
+														id="type"
+														name="type"
+														required
+														value={
+															formData.type
+														}
+														onChange={
+															handleInputChange
+														}
+														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+													>
+														<option value="Project">
+															Project
+														</option>
+														<option value="Retail">
+															Retail
+														</option>
+														<option value="Order">
+															Order
+														</option>
+													</select>
+												</div>
+
+												{/* For Project Orders: Show Termin */}
+												{formData.type === 'Project' && (
+													<div>
+														<label
+															htmlFor="termin"
+															className="block text-sm font-semibold text-gray-700 mb-2"
+														>
+															Termin (Hari)
+															<span className="text-xs text-gray-500 ml-1">(Opsional)</span>
+														</label>
+														<input
+															type="number"
+															id="termin"
+															name="termin"
+															min="0"
+															value={
+																formData.termin
+															}
+															onChange={(e) =>
+																setFormData({
+																	...formData,
+																	termin: Number(e.target.value),
+																})
+															}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+															placeholder="Contoh: 10 untuk 10 hari setelah diterima"
+														/>
+													</div>
+												)}
+
+												{/* For Non-Project Orders: Show Payment Due Date */}
+												{formData.type !== 'Project' && (
+													<div>
+														<label
+															htmlFor="paymentDueDate"
+															className="block text-sm font-semibold text-gray-700 mb-2"
+														>
+															Tanggal Jatuh Tempo
+														</label>
+														<input
+															type="date"
+															id="paymentDueDate"
+															name="paymentDueDate"
+															value={
+																formData.paymentDueDate
+															}
+															onChange={
+																handleInputChange
+															}
+															className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+														/>
+													</div>
+												)}
 											</div>
 										</div>
 									</div>
@@ -3009,6 +3155,9 @@ export default function PO() {
 												{descModalType ===
 													'isShipment' &&
 													'Kirim PO'}
+												{descModalType ===
+													'isReceived' &&
+													'Terima PO'}
 											</h3>
 											<div className="mt-2">
 												<p className="text-sm text-gray-500 mb-4">

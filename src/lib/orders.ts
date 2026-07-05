@@ -26,6 +26,7 @@ interface Order {
 	rejected: OrderStatus;
 	shipment: OrderStatus;
 	priceApproved: OrderStatus;
+	received?: OrderStatus; // New field for project orders
 	shipmentTime: string;
 	createdBy: string;
 	username?: string;
@@ -33,6 +34,9 @@ interface Order {
 	updatedAt?: string;
 	collector?: string;
 	paymentDueDate?: string;
+	termin?: number; // Payment terms in days
+	type?: 'Retail' | 'Project' | 'Order';
+	store?: string;
 	// Legacy fields for backward compatibility
 	isProcessed?: boolean;
 	isFinished?: boolean;
@@ -50,6 +54,11 @@ interface OrderCreateRequest {
 	orderDate: string;
 	shipmentTime: string;
 	createdBy: string;
+	type?: 'Retail' | 'Project' | 'Order';
+	termin?: number; // Payment terms in days (for project orders)
+	store?: string; // Optional for project orders, required for retail
+	paymentDueDate?: string; // Required for retail, auto-calculated for project
+	username?: string;
 }
 
 interface OrderResponse {
@@ -260,6 +269,7 @@ export const updateOrder = async (
 			rejected?: OrderStatus;
 			shipment?: OrderStatus;
 			priceApproved?: OrderStatus;
+			received?: OrderStatus; // For project orders
 			paymentDueDate?: string;
 		}
 	>
