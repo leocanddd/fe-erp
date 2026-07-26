@@ -39,13 +39,35 @@ export default function VisitDetail() {
 	if (loading) {
 		return (
 			<MainLayout title="Detail Kunjungan">
-				<div className="max-w-4xl mx-auto">
-					<div className="p-8 text-center">
-						<div className="inline-flex items-center space-x-3">
-							<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-							<span className="text-gray-600">Memuat detail kunjungan...</span>
-						</div>
-					</div>
+				<style jsx>{`
+					.loading-container {
+						padding: 80px 32px;
+						text-align: center;
+					}
+					.loading-spinner {
+						display: inline-block;
+						width: 32px;
+						height: 32px;
+						border: 3px solid #e0e0e0;
+						border-top-color: #1ca7ec;
+						border-radius: 50%;
+						animation: spin 0.8s linear infinite;
+					}
+					@keyframes spin {
+						to {
+							transform: rotate(360deg);
+						}
+					}
+					.loading-text {
+						margin-top: 16px;
+						font-weight: 500;
+						font-size: 14px;
+						color: #9a9a9a;
+					}
+				`}</style>
+				<div className="loading-container">
+					<div className="loading-spinner"></div>
+					<div className="loading-text">Loading visit details...</div>
 				</div>
 			</MainLayout>
 		);
@@ -54,21 +76,50 @@ export default function VisitDetail() {
 	if (error || !visit) {
 		return (
 			<MainLayout title="Detail Kunjungan">
-				<div className="max-w-4xl mx-auto">
-					<div className="mb-8">
-						<Link
-							href="/reports"
-							className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-						>
-							<svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-							</svg>
-							Kembali ke Laporan
-						</Link>
-					</div>
-					<div className="bg-red-50 border border-red-200 rounded-xl p-6">
-						<div className="text-red-600 font-medium">
-							{error || 'Kunjungan tidak ditemukan'}
+				<style jsx>{`
+					.back-link {
+						display: inline-flex;
+						align-items: center;
+						gap: 6px;
+						font-weight: 600;
+						font-size: 13px;
+						text-decoration: none;
+						margin-bottom: 20px;
+						transition: color 0.2s ease;
+					}
+					:global(.back-link) {
+						color: #1ca7ec !important;
+					}
+					:global(.back-link:hover) {
+						color: #1590cd !important;
+					}
+					.back-icon {
+						width: 16px;
+						height: 16px;
+					}
+					.error-card {
+						background: #fff5f5;
+						border: 1px solid #feb2b2;
+						border-radius: 12px;
+						padding: 24px;
+						text-align: center;
+					}
+					.error-text {
+						font-weight: 600;
+						font-size: 14px;
+						color: #c53030;
+					}
+				`}</style>
+				<div>
+					<Link href="/reports" className="back-link">
+						<svg className="back-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+						</svg>
+						Back to Reports
+					</Link>
+					<div className="error-card">
+						<div className="error-text">
+							{error || 'Visit not found'}
 						</div>
 					</div>
 				</div>
@@ -78,121 +129,217 @@ export default function VisitDetail() {
 
 	return (
 		<MainLayout title="Detail Kunjungan">
-			<div className="max-w-4xl mx-auto">
-				{/* Header */}
-				<div className="mb-8">
-					<Link
-						href="/reports"
-						className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors mb-4"
-					>
-						<svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-						</svg>
-						Kembali ke Laporan
-					</Link>
-					<h2 className="text-2xl font-bold text-gray-900">Detail Kunjungan</h2>
-					<p className="text-gray-600">Informasi lengkap kunjungan sales</p>
-				</div>
+			<style jsx>{`
+				.back-link {
+					display: inline-flex;
+					align-items: center;
+					gap: 6px;
+					font-weight: 600;
+					font-size: 13px;
+					text-decoration: none;
+					margin-bottom: 20px;
+					transition: color 0.2s ease;
+				}
+				:global(.back-link) {
+					color: #1ca7ec !important;
+				}
+				:global(.back-link:hover) {
+					color: #1590cd !important;
+				}
+				.back-icon {
+					width: 16px;
+					height: 16px;
+				}
+				.detail-card {
+					background: #ffffff;
+					border: 1px solid #e0e0e0;
+					border-radius: 12px;
+					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+					overflow: hidden;
+				}
+				.card-header {
+					background: linear-gradient(90deg, #61bedf 0%, #1ca7ec 50%, #1590cd 100%);
+					padding: 24px 28px;
+					display: flex;
+					align-items: center;
+					gap: 16px;
+				}
+				.avatar-large {
+					flex: 0 0 72px;
+					width: 72px;
+					height: 72px;
+					border-radius: 50%;
+					background: #ffffff;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					font-weight: 700;
+					font-size: 28px;
+					color: #1ca7ec;
+					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+				}
+				.header-info {
+					flex: 1;
+				}
+				.sales-name {
+					font-weight: 700;
+					font-size: 24px;
+					color: #ffffff;
+					margin: 0 0 4px 0;
+				}
+				.sales-username {
+					font-weight: 500;
+					font-size: 14px;
+					color: rgba(255, 255, 255, 0.9);
+				}
+				.card-body {
+					padding: 24px 28px;
+				}
+				.info-grid {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+					gap: 20px;
+				}
+				.info-item {
+					padding-bottom: 16px;
+					border-bottom: 1px solid #f4f6f9;
+				}
+				.info-label {
+					font-weight: 600;
+					font-size: 11px;
+					text-transform: uppercase;
+					letter-spacing: 0.04em;
+					color: #9a9a9a;
+					margin-bottom: 8px;
+				}
+				.info-value {
+					font-weight: 500;
+					font-size: 15px;
+					color: #111111;
+					line-height: 1.5;
+				}
+				.info-value.large {
+					font-weight: 600;
+					font-size: 16px;
+				}
+				.meta-section {
+					margin-top: 24px;
+					padding-top: 20px;
+					border-top: 1px solid #e0e0e0;
+				}
+				.meta-title {
+					font-weight: 700;
+					font-size: 13px;
+					color: #111111;
+					margin-bottom: 12px;
+				}
+				.meta-item {
+					display: flex;
+					justify-content: space-between;
+					padding: 8px 0;
+					font-size: 13px;
+				}
+				.meta-label {
+					font-weight: 500;
+					color: #9a9a9a;
+				}
+				.meta-value {
+					font-weight: 600;
+					color: #111111;
+				}
+			`}</style>
+			<div>
+				<Link href="/reports" className="back-link">
+					<svg className="back-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+					</svg>
+					Back to Reports
+				</Link>
 
-				{/* Visit Details */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					<div className="p-8">
-						{/* Sales Info */}
-						<div className="mb-8">
-							<h3 className="text-lg font-semibold text-gray-900 mb-4">Informasi Sales</h3>
-							<div className="flex items-center space-x-4">
-								<div className="w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center">
-									<span className="text-white font-semibold text-xl">
-										{visit.username.charAt(0).toUpperCase()}
-									</span>
-								</div>
-								<div>
-									<div className="text-xl font-medium text-gray-900">{visit.name}</div>
-									<div className="text-gray-500">@{visit.username}</div>
-								</div>
+				<div className="detail-card">
+					{/* Header with gradient */}
+					<div className="card-header">
+						<div className="avatar-large">
+							{visit.username.charAt(0).toUpperCase()}
+						</div>
+						<div className="header-info">
+							<h1 className="sales-name">{visit.name}</h1>
+							<div className="sales-username">@{visit.username}</div>
+						</div>
+					</div>
+
+					{/* Body */}
+					<div className="card-body">
+						<div className="info-grid">
+							<div className="info-item">
+								<div className="info-label">Store</div>
+								<div className="info-value large">{visit.store}</div>
 							</div>
+
+							<div className="info-item">
+								<div className="info-label">Location</div>
+								<div className="info-value">{visit.location}</div>
+							</div>
+
+							<div className="info-item">
+								<div className="info-label">Date</div>
+								<div className="info-value">{formatVisitDateOnly(visit)}</div>
+							</div>
+
+							<div className="info-item">
+								<div className="info-label">Time</div>
+								<div className="info-value">{formatVisitTimeOnly(visit)}</div>
+							</div>
+
+							<div className="info-item">
+								<div className="info-label">Description</div>
+								<div className="info-value">{visit.description}</div>
+							</div>
+
+							<div className="info-item">
+								<div className="info-label">Result</div>
+								<div className="info-value">{visit.result}</div>
+							</div>
+
+							<div className="info-item">
+								<div className="info-label">Notes</div>
+								<div className="info-value">{visit.notes}</div>
+							</div>
+
+							{visit.orderId && (
+								<div className="info-item">
+									<div className="info-label">Order ID</div>
+									<div className="info-value">{visit.orderId}</div>
+								</div>
+							)}
 						</div>
 
-						{/* Visit Details Grid */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-							{/* Left Column */}
-							<div className="space-y-6">
-								<div>
-									<h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-										Toko
-									</h4>
-									<p className="text-lg text-gray-900">{visit.store}</p>
-								</div>
-
-								<div>
-									<h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-										Tanggal Kunjungan
-									</h4>
-									<p className="text-lg text-gray-900">{formatVisitDateOnly(visit)}</p>
-								</div>
-
-								<div>
-									<h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-										Waktu Kunjungan
-									</h4>
-									<p className="text-lg text-gray-900">{formatVisitTimeOnly(visit)}</p>
-								</div>
-
-								{visit.orderId && (
-									<div>
-										<h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-											Order ID
-										</h4>
-										<p className="text-lg text-gray-900">{visit.orderId}</p>
-									</div>
-								)}
+						{/* Meta Section */}
+						<div className="meta-section">
+							<div className="meta-title">Visit Metadata</div>
+							<div className="meta-item">
+								<span className="meta-label">Created</span>
+								<span className="meta-value">
+									{new Date(visit.createdAt).toLocaleDateString('id-ID', {
+										year: 'numeric',
+										month: 'short',
+										day: 'numeric',
+										hour: '2-digit',
+										minute: '2-digit',
+									})}
+								</span>
 							</div>
-
-							{/* Right Column */}
-							<div className="space-y-6">
-								<div>
-									<h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-										Lokasi
-									</h4>
-									<p className="text-lg text-gray-900">{visit.location}</p>
-								</div>
-
-								<div>
-									<h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-										Deskripsi
-									</h4>
-									<p className="text-lg text-gray-900">{visit.description}</p>
-								</div>
-
-								<div>
-									<h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-										Dibuat pada
-									</h4>
-									<p className="text-gray-600">
-										{new Date(visit.createdAt).toLocaleDateString('id-ID', {
-											year: 'numeric',
-											month: 'long',
-											day: 'numeric',
-											hour: '2-digit',
-											minute: '2-digit',
-										})}
-									</p>
-								</div>
-
-								<div>
-									<h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-										Terakhir diupdate
-									</h4>
-									<p className="text-gray-600">
-										{new Date(visit.updatedAt).toLocaleDateString('id-ID', {
-											year: 'numeric',
-											month: 'long',
-											day: 'numeric',
-											hour: '2-digit',
-											minute: '2-digit',
-										})}
-									</p>
-								</div>
+							<div className="meta-item">
+								<span className="meta-label">Last Updated</span>
+								<span className="meta-value">
+									{new Date(visit.updatedAt).toLocaleDateString('id-ID', {
+										year: 'numeric',
+										month: 'short',
+										day: 'numeric',
+										hour: '2-digit',
+										minute: '2-digit',
+									})}
+								</span>
 							</div>
 						</div>
 					</div>

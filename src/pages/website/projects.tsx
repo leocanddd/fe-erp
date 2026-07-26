@@ -227,124 +227,260 @@ export default function WebProjects() {
 
 	return (
 		<MainLayout title="Web Projects">
-			<div className="max-w-7xl mx-auto">
-				{/* Header */}
-				<div className="mb-8 flex justify-between items-center">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Web Projects
-						</h2>
-						<p className="text-gray-600">
-							Kelola project website
-						</p>
-					</div>
-					<button
-						onClick={() => handleOpenModal()}
-						className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-					>
-						+ Tambah Project
+			<style jsx>{`
+				.welcome {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					margin-bottom: 24px;
+				}
+				.welcome h1 {
+					margin: 0;
+					font-weight: 800;
+					font-size: 24px;
+					color: var(--dark);
+				}
+				.date {
+					font-size: 13px;
+					color: var(--muted);
+					margin-top: 4px;
+				}
+				.sub-actions {
+					margin-left: auto;
+				}
+				.btn {
+					display: inline-flex;
+					align-items: center;
+					gap: 8px;
+					height: 38px;
+					padding: 0 18px;
+					border: none;
+					border-radius: 9px;
+					cursor: pointer;
+					font-family: 'Montserrat', sans-serif;
+					font-weight: 700;
+					font-size: 13px;
+					color: #fff;
+					background: linear-gradient(135deg, #1ca7ec 0%, #121567 100%);
+					transition: 0.18s;
+					white-space: nowrap;
+				}
+				.btn:hover {
+					filter: brightness(1.07);
+					transform: translateY(-1px);
+				}
+				.vcard {
+					background: var(--card);
+					border: 1px solid var(--border);
+					border-radius: 12px;
+					padding: 24px 28px;
+					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+				}
+				.pgrid {
+					display: grid;
+					grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+					gap: 18px;
+				}
+				.pcard {
+					border: 1px solid var(--border);
+					border-radius: 12px;
+					overflow: hidden;
+					background: #fff;
+					transition: 0.18s;
+					cursor: pointer;
+				}
+				.pcard:hover {
+					box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+					transform: translateY(-2px);
+				}
+				.pcover {
+					height: 140px;
+					background-size: cover;
+					background-position: center;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					color: #9fb4c8;
+					position: relative;
+				}
+				.pcover.empty {
+					background: linear-gradient(135deg, #e8f1f9, #d6e6f2);
+				}
+				.pcover svg {
+					width: 34px;
+					height: 34px;
+					stroke-width: 1.6;
+				}
+				.pc-badge {
+					position: absolute;
+					top: 10px;
+					left: 10px;
+				}
+				.chip {
+					display: inline-flex;
+					align-items: center;
+					gap: 6px;
+					font-weight: 700;
+					font-size: 11px;
+					padding: 4px 11px;
+					border-radius: 100px;
+					white-space: nowrap;
+				}
+				.chip.green {
+					background: #e7f7ee;
+					color: #1f8a4d;
+				}
+				.chip .cdot {
+					width: 6px;
+					height: 6px;
+					border-radius: 50%;
+					background: currentColor;
+				}
+				.pcard-body {
+					padding: 15px 16px;
+				}
+				.pcard-cat {
+					font-weight: 600;
+					font-size: 11px;
+					text-transform: uppercase;
+					letter-spacing: 0.04em;
+					color: var(--blue);
+					margin-bottom: 6px;
+				}
+				.pcard-title {
+					font-weight: 700;
+					font-size: 15px;
+					color: var(--dark);
+					line-height: 1.35;
+					margin-bottom: 6px;
+				}
+				.pcard-sub {
+					font-weight: 400;
+					font-size: 12.5px;
+					color: var(--muted);
+					line-height: 1.5;
+					margin-bottom: 12px;
+				}
+				.pcard-foot {
+					display: flex;
+					align-items: center;
+					justify-content: flex-end;
+					font-size: 12px;
+					color: var(--muted);
+					gap: 6px;
+				}
+				.btn.ghost {
+					background: #fff;
+					border: 1px solid var(--border);
+					color: var(--text);
+				}
+				.btn.ghost:hover {
+					border-color: var(--blue);
+					color: var(--blue);
+					transform: none;
+					filter: none;
+				}
+				.btn.sm {
+					height: 32px;
+					padding: 0 13px;
+					font-size: 12px;
+					border-radius: 8px;
+				}
+				.btn.red {
+					background: #fe2c23;
+				}
+				.btn.red:hover {
+					background: #e02419;
+				}
+				.empty {
+					text-align: center;
+					color: var(--muted);
+					padding: 48px 20px;
+				}
+				.empty .et {
+					font-weight: 700;
+					font-size: 15px;
+					color: var(--text);
+					margin-bottom: 4px;
+				}
+			`}</style>
+
+			<div className="welcome">
+				<div>
+					<h1>Portfolio</h1>
+					<div className="date">{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+				</div>
+				<div className="sub-actions">
+					<button className="btn" onClick={() => handleOpenModal()}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+							<path d="M12 5v14M5 12h14"/>
+						</svg>
+						Tambah Proyek
 					</button>
 				</div>
+			</div>
 
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
-							{error}
-						</div>
+			{error && (
+				<div style={{ marginBottom: '16px', background: '#fdecea', border: '1px solid #f5c6cb', borderRadius: '12px', padding: '16px' }}>
+					<div style={{ fontSize: '13px', color: '#d93a2f', fontWeight: 600 }}>
+						{error}
 					</div>
-				)}
+				</div>
+			)}
 
-				{/* Projects Grid */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat projects...
-								</span>
-							</div>
-						</div>
-					) : projects.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada project yang
-							ditemukan
-						</div>
-					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-							{projects.map((project) => (
+			<section className="vcard">
+				{loading ? (
+					<div className="empty">
+						<div className="et">Memuat projects...</div>
+					</div>
+				) : projects.length === 0 ? (
+					<div className="empty">
+						<div className="et">Tidak ada project yang ditemukan</div>
+					</div>
+				) : (
+					<div className="pgrid">
+						{projects.map((project) => (
+							<div key={project._id} className="pcard">
 								<div
-									key={project._id}
-									className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+									className={`pcover ${!project.image ? 'empty' : ''}`}
+									style={project.image ? { backgroundImage: `url(${project.image})` } : {}}
 								>
-									{/* eslint-disable-next-line @next/next/no-img-element */}
-									<img
-										src={project.image}
-										alt={project.title}
-										className="w-full h-48 object-cover"
-									/>
-									<div className="p-4">
-										<div className="flex items-center justify-between mb-2">
-											<span className="px-2 py-1 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full">
-												{project.category}
-											</span>
-										</div>
-										<h3 className="text-lg font-bold text-gray-900 mb-2">
-											{project.title}
-										</h3>
-										<div className="space-y-1 mb-4">
-											<p className="text-sm text-gray-600">
-												<span className="font-semibold">Product:</span> {project.product}
-											</p>
-											<p className="text-sm text-gray-600">
-												<span className="font-semibold">Client:</span> {project.client}
-											</p>
-										</div>
-										<div className="flex space-x-2">
-											<button
-												onClick={() => handleOpenModal(project)}
-												className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-											>
-												Edit
-											</button>
-											<button
-												onClick={() =>
-													handleDelete(
-														project._id,
-													)
-												}
-												disabled={
-													deleteLoading ===
-													project._id
-												}
-												className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors text-sm font-medium"
-											>
-												{deleteLoading ===
-												project._id
-													? 'Deleting...'
-													: 'Delete'}
-											</button>
-										</div>
+									{!project.image && (
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+											<path d="M3 21h18M5 21V8l9-3v16M14 21V10l5 2v9"/>
+										</svg>
+									)}
+									<span className="pc-badge chip green">
+										<span className="cdot"></span>
+										Published
+									</span>
+								</div>
+								<div className="pcard-body">
+									<div className="pcard-cat">{project.category}</div>
+									<div className="pcard-title">{project.title}</div>
+									<div className="pcard-sub">{project.product}</div>
+									<div className="pcard-sub">{project.client}</div>
+									<div className="pcard-foot">
+										<button
+											className="btn ghost sm"
+											onClick={() => handleOpenModal(project)}
+										>
+											Edit
+										</button>
+										<button
+											className="btn red sm"
+											onClick={() => handleDelete(project._id)}
+											disabled={deleteLoading === project._id}
+										>
+											{deleteLoading === project._id ? 'Deleting...' : 'Delete'}
+										</button>
 									</div>
 								</div>
-							))}
-						</div>
-					)}
-				</div>
-
-				{/* Summary */}
-				{!loading &&
-					projects.length > 0 && (
-						<div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20">
-							<div className="text-sm text-gray-600">
-								Total projects:{' '}
-								<span className="font-semibold text-gray-900">
-									{projects.length}
-								</span>
 							</div>
-						</div>
-					)}
-			</div>
+						))}
+					</div>
+				)}
+			</section>
 
 			{/* Modal */}
 			{showModal && (

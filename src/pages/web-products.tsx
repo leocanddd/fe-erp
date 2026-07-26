@@ -4,7 +4,6 @@ import {
 	getWebProducts,
 	WebProduct,
 } from '@/lib/web-products';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
 	useCallback,
@@ -125,295 +124,486 @@ export default function WebProducts() {
 	};
 
 	return (
-		<MainLayout title="Produk Web">
-			<div className="max-w-7xl mx-auto">
-				{/* Header */}
-				<div className="mb-8 flex justify-between items-center">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-1">
-							Produk Web
-						</h2>
-						<p className="text-gray-600">
-							Kelola produk yang tampil
-							di website
-						</p>
+		<MainLayout title="Web Products">
+			<style jsx global>{`
+				.chip {
+					display: inline-flex;
+					align-items: center;
+					gap: 6px;
+					font-weight: 700;
+					font-size: 11px;
+					padding: 4px 11px;
+					border-radius: 100px;
+					white-space: nowrap;
+				}
+				.chip .cdot {
+					width: 6px;
+					height: 6px;
+					border-radius: 50%;
+					background: currentColor;
+				}
+				.chip.green { background: #E7F7EE; color: #1F8A4D; }
+				.chip.grey { background: #EEF1F5; color: #697789; }
+				.tag-brand {
+					display: inline-block;
+					font-weight: 600;
+					font-size: 11px;
+					padding: 3px 9px;
+					border-radius: 6px;
+					background: #e6f4fc;
+					color: #1573a8;
+				}
+				.pill-note {
+					display: inline-block;
+					font-size: 12px;
+					color: var(--muted);
+					background: var(--bg);
+					border-radius: 100px;
+					padding: 5px 12px;
+				}
+			`}</style>
+
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
+						Web Products
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
-					<button
-						onClick={() =>
-							router.push(
-								'/web-products/new',
-							)
-						}
-						className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-2 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
-					>
-						+ Tambah Produk Web
-					</button>
 				</div>
-
-				{/* Filters */}
-				<form
-					onSubmit={handleSearch}
-					className="mb-6 flex flex-col sm:flex-row gap-3"
-				>
-					<input
-						type="text"
-						value={search}
-						onChange={(e) =>
-							setSearch(e.target.value)
-						}
-						placeholder="Cari nama / display name..."
-						className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-					/>
-					<input
-						type="text"
-						value={category}
-						onChange={(e) =>
-							setCategory(
-								e.target.value,
-							)
-						}
-						placeholder="Kategori"
-						className="w-full sm:w-40 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-					/>
-					<input
-						type="text"
-						value={brand}
-						onChange={(e) =>
-							setBrand(e.target.value)
-						}
-						placeholder="Brand"
-						className="w-full sm:w-40 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-					/>
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '10px'
+				}}>
 					<button
-						type="submit"
-						className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
+						style={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: '8px',
+							height: '38px',
+							padding: '0 18px',
+							border: '1px solid var(--border)',
+							borderRadius: '9px',
+							cursor: 'pointer',
+							fontFamily: "'Montserrat', sans-serif",
+							fontWeight: 700,
+							fontSize: '13px',
+							color: 'var(--text)',
+							background: '#fff',
+							transition: '0.18s'
+						}}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.borderColor = 'var(--blue)';
+							e.currentTarget.style.color = 'var(--blue)';
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.borderColor = 'var(--border)';
+							e.currentTarget.style.color = 'var(--text)';
+						}}
 					>
-						Cari
+						Pilih dari Stok Barang
 					</button>
-				</form>
-
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<p className="text-sm text-red-600 font-medium">
-							{error}
-						</p>
-					</div>
-				)}
-
-				{/* Table */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat produk...
-								</span>
-							</div>
-						</div>
-					) : products.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada produk web
-							ditemukan
-						</div>
-					) : (
-						<>
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Produk
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Brand
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Kategori
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Harga
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Varian
-											</th>
-											<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Aksi
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-200">
-										{products.map(
-											(p) => (
-												<tr
-													key={p.id}
-													className="hover:bg-gray-50"
-												>
-													<td className="px-6 py-4">
-														<div className="flex items-center gap-3">
-															<div>
-																<div className="text-sm font-semibold text-gray-900">
-																	{p.displayName ||
-																		p.name}
-																</div>
-																{p.subtitle && (
-																	<div className="text-xs text-gray-500">
-																		{
-																			p.subtitle
-																		}
-																	</div>
-																)}
-															</div>
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-														{p.brand}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														{p.category && (
-															<span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-																{
-																	p.category
-																}
-															</span>
-														)}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-														{p.price
-															? `Rp ${p.price.toLocaleString('id-ID')}`
-															: '-'}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-														{p.variants
-															?.length
-															? `${p.variants.length} varian`
-															: '-'}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-right">
-														<div className="flex items-center justify-end gap-2">
-															<Link
-																href={`/web-products/${p.id}`}
-																className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
-																title="Edit"
-															>
-																<svg
-																	className="w-4 h-4"
-																	fill="none"
-																	stroke="currentColor"
-																	viewBox="0 0 24 24"
-																>
-																	<path
-																		strokeLinecap="round"
-																		strokeLinejoin="round"
-																		strokeWidth={
-																			2
-																		}
-																		d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																	/>
-																</svg>
-															</Link>
-															<button
-																onClick={() =>
-																	setDeleteModal(
-																		{
-																			open: true,
-																			product:
-																				p,
-																		},
-																	)
-																}
-																className="text-red-600 hover:text-red-900 p-1 rounded"
-																title="Hapus"
-															>
-																<svg
-																	className="w-4 h-4"
-																	fill="none"
-																	stroke="currentColor"
-																	viewBox="0 0 24 24"
-																>
-																	<path
-																		strokeLinecap="round"
-																		strokeLinejoin="round"
-																		strokeWidth={
-																			2
-																		}
-																		d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																	/>
-																</svg>
-															</button>
-														</div>
-													</td>
-												</tr>
-											),
-										)}
-									</tbody>
-								</table>
-							</div>
-
-							{/* Pagination */}
-							<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-								<p className="text-sm text-gray-700">
-									Menampilkan{' '}
-									<span className="font-medium">
-										{(currentPage - 1) *
-											10 +
-											1}
-									</span>{' '}
-									–{' '}
-									<span className="font-medium">
-										{Math.min(
-											currentPage * 10,
-											totalItems,
-										)}
-									</span>{' '}
-									dari{' '}
-									<span className="font-medium">
-										{totalItems}
-									</span>{' '}
-									hasil
-								</p>
-								<nav className="inline-flex rounded-md shadow-sm -space-x-px">
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.max(
-													1,
-													currentPage -
-														1,
-												),
-											)
-										}
-										disabled={
-											currentPage === 1
-										}
-										className="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Sebelumnya
-									</button>
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.min(
-													totalPages,
-													currentPage +
-														1,
-												),
-											)
-										}
-										disabled={
-											currentPage ===
-											totalPages
-										}
-										className="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Berikutnya
-									</button>
-								</nav>
-							</div>
-						</>
-					)}
+					<button
+						onClick={() => router.push('/web-products/new')}
+						style={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: '8px',
+							height: '38px',
+							padding: '0 18px',
+							border: 'none',
+							borderRadius: '9px',
+							cursor: 'pointer',
+							fontFamily: "'Montserrat', sans-serif",
+							fontWeight: 700,
+							fontSize: '13px',
+							color: '#fff',
+							background: 'var(--grad)',
+							transition: '0.18s'
+						}}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.filter = 'brightness(1.07)';
+							e.currentTarget.style.transform = 'translateY(-1px)';
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.filter = 'none';
+							e.currentTarget.style.transform = 'none';
+						}}
+					>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+							<path d="M12 5v14M5 12h14"/>
+						</svg>
+						Produk Web
+					</button>
 				</div>
 			</div>
+
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Main Card */}
+			<section style={{
+				background: '#fff',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{/* Toolbar */}
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '12px',
+					flexWrap: 'wrap',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 14px',
+						background: '#fff',
+						border: '1px solid var(--border)',
+						borderRadius: '9px',
+						minWidth: '240px',
+						color: 'var(--muted)'
+					}}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<circle cx="11" cy="11" r="7"/>
+							<path d="m21 21-4.3-4.3"/>
+						</svg>
+						<input
+							type="text"
+							value={search}
+							onChange={(e) => {
+								setSearch(e.target.value);
+								setCurrentPage(1);
+							}}
+							placeholder="Cari produk web..."
+							style={{
+								border: 'none',
+								outline: 'none',
+								fontFamily: "'Montserrat', sans-serif",
+								fontSize: '13px',
+								color: 'var(--text)',
+								width: '100%',
+								background: 'transparent'
+							}}
+						/>
+					</div>
+					<div style={{ marginLeft: 'auto' }}></div>
+					<span className="pill-note">Sumber: Inventory › Stok Barang</span>
+				</div>
+
+				{/* Table */}
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Memuat produk...</span>
+						</div>
+					</div>
+				) : products.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						Tidak ada produk web ditemukan
+					</div>
+				) : (
+					<>
+						<table style={{
+							width: '100%',
+							borderCollapse: 'collapse',
+							background: '#fff'
+						}}>
+							<thead>
+								<tr style={{ background: '#fff' }}>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Produk Website
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Brand
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Kategori
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Varian
+									</th>
+									<th style={{
+										textAlign: 'right',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Harga
+									</th>
+									<th style={{
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)'
+									}}></th>
+								</tr>
+							</thead>
+							<tbody>
+								{products.map((p) => (
+									<tr
+										key={p.id}
+										style={{ background: '#fff', transition: 'background 0.15s ease' }}
+										onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+										onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+									>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											verticalAlign: 'middle'
+										}}>
+											<div style={{
+												display: 'flex',
+												alignItems: 'center',
+												gap: '12px'
+											}}>
+												<span style={{
+													flex: '0 0 44px',
+													width: '44px',
+													height: '44px',
+													borderRadius: '9px',
+													background: '#eef3f8',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													color: '#a9b7c6'
+												}}>
+													<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+														<rect x="3" y="3" width="18" height="18" rx="2"/>
+														<circle cx="9" cy="9" r="1.6"/>
+														<path d="m21 15-5-5L5 21"/>
+													</svg>
+												</span>
+												<div>
+													<div style={{
+														fontWeight: 700,
+														fontSize: '13.5px',
+														color: 'var(--dark)'
+													}}>
+														{p.displayName || p.name}
+													</div>
+													{p.subtitle && (
+														<div style={{
+															fontWeight: 400,
+															fontSize: '12px',
+															color: 'var(--muted)'
+														}}>
+															{p.subtitle}
+														</div>
+													)}
+												</div>
+											</div>
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle'
+										}}>
+											{p.brand || '-'}
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											verticalAlign: 'middle'
+										}}>
+											{p.category && (
+												<span className="tag-brand">{p.category}</span>
+											)}
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--muted)',
+											verticalAlign: 'middle'
+										}}>
+											{p.variants?.length ? `${p.variants.length} varian` : '-'}
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle',
+											textAlign: 'right',
+											fontWeight: 600
+										}}>
+											{p.price ? `Rp ${p.price.toLocaleString('id-ID')}` : '-'}
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											verticalAlign: 'middle',
+											textAlign: 'right'
+										}}>
+											<div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
+												<button
+													onClick={() => router.push(`/web-products/${p.id}`)}
+													style={{
+														width: '30px',
+														height: '30px',
+														display: 'inline-flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														border: '1px solid var(--border)',
+														borderRadius: '7px',
+														background: '#fff',
+														color: 'var(--muted)',
+														cursor: 'pointer',
+														transition: '0.18s'
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.borderColor = 'var(--blue)';
+														e.currentTarget.style.color = 'var(--blue)';
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.borderColor = 'var(--border)';
+														e.currentTarget.style.color = 'var(--muted)';
+													}}
+												>
+													<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+														<path d="M12 20h9"/>
+														<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+													</svg>
+												</button>
+												<button
+													onClick={() => setDeleteModal({ open: true, product: p })}
+													style={{
+														width: '30px',
+														height: '30px',
+														display: 'inline-flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														border: '1px solid var(--border)',
+														borderRadius: '7px',
+														background: '#fff',
+														color: 'var(--muted)',
+														cursor: 'pointer',
+														transition: '0.18s'
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.borderColor = 'var(--red)';
+														e.currentTarget.style.color = 'var(--red)';
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.borderColor = 'var(--border)';
+														e.currentTarget.style.color = 'var(--muted)';
+													}}
+												>
+													<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+														<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+													</svg>
+												</button>
+											</div>
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</>
+				)}
+			</section>
 
 			{/* Delete modal */}
 			{deleteModal.open && (

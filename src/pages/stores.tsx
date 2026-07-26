@@ -303,348 +303,476 @@ export default function Stores() {
 
 	return (
 		<MainLayout title="Toko">
-			<div className="max-w-7xl mx-auto">
-				{/* Header with search and add button */}
-				<div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Toko
-						</h2>
-						<p className="text-gray-600">
-							Kelola data toko dan
-							cabang Anda
-						</p>
-					</div>
-					<div className="mt-4 sm:mt-0">
-						<button
-							onClick={() =>
-								setShowAddModal(true)
-							}
-							className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-						>
-							Tambah Toko
-						</button>
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
+						Toko
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
 				</div>
-
-				{/* Search */}
-				<div className="mb-6">
-					<form
-						onSubmit={handleSearch}
-						className="flex gap-4"
-					>
-						<div className="flex-1">
-							<input
-								type="text"
-								value={search}
-								onChange={(e) =>
-									setSearch(
-										e.target.value,
-									)
-								}
-								placeholder="Cari toko berdasarkan nama atau lokasi..."
-								className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-							/>
-						</div>
-						<button
-							type="submit"
-							className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
-						>
-							Cari
-						</button>
-					</form>
-				</div>
-
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
-							{error}
-						</div>
-					</div>
-				)}
-
-				{/* Stores table */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat toko...
-								</span>
-							</div>
-						</div>
-					) : stores.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada toko yang
-							ditemukan
-						</div>
-					) : (
-						<>
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Toko
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Lokasi
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												PIC
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Kontak
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Username
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												PIN
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												POIN
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Limit
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Kunjungan
-											</th>
-											<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Aksi
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-200">
-										{stores.map(
-											(store) => (
-												<tr
-													key={store.id}
-													className="hover:bg-gray-50"
-												>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div>
-															<div className="text-sm font-medium text-gray-900">
-																{
-																	store.name
-																}
-															</div>
-															<div className="text-sm text-gray-500 truncate max-w-xs">
-																{
-																	store.description
-																}
-															</div>
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{
-															store.location
-														}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{store.pic}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{
-															store.contact
-														}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{
-															store.username
-														}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{store.pin}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{
-															store.points
-														}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{
-															store.limit
-														}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{
-															store.totalVisit
-														}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-														<div className="flex items-center justify-end space-x-2">
-															<button
-																onClick={() =>
-																	handleEdit(
-																		store,
-																	)
-																}
-																className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
-																title="Edit toko"
-															>
-																<svg
-																	className="w-4 h-4"
-																	fill="none"
-																	stroke="currentColor"
-																	viewBox="0 0 24 24"
-																>
-																	<path
-																		strokeLinecap="round"
-																		strokeLinejoin="round"
-																		strokeWidth={
-																			2
-																		}
-																		d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																	/>
-																</svg>
-															</button>
-															<button
-																onClick={() =>
-																	handleDelete(
-																		store,
-																	)
-																}
-																className="text-red-600 hover:text-red-900 p-1 rounded"
-																title="Hapus toko"
-															>
-																<svg
-																	className="w-4 h-4"
-																	fill="none"
-																	stroke="currentColor"
-																	viewBox="0 0 24 24"
-																>
-																	<path
-																		strokeLinecap="round"
-																		strokeLinejoin="round"
-																		strokeWidth={
-																			2
-																		}
-																		d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																	/>
-																</svg>
-															</button>
-														</div>
-													</td>
-												</tr>
-											),
-										)}
-									</tbody>
-								</table>
-							</div>
-
-							{/* Pagination */}
-							<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-								<div className="flex-1 flex justify-between sm:hidden">
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.max(
-													1,
-													currentPage -
-														1,
-												),
-											)
-										}
-										disabled={
-											currentPage === 1
-										}
-										className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Sebelumnya
-									</button>
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.min(
-													totalPages,
-													currentPage +
-														1,
-												),
-											)
-										}
-										disabled={
-											currentPage ===
-											totalPages
-										}
-										className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Berikutnya
-									</button>
-								</div>
-								<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-									<div>
-										<p className="text-sm text-gray-700">
-											Menampilkan{' '}
-											<span className="font-medium">
-												{(currentPage -
-													1) *
-													10 +
-													1}
-											</span>{' '}
-											sampai{' '}
-											<span className="font-medium">
-												{Math.min(
-													currentPage *
-														10,
-													totalItems,
-												)}
-											</span>{' '}
-											dari{' '}
-											<span className="font-medium">
-												{totalItems}
-											</span>{' '}
-											hasil
-										</p>
-									</div>
-									<div>
-										<nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-											<button
-												onClick={() =>
-													setCurrentPage(
-														Math.max(
-															1,
-															currentPage -
-																1,
-														),
-													)
-												}
-												disabled={
-													currentPage ===
-													1
-												}
-												className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-											>
-												Sebelumnya
-											</button>
-											<button
-												onClick={() =>
-													setCurrentPage(
-														Math.min(
-															totalPages,
-															currentPage +
-																1,
-														),
-													)
-												}
-												disabled={
-													currentPage ===
-													totalPages
-												}
-												className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-											>
-												Berikutnya
-											</button>
-										</nav>
-									</div>
-								</div>
-							</div>
-						</>
-					)}
-				</div>
+				<button
+					onClick={() => setShowAddModal(true)}
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 18px',
+						border: 'none',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						color: '#fff',
+						background: 'var(--grad)',
+						transition: '0.18s'
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.filter = 'brightness(1.07)';
+						e.currentTarget.style.transform = 'translateY(-1px)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.filter = 'none';
+						e.currentTarget.style.transform = 'none';
+					}}
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+						<path d="M12 5v14M5 12h14"/>
+					</svg>
+					Tambah Toko
+				</button>
 			</div>
+
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Main Card */}
+			<section style={{
+				background: '#fff',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{/* Toolbar with search */}
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '12px',
+					flexWrap: 'wrap',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 14px',
+						background: '#fff',
+						border: '1px solid var(--border)',
+						borderRadius: '9px',
+						minWidth: '300px',
+						color: 'var(--muted)'
+					}}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<circle cx="11" cy="11" r="7"/>
+							<path d="m21 21-4.3-4.3"/>
+						</svg>
+						<input
+							type="text"
+							value={search}
+							onChange={(e) => {
+								setSearch(e.target.value);
+								setCurrentPage(1);
+							}}
+							placeholder="Cari toko berdasarkan nama atau lokasi..."
+							style={{
+								border: 'none',
+								outline: 'none',
+								fontFamily: "'Montserrat', sans-serif",
+								fontSize: '13px',
+								color: 'var(--text)',
+								width: '100%',
+								background: 'transparent'
+							}}
+						/>
+					</div>
+				</div>
+
+				{/* Table */}
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Memuat toko...</span>
+						</div>
+					</div>
+				) : !stores || stores.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						Tidak ada toko yang ditemukan
+					</div>
+				) : (
+					<>
+						<div style={{ overflowX: 'auto' }}>
+							<table style={{
+								width: '100%',
+								borderCollapse: 'collapse',
+								background: '#fff'
+							}}>
+								<thead>
+									<tr style={{ background: '#fff' }}>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Toko
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Lokasi
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											PIC
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Kontak
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Username
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											PIN
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											POIN
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Limit
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Kunjungan
+										</th>
+										<th style={{
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)'
+										}}></th>
+									</tr>
+								</thead>
+								<tbody>
+									{stores.map((store) => (
+										<tr
+											key={store.id}
+											style={{ background: '#fff', transition: 'background 0.15s ease' }}
+											onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+											onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+										>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												verticalAlign: 'middle'
+											}}>
+												<div style={{
+													fontWeight: 700,
+													fontSize: '13.5px',
+													color: 'var(--dark)'
+												}}>
+													{store.name}
+												</div>
+												<div style={{
+													fontWeight: 400,
+													fontSize: '12px',
+													color: 'var(--muted)',
+													maxWidth: '200px',
+													overflow: 'hidden',
+													textOverflow: 'ellipsis',
+													whiteSpace: 'nowrap'
+												}}>
+													{store.description}
+												</div>
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle'
+											}}>
+												{store.location}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle'
+											}}>
+												{store.pic}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle'
+											}}>
+												{store.contact}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle'
+											}}>
+												{store.username}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle'
+											}}>
+												{store.pin}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle',
+												fontWeight: 600
+											}}>
+												{store.points}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle'
+											}}>
+												{store.limit}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle'
+											}}>
+												{store.totalVisit}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												verticalAlign: 'middle',
+												textAlign: 'right'
+											}}>
+												<div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
+													<button
+														onClick={() => handleEdit(store)}
+														style={{
+															width: '30px',
+															height: '30px',
+															display: 'inline-flex',
+															alignItems: 'center',
+															justifyContent: 'center',
+															border: '1px solid var(--border)',
+															borderRadius: '7px',
+															background: '#fff',
+															color: 'var(--muted)',
+															cursor: 'pointer',
+															transition: '0.18s'
+														}}
+														onMouseEnter={(e) => {
+															e.currentTarget.style.borderColor = 'var(--blue)';
+															e.currentTarget.style.color = 'var(--blue)';
+														}}
+														onMouseLeave={(e) => {
+															e.currentTarget.style.borderColor = 'var(--border)';
+															e.currentTarget.style.color = 'var(--muted)';
+														}}
+													>
+														<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+															<path d="M12 20h9"/>
+															<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+														</svg>
+													</button>
+													<button
+														onClick={() => handleDelete(store)}
+														style={{
+															width: '30px',
+															height: '30px',
+															display: 'inline-flex',
+															alignItems: 'center',
+															justifyContent: 'center',
+															border: '1px solid var(--border)',
+															borderRadius: '7px',
+															background: '#fff',
+															color: 'var(--muted)',
+															cursor: 'pointer',
+															transition: '0.18s'
+														}}
+														onMouseEnter={(e) => {
+															e.currentTarget.style.borderColor = 'var(--red)';
+															e.currentTarget.style.color = 'var(--red)';
+														}}
+														onMouseLeave={(e) => {
+															e.currentTarget.style.borderColor = 'var(--border)';
+															e.currentTarget.style.color = 'var(--muted)';
+														}}
+													>
+														<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+															<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+														</svg>
+													</button>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					</>
+				)}
+			</section>
 
 			{/* Add Store Modal */}
 			{showAddModal && (

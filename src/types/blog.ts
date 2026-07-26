@@ -9,6 +9,7 @@ export interface Blog {
 	author: string;
 	publishDate: string;
 	tags: string[];
+	relatedProducts?: string[];
 	isApproved?: boolean;
 	createdAt?: string;
 	updatedAt?: string;

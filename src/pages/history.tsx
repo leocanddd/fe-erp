@@ -101,230 +101,407 @@ export default function History() {
 		fetchHistory();
 	}, [fetchHistory]);
 
+	const getTypeChipColor = (type: string) => {
+		switch (type) {
+			case 'CREATE':
+				return 'green';
+			case 'UPDATE':
+				return 'blue';
+			case 'ADD_TO_PALLET':
+				return 'violet';
+			case 'INCOMING':
+				return 'blue';
+			case 'OUTGOING':
+				return 'amber';
+			default:
+				return 'grey';
+		}
+	};
+
 	const getTypeLabel = (type: string) => {
 		switch (type) {
 			case 'CREATE':
-				return (
-					<span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-						Create
-					</span>
-				);
+				return 'Create';
 			case 'UPDATE':
-				return (
-					<span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-						Update
-					</span>
-				);
+				return 'Update';
 			case 'ADD_TO_PALLET':
-				return (
-					<span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-						Add to Pallet
-					</span>
-				);
+				return 'Add to Pallet';
 			case 'INCOMING':
-				return (
-					<span className="px-2 py-1 text-xs font-semibold rounded-full bg-teal-100 text-teal-800">
-						Incoming
-					</span>
-				);
+				return 'Incoming';
 			case 'OUTGOING':
-				return (
-					<span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
-						Outgoing
-					</span>
-				);
+				return 'Outgoing';
 			default:
-				return (
-					<span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-						{type}
-					</span>
-				);
+				return type;
 		}
 	};
 
 	return (
 		<MainLayout title="Product History">
-			<div className="max-w-7xl mx-auto">
-				{/* Header */}
-				<div className="mb-8">
-					<h2 className="text-2xl font-bold text-gray-900 mb-2">
-						Product History
-					</h2>
-					<p className="text-gray-600">
-						View all product activity history
-					</p>
-				</div>
+			<style jsx global>{`
+				.chip {
+					display: inline-flex;
+					align-items: center;
+					gap: 6px;
+					font-weight: 700;
+					font-size: 11px;
+					padding: 4px 11px;
+					border-radius: 100px;
+					white-space: nowrap;
+				}
+				.chip .cdot {
+					width: 6px;
+					height: 6px;
+					border-radius: 50%;
+					background: currentColor;
+				}
+				.chip.green { background: #E7F7EE; color: #1F8A4D; }
+				.chip.amber { background: #FEF3E0; color: #C77E12; }
+				.chip.blue { background: #E6F4FC; color: #1573A8; }
+				.chip.red { background: #FDECEA; color: #D93A2F; }
+				.chip.grey { background: #EEF1F5; color: #697789; }
+				.chip.violet { background: #F0E9FA; color: #7B4FB5; }
+			`}</style>
 
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
-							{error}
+			{/* Header */}
+			<div style={{ marginBottom: '24px' }}>
+				<h1 style={{
+					margin: 0,
+					fontWeight: 800,
+					fontSize: '24px',
+					color: 'var(--dark)'
+				}}>
+					Product History
+				</h1>
+				<p style={{
+					fontSize: '13px',
+					color: 'var(--muted)',
+					marginTop: '4px'
+				}}>
+					View all product activity history
+				</p>
+			</div>
+
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Main Card */}
+			<div style={{
+				background: 'white',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Loading history...</span>
 						</div>
 					</div>
+				) : !history || history.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						No history found
+					</div>
+				) : (
+					<>
+						{/* Table */}
+						<table style={{
+							width: '100%',
+							borderCollapse: 'collapse'
+						}}>
+							<thead>
+								<tr>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										User
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Type
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Message
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Date
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								{history.map((item) => (
+									<tr
+										key={item.id}
+										style={{
+											transition: 'background 0.15s ease'
+										}}
+										onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+										onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+									>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle'
+										}}>
+											<span style={{ fontWeight: 600 }}>
+												{item.name}
+											</span>
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle'
+										}}>
+											<span className={`chip ${getTypeChipColor(item.type)}`}>
+												<span className="cdot"></span>
+												{getTypeLabel(item.type)}
+											</span>
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle'
+										}}>
+											{item.message}
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--muted)',
+											verticalAlign: 'middle',
+											whiteSpace: 'nowrap'
+										}}>
+											{new Date(item.createdAt).toLocaleString('id-ID', {
+												year: 'numeric',
+												month: 'short',
+												day: 'numeric',
+												hour: '2-digit',
+												minute: '2-digit',
+											})}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+
+						{/* Pagination */}
+						<div style={{
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							marginTop: '20px',
+							paddingTop: '20px',
+							borderTop: '1px solid var(--border)'
+						}}>
+							<div style={{
+								fontWeight: 400,
+								fontSize: '13px',
+								color: 'var(--muted)'
+							}}>
+								Showing <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+									{(currentPage - 1) * 20 + 1}
+								</span> to <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+									{Math.min(currentPage * 20, totalItems)}
+								</span> of <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+									{totalItems}
+								</span> results
+							</div>
+							<div style={{ display: 'flex', gap: '8px' }}>
+								<button
+									onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+									disabled={currentPage === 1}
+									style={{
+										height: '30px',
+										padding: '0 14px',
+										border: '1px solid var(--border)',
+										background: '#fff',
+										borderRadius: '6px',
+										cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 500,
+										fontSize: '13px',
+										color: 'var(--muted)',
+										transition: '0.2s',
+										opacity: currentPage === 1 ? 0.5 : 1
+									}}
+									onMouseEnter={(e) => {
+										if (currentPage !== 1) {
+											e.currentTarget.style.borderColor = 'var(--blue)';
+											e.currentTarget.style.color = 'var(--blue)';
+										}
+									}}
+									onMouseLeave={(e) => {
+										if (currentPage !== 1) {
+											e.currentTarget.style.borderColor = 'var(--border)';
+											e.currentTarget.style.color = 'var(--muted)';
+										}
+									}}
+								>
+									Previous
+								</button>
+
+								{/* Page numbers */}
+								{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+									let pageNum;
+									if (totalPages <= 5) {
+										pageNum = i + 1;
+									} else if (currentPage <= 3) {
+										pageNum = i + 1;
+									} else if (currentPage >= totalPages - 2) {
+										pageNum = totalPages - 4 + i;
+									} else {
+										pageNum = currentPage - 2 + i;
+									}
+
+									const isActive = pageNum === currentPage;
+
+									return (
+										<button
+											key={pageNum}
+											onClick={() => setCurrentPage(pageNum)}
+											style={{
+												height: '30px',
+												padding: '0 14px',
+												border: isActive ? 'none' : '1px solid var(--border)',
+												background: isActive ? 'var(--grad)' : '#fff',
+												borderRadius: '6px',
+												cursor: 'pointer',
+												fontFamily: "'Montserrat', sans-serif",
+												fontWeight: 500,
+												fontSize: '13px',
+												color: isActive ? '#fff' : 'var(--muted)',
+												transition: '0.2s'
+											}}
+											onMouseEnter={(e) => {
+												if (!isActive) {
+													e.currentTarget.style.borderColor = 'var(--blue)';
+													e.currentTarget.style.color = 'var(--blue)';
+												}
+											}}
+											onMouseLeave={(e) => {
+												if (!isActive) {
+													e.currentTarget.style.borderColor = 'var(--border)';
+													e.currentTarget.style.color = 'var(--muted)';
+												}
+											}}
+										>
+											{pageNum}
+										</button>
+									);
+								})}
+
+								<button
+									onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+									disabled={currentPage === totalPages}
+									style={{
+										height: '30px',
+										padding: '0 14px',
+										border: '1px solid var(--border)',
+										background: '#fff',
+										borderRadius: '6px',
+										cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 500,
+										fontSize: '13px',
+										color: 'var(--muted)',
+										transition: '0.2s',
+										opacity: currentPage === totalPages ? 0.5 : 1
+									}}
+									onMouseEnter={(e) => {
+										if (currentPage !== totalPages) {
+											e.currentTarget.style.borderColor = 'var(--blue)';
+											e.currentTarget.style.color = 'var(--blue)';
+										}
+									}}
+									onMouseLeave={(e) => {
+										if (currentPage !== totalPages) {
+											e.currentTarget.style.borderColor = 'var(--border)';
+											e.currentTarget.style.color = 'var(--muted)';
+										}
+									}}
+								>
+									Next
+								</button>
+							</div>
+						</div>
+					</>
 				)}
-
-				{/* History Table */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Loading history...
-								</span>
-							</div>
-						</div>
-					) : !history || history.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							No history found
-						</div>
-					) : (
-						<>
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												User
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Type
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Message
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Date
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-200">
-										{history.map((item) => (
-											<tr
-												key={item.id}
-												className="hover:bg-gray-50"
-											>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm font-medium text-gray-900">
-														{item.name}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													{getTypeLabel(item.type)}
-												</td>
-												<td className="px-6 py-4">
-													<div className="text-sm text-gray-900">
-														{item.message}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900">
-														{new Date(
-															item.createdAt
-														).toLocaleString('id-ID', {
-															year: 'numeric',
-															month: 'short',
-															day: 'numeric',
-															hour: '2-digit',
-															minute: '2-digit',
-														})}
-													</div>
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-
-							{/* Pagination */}
-							<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-								<div className="flex-1 flex justify-between sm:hidden">
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.max(1, currentPage - 1)
-											)
-										}
-										disabled={currentPage === 1}
-										className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Previous
-									</button>
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.min(
-													totalPages,
-													currentPage + 1
-												)
-											)
-										}
-										disabled={currentPage === totalPages}
-										className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Next
-									</button>
-								</div>
-								<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-									<div>
-										<p className="text-sm text-gray-700">
-											Showing{' '}
-											<span className="font-medium">
-												{(currentPage - 1) * 20 + 1}
-											</span>{' '}
-											to{' '}
-											<span className="font-medium">
-												{Math.min(
-													currentPage * 20,
-													totalItems
-												)}
-											</span>{' '}
-											of{' '}
-											<span className="font-medium">
-												{totalItems}
-											</span>{' '}
-											results
-										</p>
-									</div>
-									<div>
-										<nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-											<button
-												onClick={() =>
-													setCurrentPage(
-														Math.max(
-															1,
-															currentPage - 1
-														)
-													)
-												}
-												disabled={currentPage === 1}
-												className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-											>
-												Previous
-											</button>
-											<button
-												onClick={() =>
-													setCurrentPage(
-														Math.min(
-															totalPages,
-															currentPage + 1
-														)
-													)
-												}
-												disabled={
-													currentPage === totalPages
-												}
-												className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-											>
-												Next
-											</button>
-										</nav>
-									</div>
-								</div>
-							</div>
-						</>
-					)}
-				</div>
 			</div>
 		</MainLayout>
 	);

@@ -444,513 +444,864 @@ export default function Reports() {
 		);
 	};
 
-	const renderPagination = () => {
-		const pages = [];
-		const maxVisiblePages = 5;
-
-		let startPage = Math.max(
-			1,
-			currentPage -
-				Math.floor(maxVisiblePages / 2),
-		);
-		const endPage = Math.min(
-			totalPages,
-			startPage + maxVisiblePages - 1,
-		);
-
-		if (
-			endPage - startPage + 1 <
-			maxVisiblePages
-		) {
-			startPage = Math.max(
-				1,
-				endPage - maxVisiblePages + 1,
-			);
-		}
-
-		for (
-			let i = startPage;
-			i <= endPage;
-			i++
-		) {
-			pages.push(
-				<button
-					key={i}
-					onClick={() =>
-						handlePageChange(i)
-					}
-					className={`px-3 py-1 mx-1 rounded transition-colors ${
-						i === currentPage
-							? 'bg-blue-600 text-white'
-							: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-					}`}
-				>
-					{i}
-				</button>,
-			);
-		}
-
-		return (
-			<div className="flex items-center justify-between mt-6">
-				<div className="text-sm text-gray-600">
-					Menampilkan{' '}
-					{Math.min(
-						(currentPage - 1) *
-							itemsPerPage +
-							1,
-						totalItems,
-					)}{' '}
-					-{' '}
-					{Math.min(
-						currentPage * itemsPerPage,
-						totalItems,
-					)}{' '}
-					dari {totalItems} kunjungan
-				</div>
-				<div className="flex items-center space-x-2">
-					<button
-						onClick={() =>
-							handlePageChange(
-								currentPage - 1,
-							)
-						}
-						disabled={currentPage === 1}
-						className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-					>
-						Previous
-					</button>
-					{pages}
-					<button
-						onClick={() =>
-							handlePageChange(
-								currentPage + 1,
-							)
-						}
-						disabled={
-							currentPage === totalPages
-						}
-						className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-					>
-						Next
-					</button>
-				</div>
-			</div>
-		);
-	};
-
 	return (
 		<MainLayout title="Laporan Kunjungan">
-			<div className="max-w-7xl mx-auto">
+			<style jsx>{`
+				.welcome {
+					display: flex;
+					align-items: flex-start;
+					margin-bottom: 24px;
+				}
+				.welcome h1 {
+					margin: 0;
+					font-weight: 700;
+					font-size: 20px;
+					color: #111111;
+				}
+				.welcome .date {
+					margin-top: 4px;
+					font-weight: 400;
+					font-size: 13px;
+					color: #9a9a9a;
+				}
+				.export-row {
+					display: flex;
+					justify-content: flex-end;
+					gap: 10px;
+					margin: -8px 0 16px;
+				}
+				.btn-export,
+				.btn-excel {
+					height: 34px;
+					padding: 0 20px;
+					border: none;
+					border-radius: 8px;
+					cursor: pointer;
+					font-family:
+						'Montserrat',
+						-apple-system,
+						BlinkMacSystemFont,
+						'Segoe UI',
+						sans-serif;
+					font-weight: 700;
+					font-size: 13px;
+					color: #fff;
+					transition: filter 0.2s ease;
+				}
+				.btn-export {
+					background: linear-gradient(
+						90deg,
+						#61bedf 0%,
+						#1ca7ec 50%,
+						#1590cd 100%
+					);
+				}
+				.btn-excel {
+					background: #27ae60;
+				}
+				.btn-export:hover,
+				.btn-excel:hover {
+					filter: brightness(1.08);
+				}
+				.btn-export:disabled,
+				.btn-excel:disabled {
+					opacity: 0.5;
+					cursor: not-allowed;
+				}
+				.vcard {
+					background: #ffffff;
+					border: 1px solid #e0e0e0;
+					border-radius: 12px;
+					padding: 24px 28px;
+					box-shadow: 0 2px 8px
+						rgba(0, 0, 0, 0.04);
+					margin-bottom: 16px;
+				}
+				.controls-row {
+					display: flex;
+					align-items: center;
+					gap: 16px;
+					flex-wrap: wrap;
+					margin-bottom: 14px;
+				}
+				.vcard-title {
+					margin: 0;
+					font-weight: 700;
+					font-size: 16px;
+					color: #111111;
+				}
+				.filter-group {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					flex-wrap: wrap;
+					flex: 1;
+				}
+				.filter-label {
+					font-weight: 500;
+					font-size: 13px;
+					color: #9a9a9a;
+				}
+				.filter-select {
+					height: 30px;
+					padding: 0 14px;
+					border: 1px solid #e0e0e0;
+					border-radius: 8px;
+					background: #fff;
+					font-family:
+						'Montserrat',
+						-apple-system,
+						BlinkMacSystemFont,
+						'Segoe UI',
+						sans-serif;
+					font-weight: 500;
+					font-size: 13px;
+					color: #111111;
+					cursor: pointer;
+					transition: border-color 0.2s
+						ease;
+				}
+				.filter-select:focus {
+					outline: none;
+					border-color: #1ca7ec;
+				}
+				.filter-input {
+					height: 30px;
+					padding: 0 14px;
+					border: 1px solid #e0e0e0;
+					border-radius: 8px;
+					background: #fff;
+					font-family:
+						'Montserrat',
+						-apple-system,
+						BlinkMacSystemFont,
+						'Segoe UI',
+						sans-serif;
+					font-weight: 500;
+					font-size: 13px;
+					color: #111111;
+					transition: border-color 0.2s
+						ease;
+				}
+				.filter-input:focus {
+					outline: none;
+					border-color: #1ca7ec;
+				}
+				.btn-filter {
+					height: 30px;
+					padding: 0 16px;
+					border: none;
+					border-radius: 8px;
+					background: linear-gradient(
+						90deg,
+						#61bedf 0%,
+						#1ca7ec 50%,
+						#1590cd 100%
+					);
+					color: #fff;
+					font-family:
+						'Montserrat',
+						-apple-system,
+						BlinkMacSystemFont,
+						'Segoe UI',
+						sans-serif;
+					font-weight: 700;
+					font-size: 13px;
+					cursor: pointer;
+					transition: filter 0.2s ease;
+				}
+				.btn-filter:hover {
+					filter: brightness(1.08);
+				}
+				.btn-clear {
+					height: 30px;
+					padding: 0 16px;
+					border: 1px solid #e0e0e0;
+					border-radius: 8px;
+					background: #fff;
+					color: #9a9a9a;
+					font-family:
+						'Montserrat',
+						-apple-system,
+						BlinkMacSystemFont,
+						'Segoe UI',
+						sans-serif;
+					font-weight: 600;
+					font-size: 13px;
+					cursor: pointer;
+					transition: all 0.2s ease;
+				}
+				.btn-clear:hover {
+					border-color: #1ca7ec;
+					color: #1ca7ec;
+				}
+				.perpage {
+					margin-left: auto;
+					display: flex;
+					align-items: center;
+					gap: 10px;
+				}
+				.pp-label {
+					font-weight: 500;
+					font-size: 13px;
+					color: #9a9a9a;
+				}
+				.pp-pill {
+					height: 30px;
+					padding: 0 14px;
+					border: none;
+					border-radius: 8px;
+					cursor: pointer;
+					background: linear-gradient(
+						90deg,
+						#61bedf 0%,
+						#1ca7ec 50%,
+						#1590cd 100%
+					);
+					color: #fff;
+					font-family:
+						'Montserrat',
+						-apple-system,
+						BlinkMacSystemFont,
+						'Segoe UI',
+						sans-serif;
+					font-weight: 700;
+					font-size: 13px;
+				}
+				.divider {
+					height: 1px;
+					background: #e0e0e0;
+					width: 100%;
+					margin: 20px 0;
+				}
+				.visit-table {
+					margin-top: 4px;
+					overflow-x: auto;
+					-webkit-overflow-scrolling: touch;
+				}
+				.visit-table-inner {
+					min-width: 1300px;
+				}
+				.v-header {
+					display: flex;
+					align-items: center;
+					gap: 14px;
+					padding: 12px 8px;
+					border-bottom: 1px solid
+						#e0e0e0;
+					background: #f8fbff;
+					border-radius: 8px 8px 0 0;
+				}
+				.v-header-cell {
+					font-weight: 600;
+					font-size: 10px;
+					text-transform: uppercase;
+					letter-spacing: 0.04em;
+					color: #9a9a9a;
+				}
+				.v-header .v-avatar {
+					opacity: 0;
+					pointer-events: none;
+				}
+				.v-rowwrap {
+					border-bottom: 1px solid
+						#f4f6f9;
+				}
+				.v-row {
+					display: flex;
+					align-items: center;
+					gap: 14px;
+					padding: 12px 8px;
+					cursor: pointer;
+					transition: background 0.2s
+						ease;
+					border-radius: 8px;
+				}
+				.v-row:hover {
+					background: #f8fbff;
+				}
+				.v-avatar {
+					flex: 0 0 32px;
+					width: 32px;
+					height: 32px;
+					border-radius: 50%;
+					background: linear-gradient(
+						90deg,
+						#61bedf 0%,
+						#1ca7ec 50%,
+						#1590cd 100%
+					);
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					color: #fff;
+					font-weight: 700;
+					font-size: 11px;
+				}
+				.v-name {
+					flex: 0 0 100px;
+					font-weight: 600;
+					font-size: 14px;
+					color: #111111;
+					white-space: nowrap;
+				}
+				.v-store {
+					flex: 0 0 140px;
+					font-weight: 500;
+					font-size: 14px;
+					color: #111111;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+				.v-loc {
+					flex: 0 0 280px;
+					font-weight: 400;
+					font-size: 13px;
+					color: #9a9a9a;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+				.v-date {
+					flex: 0 0 95px;
+					font-weight: 400;
+					font-size: 13px;
+					color: #9a9a9a;
+					white-space: nowrap;
+				}
+				.v-time {
+					flex: 0 0 130px;
+					font-weight: 500;
+					font-size: 13px;
+					color: #111111;
+					white-space: nowrap;
+				}
+				.v-desc {
+					flex: 0 0 150px;
+					font-weight: 400;
+					font-size: 13px;
+					color: #9a9a9a;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+				.v-result {
+					flex: 0 0 100px;
+					font-weight: 500;
+					font-size: 13px;
+					color: #111111;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+				.v-notes {
+					flex: 0 0 100px;
+					font-weight: 400;
+					font-size: 13px;
+					color: #9a9a9a;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+				.v-view {
+					flex: 0 0 50px;
+					font-weight: 700;
+					font-size: 13px;
+					cursor: pointer;
+					text-align: right;
+					display: inline-block;
+				}
+				:global(.v-view) {
+					color: #000000 !important;
+					text-decoration: none !important;
+				}
+				:global(.v-view:hover) {
+					text-decoration: underline !important;
+					color: #1ca7ec !important;
+				}
+				.pagination {
+					display: flex;
+					align-items: center;
+					justify-content: flex-end;
+					gap: 8px;
+					margin-top: 20px;
+					flex-wrap: wrap;
+				}
+				.pg-info {
+					font-weight: 400;
+					font-size: 13px;
+					color: #9a9a9a;
+					margin-right: 8px;
+				}
+				.pg-btn {
+					height: 30px;
+					padding: 0 14px;
+					border: 1px solid #e0e0e0;
+					background: #fff;
+					border-radius: 6px;
+					cursor: pointer;
+					font-family:
+						'Montserrat',
+						-apple-system,
+						BlinkMacSystemFont,
+						'Segoe UI',
+						sans-serif;
+					font-weight: 500;
+					font-size: 13px;
+					color: #9a9a9a;
+					transition: 0.2s;
+				}
+				.pg-btn:hover:not(.active):not(
+						:disabled
+					) {
+					border-color: #1ca7ec;
+					color: #1ca7ec;
+				}
+				.pg-btn.active {
+					background: linear-gradient(
+						90deg,
+						#61bedf 0%,
+						#1ca7ec 50%,
+						#1590cd 100%
+					);
+					border-color: transparent;
+					color: #fff;
+				}
+				.pg-btn:disabled {
+					opacity: 0.5;
+					cursor: not-allowed;
+				}
+				.error-banner {
+					background: #fff5f5;
+					border: 1px solid #feb2b2;
+					border-radius: 8px;
+					padding: 12px 16px;
+					margin-bottom: 16px;
+				}
+				.error-text {
+					font-weight: 500;
+					font-size: 13px;
+					color: #c53030;
+				}
+				.loading-container {
+					padding: 32px;
+					text-align: center;
+				}
+				.loading-spinner {
+					display: inline-block;
+					width: 24px;
+					height: 24px;
+					border: 3px solid #e0e0e0;
+					border-top-color: #1ca7ec;
+					border-radius: 50%;
+					animation: spin 0.8s linear
+						infinite;
+				}
+				@keyframes spin {
+					to {
+						transform: rotate(360deg);
+					}
+				}
+				.loading-text {
+					margin-top: 12px;
+					font-weight: 500;
+					font-size: 14px;
+					color: #9a9a9a;
+				}
+				.empty-state {
+					padding: 32px;
+					text-align: center;
+					font-weight: 500;
+					font-size: 14px;
+					color: #9a9a9a;
+				}
+				@media (max-width: 1280px) {
+					.v-desc {
+						display: none;
+					}
+				}
+				@media (max-width: 1060px) {
+					.v-loc {
+						display: none;
+					}
+				}
+				@media (max-width: 900px) {
+					.v-date {
+						display: none;
+					}
+				}
+			`}</style>
+			<div>
 				{/* Header */}
-				<div className="mb-8 flex justify-between items-start">
+				<div className="welcome">
 					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Laporan Kunjungan
-						</h2>
-						<p className="text-gray-600">
-							Data kunjungan sales
-							dengan filter dan
-							pagination
-						</p>
-					</div>
-					<div className="flex space-x-3">
-						<button
-							onClick={exportSummary}
-							disabled={
-								visits.length === 0
-							}
-							className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-						>
-							<svg
-								className="w-5 h-5"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-								/>
-							</svg>
-							<span>
-								Export Summary
-							</span>
-						</button>
-						<button
-							onClick={exportToExcel}
-							disabled={
-								visits.length === 0
-							}
-							className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-						>
-							<svg
-								className="w-5 h-5"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-								/>
-							</svg>
-							<span>
-								Export to Excel
-							</span>
-						</button>
+						<h1>Laporan Kunjungan</h1>
+						<div className="date">
+							{new Date().toLocaleDateString(
+								'id-ID',
+								{
+									day: '2-digit',
+									month: 'short',
+									year: 'numeric',
+								},
+							)}
+						</div>
 					</div>
 				</div>
 
-				{/* Filters */}
-				<div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-					<form
-						onSubmit={handleSearch}
-						className="space-y-4"
+				{/* Export buttons */}
+				<div className="export-row">
+					<button
+						onClick={exportSummary}
+						disabled={
+							visits.length === 0
+						}
+						className="btn-export"
 					>
-						<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-							<div>
-								<label
-									htmlFor="username"
-									className="block text-sm font-medium text-gray-700 mb-2"
-								>
-									Username
-								</label>
-								<select
-									id="username"
-									value={
-										filters.username ||
-										''
-									}
-									onChange={(e) =>
-										handleFilterChange(
-											'username',
-											e.target.value,
-										)
-									}
-									className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-								>
-									<option value="">
-										Semua Sales
-									</option>
-									{users.map((user) => (
-										<option
-											key={
-												user._id ||
-												user.id
-											}
-											value={
-												user.username
-											}
-										>
-											{user.firstName}
-										</option>
-									))}
-								</select>
-							</div>
-							<div>
-								<label
-									htmlFor="startDate"
-									className="block text-sm font-medium text-gray-700 mb-2"
-								>
-									Tanggal Mulai
-								</label>
-								<input
-									type="date"
-									id="startDate"
-									value={
-										filters.startDate ||
-										''
-									}
-									onChange={(e) =>
-										handleFilterChange(
-											'startDate',
-											e.target.value,
-										)
-									}
-									className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-								/>
-							</div>
-							<div>
-								<label
-									htmlFor="endDate"
-									className="block text-sm font-medium text-gray-700 mb-2"
-								>
-									Tanggal Akhir
-								</label>
-								<input
-									type="date"
-									id="endDate"
-									value={
-										filters.endDate ||
-										''
-									}
-									onChange={(e) =>
-										handleFilterChange(
-											'endDate',
-											e.target.value,
-										)
-									}
-									className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-								/>
-							</div>
-							<div className="flex items-end space-x-2">
-								<button
-									type="submit"
-									className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-								>
-									Filter
-								</button>
-								<button
-									type="button"
-									onClick={clearFilters}
-									className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
-								>
-									Clear
-								</button>
-							</div>
-						</div>
-						<div className="flex items-center space-x-4">
-							<div>
-								<label
-									htmlFor="limit"
-									className="block text-sm font-medium text-gray-700 mb-1"
-								>
-									Items per page
-								</label>
-								<select
-									id="limit"
-									value={
-										filters.limit || 10
-									}
-									onChange={(e) =>
-										handleLimitChange(
-											Number(
-												e.target.value,
-											),
-										)
-									}
-									className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-								>
-									<option value={10}>
-										10
-									</option>
-									<option value={25}>
-										25
-									</option>
-									<option value={50}>
-										50
-									</option>
-									<option value={100}>
-										100
-									</option>
-								</select>
-							</div>
-						</div>
-					</form>
+						Export Summary
+					</button>
+					<button
+						onClick={exportToExcel}
+						disabled={
+							visits.length === 0
+						}
+						className="btn-excel"
+					>
+						Export Excel
+					</button>
 				</div>
 
 				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
+					<div className="error-banner">
+						<div className="error-text">
 							{error}
 						</div>
 					</div>
 				)}
 
-				{/* Visits table */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
+				{/* Main card */}
+				<div className="vcard">
+					<div className="controls-row">
+						<h2 className="vcard-title">
+							Visits Performance
+						</h2>
+						<div className="filter-group">
+							<span className="filter-label">
+								Sales:
+							</span>
+							<select
+								value={
+									filters.username || ''
+								}
+								onChange={(e) =>
+									handleFilterChange(
+										'username',
+										e.target.value,
+									)
+								}
+								className="filter-select"
+							>
+								<option value="">
+									Semua Sales
+								</option>
+								{users.map((user) => (
+									<option
+										key={
+											user._id ||
+											user.id
+										}
+										value={
+											user.username
+										}
+									>
+										{user.firstName}
+									</option>
+								))}
+							</select>
+							<span className="filter-label">
+								From:
+							</span>
+							<input
+								type="date"
+								value={
+									filters.startDate ||
+									''
+								}
+								onChange={(e) =>
+									handleFilterChange(
+										'startDate',
+										e.target.value,
+									)
+								}
+								className="filter-input"
+							/>
+							<span className="filter-label">
+								To:
+							</span>
+							<input
+								type="date"
+								value={
+									filters.endDate || ''
+								}
+								onChange={(e) =>
+									handleFilterChange(
+										'endDate',
+										e.target.value,
+									)
+								}
+								className="filter-input"
+							/>
+							<button
+								onClick={handleSearch}
+								className="btn-filter"
+							>
+								Filter
+							</button>
+							<button
+								onClick={clearFilters}
+								className="btn-clear"
+							>
+								Clear
+							</button>
+						</div>
+						<div className="perpage">
+							<span className="pp-label">
+								View per page
+							</span>
+							<select
+								value={
+									filters.limit || 10
+								}
+								onChange={(e) =>
+									handleLimitChange(
+										Number(
+											e.target.value,
+										),
+									)
+								}
+								className="pp-pill"
+							>
+								<option value={10}>
+									10
+								</option>
+								<option value={25}>
+									25
+								</option>
+								<option value={50}>
+									50
+								</option>
+								<option value={100}>
+									100
+								</option>
+							</select>
+						</div>
+					</div>
+
+					<div className="divider"></div>
+
+					{/* Visits table */}
+					<div className="visit-table">
+						{loading ? (
+							<div className="loading-container">
+								<div className="loading-spinner"></div>
+								<div className="loading-text">
 									Memuat data
 									kunjungan...
-								</span>
+								</div>
 							</div>
-						</div>
-					) : visits.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada data kunjungan
-							yang ditemukan
-						</div>
-					) : (
-						<div className="overflow-x-auto">
-							<table className="min-w-full divide-y divide-gray-200">
-								<thead className="bg-gray-50">
-									<tr>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Sales
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Toko
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Lokasi
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Tanggal
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Jam
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Tujuan
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Hasil
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Notes
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Actions
-										</th>
-									</tr>
-								</thead>
-								<tbody className="bg-white divide-y divide-gray-200">
-									{visits.map(
-										(visit) => (
-											<tr
-												key={getVisitId(
+						) : visits.length === 0 ? (
+							<div className="empty-state">
+								Tidak ada data kunjungan
+								yang ditemukan
+							</div>
+						) : (
+							<div className="visit-table-inner">
+								{/* Table Header */}
+								<div className="v-header">
+									<div className="v-avatar"></div>
+									<div className="v-name v-header-cell">
+										Sales
+									</div>
+									<div className="v-store v-header-cell">
+										Store
+									</div>
+									<div className="v-loc v-header-cell">
+										Location
+									</div>
+									<div className="v-date v-header-cell">
+										Date
+									</div>
+									<div className="v-time v-header-cell">
+										Time
+									</div>
+									<div className="v-desc v-header-cell">
+										Description
+									</div>
+									<div className="v-result v-header-cell">
+										Result
+									</div>
+									<div className="v-notes v-header-cell">
+										Notes
+									</div>
+									<div className="v-view v-header-cell">
+										Action
+									</div>
+								</div>
+								{/* Table Rows */}
+								{visits.map((visit) => (
+									<div
+										key={getVisitId(
+											visit,
+										)}
+										className="v-rowwrap"
+									>
+										<div className="v-row">
+											<div className="v-avatar">
+												{visit.name
+													.split(' ')[0]
+													.charAt(0)
+													.toUpperCase()}
+											</div>
+											<div className="v-name">
+												{
+													visit.name.split(
+														' ',
+													)[0]
+												}
+											</div>
+											<div className="v-store">
+												{visit.store}
+											</div>
+											<div className="v-loc">
+												{visit.location}
+											</div>
+											<div className="v-date">
+												{formatVisitDateOnly(
 													visit,
 												)}
-												className="hover:bg-gray-50"
+											</div>
+											<div className="v-time">
+												{formatVisitTimeOnly(
+													visit,
+												)}
+											</div>
+											<div className="v-desc">
+												{
+													visit.description
+												}
+											</div>
+											<div className="v-result">
+												{visit.result}
+											</div>
+											<div className="v-notes">
+												{visit.notes}
+											</div>
+											<Link
+												href={`/reports/${getVisitId(visit)}`}
+												className="v-view"
 											>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="flex items-center">
-														<div className="w-8 h-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center">
-															<span className="text-white font-semibold text-xs">
-																{visit.name
-																	.split(
-																		' ',
-																	)[0]
-																	.charAt(
-																		0,
-																	)
-																	.toUpperCase()}
-															</span>
-														</div>
-														<div className="ml-3">
-															<div className="text-sm font-medium text-gray-900">
-																{
-																	visit.name.split(
-																		' ',
-																	)[0]
-																}
-															</div>
-														</div>
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900 font-medium">
-														{
-															visit.store
-														}
-													</div>
-												</td>
-												<td className="px-6 py-4">
-													<div
-														className="text-sm text-gray-900 max-w-xs truncate"
-														title={
-															visit.location
-														}
-													>
-														{
-															visit.location
-														}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900">
-														{formatVisitDateOnly(
-															visit,
-														)}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900">
-														{formatVisitTimeOnly(
-															visit,
-														)}
-													</div>
-												</td>
-												<td className="px-6 py-4">
-													<div
-														className="text-sm text-gray-900 max-w-xs truncate"
-														title={
-															visit.description
-														}
-													>
-														{
-															visit.description
-														}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900 font-medium">
-														{
-															visit.result
-														}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900 font-medium">
-														{
-															visit.notes
-														}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-													<Link
-														href={`/reports/${getVisitId(
-															visit,
-														)}`}
-														className="text-indigo-600 hover:text-indigo-900 transition-colors duration-200"
-														title="View details"
-													>
-														<svg
-															className="w-5 h-5"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24"
-														>
-															<path
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																strokeWidth={
-																	2
-																}
-																d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-															/>
-															<path
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																strokeWidth={
-																	2
-																}
-																d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-															/>
-														</svg>
-													</Link>
-												</td>
-											</tr>
-										),
-									)}
-								</tbody>
-							</table>
-						</div>
-					)}
-				</div>
+												View
+											</Link>
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
 
-				{/* Pagination */}
-				{!loading &&
-					visits.length > 0 &&
-					renderPagination()}
+					{/* Pagination */}
+					{!loading &&
+						visits.length > 0 && (
+							<div className="pagination">
+								<span className="pg-info">
+									Menampilkan{' '}
+									{Math.min(
+										(currentPage - 1) *
+											itemsPerPage +
+											1,
+										totalItems,
+									)}{' '}
+									-{' '}
+									{Math.min(
+										currentPage *
+											itemsPerPage,
+										totalItems,
+									)}{' '}
+									dari {totalItems}{' '}
+									kunjungan
+								</span>
+								<button
+									onClick={() =>
+										handlePageChange(
+											currentPage - 1,
+										)
+									}
+									disabled={
+										currentPage === 1
+									}
+									className="pg-btn"
+								>
+									Previous
+								</button>
+								{Array.from(
+									{
+										length: Math.min(
+											5,
+											totalPages,
+										),
+									},
+									(_, i) => {
+										const startPage =
+											Math.max(
+												1,
+												currentPage -
+													Math.floor(
+														5 / 2,
+													),
+											);
+										const page =
+											Math.min(
+												startPage + i,
+												totalPages,
+											);
+										return (
+											<button
+												key={page}
+												onClick={() =>
+													handlePageChange(
+														page,
+													)
+												}
+												className={`pg-btn ${
+													page ===
+													currentPage
+														? 'active'
+														: ''
+												}`}
+											>
+												{page}
+											</button>
+										);
+									},
+								)}
+								<button
+									onClick={() =>
+										handlePageChange(
+											currentPage + 1,
+										)
+									}
+									disabled={
+										currentPage ===
+										totalPages
+									}
+									className="pg-btn"
+								>
+									Next
+								</button>
+							</div>
+						)}
+				</div>
 			</div>
 		</MainLayout>
 	);

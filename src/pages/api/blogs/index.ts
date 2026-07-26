@@ -15,8 +15,17 @@ export default async function handler(
 	try {
 		if (req.method === 'GET') {
 			// Get all blogsssss
+			// Forward query params to backend
+			const queryParams = new URLSearchParams();
+			if (req.query.page) queryParams.append('page', req.query.page as string);
+			if (req.query.limit) queryParams.append('limit', req.query.limit as string);
+			if (req.query.isApproved) queryParams.append('isApproved', req.query.isApproved as string);
+
+			const queryString = queryParams.toString();
+			const url = `${BACKEND_URL}/api/blogs${queryString ? `?${queryString}` : ''}`;
+
 			const response = await fetch(
-				`${BACKEND_URL}/api/blogs`,
+				url,
 				{
 					headers: {
 						Authorization: token || '',

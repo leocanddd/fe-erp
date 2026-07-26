@@ -328,335 +328,440 @@ export default function Stocks() {
 
 	return (
 		<MainLayout title="Manajemen Stok">
-			<div className="max-w-7xl mx-auto">
-				<div className="mb-8 flex justify-between items-center">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Manajemen Stok
-						</h2>
-						<p className="text-gray-600">
-							Kelola palet dan
-							inventaris stok
-						</p>
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
+						Manajemen Stok
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+					</div>
+				</div>
+				<button
+					onClick={() => setShowScannerModal(true)}
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 18px',
+						border: 'none',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						color: '#fff',
+						background: 'linear-gradient(135deg, #27ae60 0%, #10b981 100%)',
+						transition: '0.18s'
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.filter = 'brightness(1.07)';
+						e.currentTarget.style.transform = 'translateY(-1px)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.filter = 'none';
+						e.currentTarget.style.transform = 'none';
+					}}
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+						<path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+					</svg>
+					Scan Barcode
+				</button>
+			</div>
+
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Main Card */}
+			<section style={{
+				background: '#fff',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{/* Toolbar */}
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '12px',
+					flexWrap: 'wrap',
+					marginBottom: '18px',
+					justifyContent: 'space-between'
+				}}>
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 14px',
+						background: '#fff',
+						border: '1px solid var(--border)',
+						borderRadius: '9px',
+						minWidth: '300px',
+						color: 'var(--muted)',
+						flex: 1
+					}}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<circle cx="11" cy="11" r="7"/>
+							<path d="m21 21-4.3-4.3"/>
+						</svg>
+						<input
+							type="text"
+							value={searchPalet}
+							onChange={(e) => {
+								setSearchPalet(e.target.value);
+								setCurrentPaletPage(1);
+							}}
+							placeholder="Cari tempat penyimpanan..."
+							style={{
+								border: 'none',
+								outline: 'none',
+								fontFamily: "'Montserrat', sans-serif",
+								fontSize: '13px',
+								color: 'var(--text)',
+								width: '100%',
+								background: 'transparent'
+							}}
+						/>
 					</div>
 					<button
-						onClick={() =>
-							setShowScannerModal(true)
-						}
-						className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center"
+						onClick={() => {
+							setEditingPalet(null);
+							resetPaletForm();
+							setShowPaletModal(true);
+						}}
+						style={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: '8px',
+							height: '38px',
+							padding: '0 18px',
+							border: 'none',
+							borderRadius: '9px',
+							cursor: 'pointer',
+							fontFamily: "'Montserrat', sans-serif",
+							fontWeight: 700,
+							fontSize: '13px',
+							color: '#fff',
+							background: 'var(--grad)',
+							transition: '0.18s'
+						}}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.filter = 'brightness(1.07)';
+							e.currentTarget.style.transform = 'translateY(-1px)';
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.filter = 'none';
+							e.currentTarget.style.transform = 'none';
+						}}
 					>
-						<svg
-							className="w-5 h-5 mr-2"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-							/>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+							<path d="M12 5v14M5 12h14"/>
 						</svg>
-						Scan Barcode
+						Tambah
 					</button>
 				</div>
 
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
-							{error}
+				{/* Table */}
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Memuat palet...</span>
 						</div>
 					</div>
-				)}
-
-				{/* Palets Section */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					<div className="p-6 border-b border-gray-200">
-						<div className="flex justify-between items-center mb-4">
-							<h3 className="text-lg font-semibold text-gray-900">
-								Daftar tempat
-								penyimpanan
-							</h3>
-							<button
-								onClick={() => {
-									setEditingPalet(null);
-									resetPaletForm();
-									setShowPaletModal(
-										true
-									);
-								}}
-								className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-							>
-								+ Tambah
-							</button>
-						</div>
-
-						<form
-							onSubmit={
-								handleSearchPalet
-							}
-							className="flex gap-2"
-						>
-							<input
-								type="text"
-								value={searchPalet}
-								onChange={(e) =>
-									setSearchPalet(
-										e.target.value
-									)
-								}
-								placeholder="Cari"
-								className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-							/>
-							<button
-								type="submit"
-								className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
-							>
-								Cari
-							</button>
-						</form>
+				) : palets.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						Tidak ada tempat penyimpanan
 					</div>
-
-					<div className="overflow-x-auto">
-						{loading ? (
-							<div className="p-8 text-center">
-								<div className="inline-flex items-center space-x-3">
-									<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-									<span className="text-gray-600">
-										Memuat palet...
-									</span>
-								</div>
-							</div>
-						) : palets.length === 0 ? (
-							<div className="p-8 text-center text-gray-500">
-								Tidak ada penyimpanan
-							</div>
-						) : (
-							<table className="min-w-full divide-y divide-gray-200">
-								<thead className="bg-gray-50">
-									<tr>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Nama
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Lokasi
-										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-											ID
-										</th>
-										<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-											Aksi
-										</th>
-									</tr>
-								</thead>
-								<tbody className="bg-white divide-y divide-gray-200">
-									{palets.map(
-										(palet) => (
-											<tr
-												key={palet.id}
-												className="hover:bg-gray-50"
+				) : (
+					<table style={{
+						width: '100%',
+						borderCollapse: 'collapse',
+						background: '#fff'
+					}}>
+						<thead>
+							<tr style={{ background: '#fff' }}>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Nama
+								</th>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Lokasi
+								</th>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									ID
+								</th>
+								<th style={{
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)'
+								}}></th>
+							</tr>
+						</thead>
+						<tbody>
+							{palets.map((palet) => (
+								<tr
+									key={palet.id}
+									style={{ background: '#fff', transition: 'background 0.15s ease' }}
+									onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+									onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+								>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										verticalAlign: 'middle'
+									}}>
+										<div style={{
+											fontWeight: 700,
+											fontSize: '13.5px',
+											color: 'var(--dark)'
+										}}>
+											{palet.name}
+										</div>
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										color: 'var(--text)',
+										verticalAlign: 'middle'
+									}}>
+										{palet.location}
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '11px',
+										color: 'var(--muted)',
+										verticalAlign: 'middle'
+									}}>
+										{palet.id}
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										verticalAlign: 'middle',
+										textAlign: 'right'
+									}}>
+										<div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
+											<button
+												onClick={() => {
+													setPaletForBarcode(palet);
+													setShowBarcodeModal(true);
+												}}
+												style={{
+													width: '30px',
+													height: '30px',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													border: '1px solid var(--border)',
+													borderRadius: '7px',
+													background: '#fff',
+													color: 'var(--muted)',
+													cursor: 'pointer',
+													transition: '0.18s'
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.borderColor = '#9333ea';
+													e.currentTarget.style.color = '#9333ea';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.borderColor = 'var(--border)';
+													e.currentTarget.style.color = 'var(--muted)';
+												}}
+												title="Print barcode"
 											>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm font-medium text-gray-900">
-														{palet.name}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-500">
-														{
-															palet.location
-														}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-xs text-gray-400">
-														{palet.id}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-													<div className="flex items-center justify-end space-x-2">
-														<button
-															onClick={() => {
-																setPaletForBarcode(
-																	palet
-																);
-																setShowBarcodeModal(
-																	true
-																);
-															}}
-															className="text-purple-600 hover:text-purple-900 p-1 rounded"
-															title="Print barcode"
-														>
-															<svg
-																className="w-5 h-5"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-																/>
-															</svg>
-														</button>
-														<button
-															onClick={() =>
-																router.push(
-																	`/stocks/${palet.id}`
-																)
-															}
-															className="text-blue-600 hover:text-blue-900 p-1 rounded"
-															title="Lihat detail"
-														>
-															<svg
-																className="w-5 h-5"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-																/>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-																/>
-															</svg>
-														</button>
-														<button
-															onClick={() => {
-																setEditingPalet(
-																	palet
-																);
-																setPaletFormData(
-																	{
-																		name: palet.name,
-																		location:
-																			palet.location,
-																	}
-																);
-																setShowPaletModal(
-																	true
-																);
-															}}
-															className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
-															title="Edit palet"
-														>
-															<svg
-																className="w-5 h-5"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																/>
-															</svg>
-														</button>
-														<button
-															onClick={() => {
-																setPaletToDelete(
-																	palet
-																);
-																setShowDeletePaletModal(
-																	true
-																);
-															}}
-															className="text-red-600 hover:text-red-900 p-1 rounded"
-															title="Hapus palet"
-														>
-															<svg
-																className="w-5 h-5"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																/>
-															</svg>
-														</button>
-													</div>
-												</td>
-											</tr>
-										)
-									)}
-								</tbody>
-							</table>
-						)}
-					</div>
-
-					{totalPaletPages > 1 && (
-						<div className="p-4 border-t border-gray-200 flex justify-between items-center">
-							<button
-								onClick={() =>
-									setCurrentPaletPage(
-										Math.max(
-											1,
-											currentPaletPage -
-												1
-										)
-									)
-								}
-								disabled={
-									currentPaletPage === 1
-								}
-								className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								Sebelumnya
-							</button>
-							<span className="text-sm text-gray-700">
-								Halaman{' '}
-								{currentPaletPage} dari{' '}
-								{totalPaletPages} (
-								{totalPaletItems} palet)
-							</span>
-							<button
-								onClick={() =>
-									setCurrentPaletPage(
-										Math.min(
-											totalPaletPages,
-											currentPaletPage +
-												1
-										)
-									)
-								}
-								disabled={
-									currentPaletPage ===
-									totalPaletPages
-								}
-								className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								Berikutnya
-							</button>
-						</div>
-					)}
-				</div>
-			</div>
+												<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+													<path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+												</svg>
+											</button>
+											<button
+												onClick={() => router.push(`/stocks/${palet.id}`)}
+												style={{
+													width: '30px',
+													height: '30px',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													border: '1px solid var(--border)',
+													borderRadius: '7px',
+													background: '#fff',
+													color: 'var(--muted)',
+													cursor: 'pointer',
+													transition: '0.18s'
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.borderColor = 'var(--blue)';
+													e.currentTarget.style.color = 'var(--blue)';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.borderColor = 'var(--border)';
+													e.currentTarget.style.color = 'var(--muted)';
+												}}
+												title="Lihat detail"
+											>
+												<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+													<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+													<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+												</svg>
+											</button>
+											<button
+												onClick={() => {
+													setEditingPalet(palet);
+													setPaletFormData({
+														name: palet.name,
+														location: palet.location,
+													});
+													setShowPaletModal(true);
+												}}
+												style={{
+													width: '30px',
+													height: '30px',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													border: '1px solid var(--border)',
+													borderRadius: '7px',
+													background: '#fff',
+													color: 'var(--muted)',
+													cursor: 'pointer',
+													transition: '0.18s'
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.borderColor = 'var(--blue)';
+													e.currentTarget.style.color = 'var(--blue)';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.borderColor = 'var(--border)';
+													e.currentTarget.style.color = 'var(--muted)';
+												}}
+												title="Edit palet"
+											>
+												<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+													<path d="M12 20h9"/>
+													<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+												</svg>
+											</button>
+											<button
+												onClick={() => {
+													setPaletToDelete(palet);
+													setShowDeletePaletModal(true);
+												}}
+												style={{
+													width: '30px',
+													height: '30px',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													border: '1px solid var(--border)',
+													borderRadius: '7px',
+													background: '#fff',
+													color: 'var(--muted)',
+													cursor: 'pointer',
+													transition: '0.18s'
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.borderColor = 'var(--red)';
+													e.currentTarget.style.color = 'var(--red)';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.borderColor = 'var(--border)';
+													e.currentTarget.style.color = 'var(--muted)';
+												}}
+												title="Hapus palet"
+											>
+												<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+													<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+												</svg>
+											</button>
+										</div>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				)}
+			</section>
 
 			{/* Palet Modal */}
 			{showPaletModal && (

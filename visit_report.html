@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"
+		/>
+		<title>
+			DKI ERP — Visit Report
+		</title>
+		<link
+			rel="preconnect"
+			href="https://fonts.googleapis.com"
+		/>
+		<link
+			rel="preconnect"
+			href="https://fonts.gstatic.com"
+			crossorigin
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap"
+			rel="stylesheet"
+		/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+		<link
+			rel="stylesheet"
+			href="shell.css"
+		/>
+		<script src="auth.js"></script>
+	</head>
+	<body>
+		<!-- ====================== SIDEBAR ====================== -->
+		<aside class="sidebar" id="sidebar">
+			<div class="sidebar-logo">
+				<img
+					class="logo-img"
+					src="assets/Logo_DKI.png"
+					alt="PT Duta Kencana Indah"
+				/>
+			</div>
+
+			<nav class="nav" id="nav"></nav>
+
+			<div class="sidebar-bottom">
+				<div class="user-row">
+					<div class="avatar">R</div>
+					<div class="user-meta">
+						<div class="nm">Rayvin</div>
+						<div class="rl">
+							Superadmin
+						</div>
+					</div>
+				</div>
+				<a
+					class="logout-row"
+					href="index.html"
+					title="Log Out"
+				>
+					<svg
+						class="ic"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path
+							d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+						/>
+						<polyline
+							points="16 17 21 12 16 7"
+						/>
+						<line
+							x1="21"
+							y1="12"
+							x2="9"
+							y2="12"
+						/>
+					</svg>
+					<span class="label"
+						>LOG OUT</span
+					>
+				</a>
+			</div>
+		</aside>
+
+		<!-- ====================== HEADER ====================== -->
+		<header class="header">
+			<button
+				class="collapse-toggle"
+				id="collapseToggle"
+			>
+				«
+			</button>
+			<div
+				class="breadcrumb"
+				id="breadcrumb"
+			></div>
+			<div class="company">
+				PT. DUTA KENCANA INDAH
+			</div>
+		</header>
+
+		<!-- ====================== MAIN ====================== -->
+		<main class="main">
+			<!-- page header -->
+			<div class="welcome">
+				<div>
+					<h1>Visit Report</h1>
+					<div class="date">
+						05 Jun 2026
+					</div>
+				</div>
+				<div class="role">
+					Superadmin
+				</div>
+			</div>
+
+			<!-- export buttons -->
+			<div class="export-row">
+				<button class="btn-export">
+					Export
+				</button>
+				<button class="btn-excel">
+					Excel
+				</button>
+			</div>
+
+			<!-- main content card -->
+			<section class="vcard">
+				<div class="controls-row">
+					<h2 class="vcard-title">
+						Visits Performance
+					</h2>
+					<span class="custom-label"
+						>Custom</span
+					>
+					<div class="daterange">
+						<button
+							class="date-pill"
+							data-target="start"
+						>
+							05/01
+						</button>
+						<span class="dash"
+							>&mdash;</span
+						>
+						<button
+							class="date-pill"
+							data-target="end"
+						>
+							05/01
+						</button>
+						<input
+							type="date"
+							class="date-native"
+							id="dateStart"
+						/>
+						<input
+							type="date"
+							class="date-native"
+							id="dateEnd"
+						/>
+					</div>
+					<div
+						class="mw-toggle"
+						id="mwToggle"
+					>
+						<button class="active">
+							Monthly</button
+						><button>Weekly</button>
+					</div>
+				</div>
+
+				<div class="filter2-row">
+					<div
+						class="sp-filter"
+						id="spFilter"
+					></div>
+					<div class="perpage">
+						<span class="pp-label"
+							>View per page</span
+						>
+						<button
+							class="pp-pill"
+							id="perPage"
+						>
+							10
+						</button>
+					</div>
+				</div>
+
+				<div
+					class="summary-row"
+					id="summaryRow"
+				></div>
+
+				<div class="divider"></div>
+
+				<div
+					class="visit-table"
+					id="visitTable"
+				></div>
+
+				<div
+					class="pagination"
+					id="pagination"
+				></div>
+			</section>
+		</main>
+		<style>
+			/* ===== export buttons ===== */
+			.export-row {
+				display: flex;
+				justify-content: flex-end;
+				gap: 10px;
+				margin: -8px 0 16px;
+			}
+			.btn-export,
+			.btn-excel {
+				height: 34px;
+				padding: 0 20px;
+				border: none;
+				border-radius: 8px;
+				cursor: pointer;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 700;
+				font-size: 13px;
+				color: #fff;
+				transition: filter 0.2s ease;
+			}
+			.btn-export {
+				background: var(--grad);
+			}
+			.btn-excel {
+				background: #27ae60;
+			}
+			.btn-export:hover,
+			.btn-excel:hover {
+				filter: brightness(1.08);
+			}
+
+			/* ===== main card ===== */
+			.vcard {
+				background: var(--card);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 24px 28px;
+				box-shadow: 0 2px 8px
+					rgba(0, 0, 0, 0.04);
+			}
+
+			.controls-row {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				flex-wrap: wrap;
+			}
+			.vcard-title {
+				margin: 0;
+				font-weight: 700;
+				font-size: 16px;
+				color: var(--text);
+			}
+			.custom-label {
+				font-weight: 500;
+				font-size: 14px;
+				color: var(--muted);
+			}
+			.daterange {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				position: relative;
+			}
+			.date-pill {
+				height: 30px;
+				padding: 0 14px;
+				border: none;
+				border-radius: 100px;
+				cursor: pointer;
+				background: var(--grad);
+				color: #fff;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 600;
+				font-size: 13px;
+			}
+			.daterange .dash {
+				color: var(--muted);
+			}
+			.date-native {
+				position: absolute;
+				left: 0;
+				bottom: 0;
+				width: 1px;
+				height: 1px;
+				opacity: 0;
+				pointer-events: none;
+			}
+			.mw-toggle {
+				margin-left: auto;
+				display: flex;
+				gap: 6px;
+			}
+			.mw-toggle button {
+				height: 30px;
+				padding: 0 16px;
+				border-radius: 100px;
+				border: none;
+				cursor: pointer;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 600;
+				font-size: 13px;
+				background: var(--bg);
+				color: var(--muted);
+				transition: 0.2s;
+			}
+			.mw-toggle button.active {
+				background: var(--grad);
+				color: #fff;
+			}
+
+			.filter2-row {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				margin-top: 14px;
+				flex-wrap: wrap;
+			}
+			.sp-filter {
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+			.sp-pill {
+				display: flex;
+				align-items: center;
+				gap: 7px;
+				height: 30px;
+				padding: 0 14px;
+				border-radius: 100px;
+				cursor: pointer;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 600;
+				font-size: 13px;
+				background: #fff;
+				border: 1px solid var(--border);
+				color: var(--muted);
+				transition: 0.2s;
+				white-space: nowrap;
+			}
+			.sp-pill .dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: var(--muted);
+				flex: 0 0 auto;
+			}
+			.sp-pill.active {
+				background: var(--grad);
+				border-color: transparent;
+				color: #fff;
+			}
+			.sp-pill.active .dot {
+				background: #fff;
+			}
+			.perpage {
+				margin-left: auto;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			.pp-label {
+				font-weight: 500;
+				font-size: 13px;
+				color: var(--muted);
+			}
+			.pp-pill {
+				height: 30px;
+				padding: 0 14px;
+				border: none;
+				border-radius: 8px;
+				cursor: pointer;
+				background: var(--grad);
+				color: #fff;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 700;
+				font-size: 13px;
+			}
+
+			.summary-row {
+				display: flex;
+				gap: 12px;
+				margin-top: 16px;
+				margin-bottom: 20px;
+				align-items: stretch;
+			}
+			.sum-card {
+				flex: 1 1 0;
+				min-width: 0;
+				background: #f8fbff;
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px 16px;
+				overflow: hidden;
+			}
+			.sum-top {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 12px;
+			}
+			.sum-avatar {
+				flex: 0 0 40px;
+				width: 40px;
+				height: 40px;
+				border-radius: 50%;
+				background: var(--grad);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: #fff;
+				font-weight: 700;
+				font-size: 13px;
+			}
+			.sum-name {
+				font-weight: 600;
+				font-size: 14px;
+				color: var(--dark);
+				white-space: nowrap;
+			}
+			.sum-stat {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 8px;
+				padding: 3px 0;
+			}
+			.sum-stat .k {
+				font-weight: 400;
+				font-size: 12px;
+				color: var(--muted);
+				white-space: nowrap;
+			}
+			.sum-stat .v {
+				font-weight: 700;
+				font-size: 14px;
+				color: var(--text);
+			}
+
+			.divider {
+				height: 1px;
+				background: var(--border);
+				width: 100%;
+			}
+
+			/* visit table */
+			.visit-table {
+				margin-top: 4px;
+			}
+			.v-rowwrap {
+				border-bottom: 1px solid #f4f6f9;
+			}
+			.v-row {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				padding: 12px 8px;
+				cursor: pointer;
+				transition: background 0.2s ease;
+				border-radius: 8px;
+			}
+			.v-row:hover {
+				background: #f8fbff;
+			}
+			.v-avatar {
+				flex: 0 0 32px;
+				width: 32px;
+				height: 32px;
+				border-radius: 50%;
+				background: var(--grad);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: #fff;
+				font-weight: 700;
+				font-size: 11px;
+			}
+			.v-name {
+				font-weight: 600;
+				font-size: 14px;
+				color: var(--text);
+				min-width: 72px;
+				white-space: nowrap;
+			}
+			.v-store {
+				font-weight: 500;
+				font-size: 14px;
+				color: var(--text);
+				flex: 1.3;
+				min-width: 120px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.v-loc {
+				font-weight: 400;
+				font-size: 13px;
+				color: var(--muted);
+				min-width: 90px;
+			}
+			.v-date {
+				font-weight: 400;
+				font-size: 13px;
+				color: var(--muted);
+				min-width: 80px;
+			}
+			.v-time {
+				font-weight: 500;
+				font-size: 13px;
+				color: var(--text);
+				min-width: 110px;
+			}
+			.v-desc {
+				font-weight: 400;
+				font-size: 13px;
+				color: var(--muted);
+				flex: 1;
+				min-width: 0;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.v-view {
+				font-weight: 600;
+				font-size: 13px;
+				color: var(--blue);
+				cursor: pointer;
+				min-width: 40px;
+				text-align: right;
+			}
+			.v-view:hover {
+				text-decoration: underline;
+			}
+			/* progressively drop the lowest-priority columns on narrower viewports */
+			@media (max-width: 1280px) {
+				.v-desc {
+					display: none;
+				}
+			}
+			@media (max-width: 1060px) {
+				.v-loc {
+					display: none;
+				}
+			}
+			@media (max-width: 900px) {
+				.v-date {
+					display: none;
+				}
+			}
+
+			.v-expand {
+				overflow: hidden;
+				height: 0;
+				opacity: 0;
+			}
+			.v-expand-inner {
+				background: #fff;
+				border: 1px solid var(--border);
+				border-top: none;
+				border-radius: 0 0 12px 12px;
+				padding: 24px 28px;
+				display: flex;
+				gap: 32px;
+			}
+			.v-ex-left {
+				flex: 0 0 45%;
+			}
+			.v-ex-head {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				margin-bottom: 16px;
+			}
+			.v-ex-avatar {
+				flex: 0 0 72px;
+				width: 72px;
+				height: 72px;
+				border-radius: 50%;
+				background: var(--grad);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: #fff;
+				font-weight: 700;
+				font-size: 24px;
+			}
+			.v-ex-name {
+				font-weight: 700;
+				font-size: 18px;
+				color: var(--dark);
+			}
+			.v-ex-store {
+				font-weight: 700;
+				font-size: 20px;
+				color: var(--text);
+			}
+			.v-ex-loc {
+				font-weight: 400;
+				font-style: italic;
+				font-size: 14px;
+				color: var(--muted);
+				margin-top: 4px;
+			}
+			.v-ex-gps {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin-top: 12px;
+			}
+			.v-ex-gps .gdot {
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				background: #27ae60;
+			}
+			.v-ex-gps .gtxt {
+				font-weight: 700;
+				font-size: 12px;
+				color: #27ae60;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+			.v-ex-newtag {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				margin-top: 10px;
+				padding: 4px 14px;
+				border-radius: 100px;
+				background: var(--grad);
+				color: #fff;
+				font-weight: 700;
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+			.v-ex-newtag .nstar {
+				font-size: 11px;
+				line-height: 1;
+			}
+			.v-ex-right {
+				flex: 1;
+				min-width: 0;
+			}
+			.v-ex-desc {
+				font-weight: 400;
+				font-size: 14px;
+				color: var(--text);
+				line-height: 1.7;
+			}
+			.v-ex-meta {
+				margin-top: 16px;
+				text-align: right;
+				font-weight: 400;
+				font-style: italic;
+				font-size: 13px;
+				color: var(--muted);
+				line-height: 1.8;
+			}
+
+			.pagination {
+				display: flex;
+				align-items: center;
+				justify-content: flex-end;
+				gap: 8px;
+				margin-top: 20px;
+				flex-wrap: wrap;
+			}
+			.pg-info {
+				font-weight: 400;
+				font-size: 13px;
+				color: var(--muted);
+				margin-right: 8px;
+			}
+			.pg-btn {
+				height: 30px;
+				padding: 0 14px;
+				border: 1px solid var(--border);
+				background: #fff;
+				border-radius: 6px;
+				cursor: pointer;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 500;
+				font-size: 13px;
+				color: var(--muted);
+				transition: 0.2s;
+			}
+			.pg-btn:hover:not(.active) {
+				border-color: var(--blue);
+				color: var(--blue);
+			}
+			.pg-btn.active {
+				background: var(--grad);
+				border-color: transparent;
+				color: #fff;
+			}
+		</style>
+		<script>
+			window.ACTIVE_KEY = 'retail';
+			window.SELECTED_IDX = 3;
+		</script>
+		<script src="shell.js"></script>
+		<script>
+			/* ====================== VISIT REPORT ====================== */
+			const SUMMARY = [
+				{ n: 1, total: 112, avg: 9 },
+				{ n: 2, total: 98, avg: 8 },
+				{ n: 3, total: 104, avg: 8 },
+				{ n: 4, total: 87, avg: 7 },
+				{ n: 5, total: 121, avg: 10 },
+			];
+
+			const STORES = [
+				'A',
+				'B',
+				'C',
+				'D',
+				'E',
+				'F',
+				'G',
+				'H',
+				'I',
+				'J',
+				'K',
+				'L',
+			];
+			const LOCS = [
+				'Tangerang',
+				'Jakarta',
+				'Bekasi',
+				'Bogor',
+				'Depok',
+			];
+			const TIMES = [
+				'07:10 - 07:45',
+				'08:05 - 08:40',
+				'09:15 - 09:50',
+				'10:20 - 11:05',
+				'13:00 - 13:35',
+			];
+			const DESC =
+				'Kunjungan rutin untuk pengecekan stok dan kerapian display produk di toko. Diskusi dengan pemilik mengenai rencana restock serta program promo bulan berjalan. Pesanan baru dicatat dan dijadwalkan untuk pengiriman minggu depan.';
+			const VISITS = Array.from(
+				{ length: 12 },
+				function (_, i) {
+					const sp = (i % 5) + 1;
+					return {
+						id: i,
+						sp,
+						store:
+							'Toko Bangunan ' +
+							STORES[i],
+						loc: LOCS[i % 5],
+						date: '05/06/2026',
+						time: TIMES[i % 5],
+						isNew: i % 3 === 0,
+						desc: DESC,
+					};
+				},
+			);
+
+			const activeSP = new Set([
+				1, 2, 3, 4, 5,
+			]);
+			let openRow = null;
+
+			/* ---- summary cards ---- */
+			function renderSummary() {
+				$('summaryRow').innerHTML =
+					SUMMARY.map(function (s) {
+						return (
+							'<div class="sum-card" data-sp="' +
+							s.n +
+							'">' +
+							'<div class="sum-top"><div class="sum-avatar">S' +
+							s.n +
+							'</div><div class="sum-name">Sales ' +
+							s.n +
+							'</div></div>' +
+							'<div class="sum-stat"><span class="k">Total</span><span class="v">' +
+							s.total +
+							'</span></div>' +
+							'<div class="sum-stat"><span class="k">Avg / day</span><span class="v">' +
+							s.avg +
+							'</span></div>' +
+							'</div>'
+						);
+					}).join('');
+				gsap.from(
+					'#summaryRow .sum-card',
+					{
+						opacity: 0,
+						y: 12,
+						duration: 0.4,
+						stagger: 0.06,
+						ease: 'power2.out',
+					},
+				);
+			}
+
+			/* ---- salesperson filter ---- */
+			function renderFilter() {
+				$('spFilter').innerHTML = [
+					1, 2, 3, 4, 5,
+				]
+					.map(function (n) {
+						return (
+							'<button class="sp-pill active" data-sp="' +
+							n +
+							'"><span class="dot"></span>Sales ' +
+							n +
+							'</button>'
+						);
+					})
+					.join('');
+				$('spFilter').addEventListener(
+					'click',
+					function (e) {
+						const b =
+							e.target.closest(
+								'.sp-pill',
+							);
+						if (!b) return;
+						const n = +b.dataset.sp;
+						const on =
+							b.classList.toggle(
+								'active',
+							);
+						if (on) activeSP.add(n);
+						else activeSP.delete(n);
+						const card = $(
+							'summaryRow',
+						).querySelector(
+							'.sum-card[data-sp="' +
+								n +
+								'"]',
+						);
+						if (card)
+							collapseCard(card, on);
+						document
+							.querySelectorAll(
+								'.v-rowwrap[data-sp="' +
+									n +
+									'"]',
+							)
+							.forEach(function (r) {
+								if (on) {
+									r.style.display = '';
+									gsap.fromTo(
+										r,
+										{ opacity: 0 },
+										{
+											opacity: 1,
+											duration: 0.3,
+										},
+									);
+								} else {
+									gsap.to(r, {
+										opacity: 0,
+										duration: 0.3,
+										onComplete:
+											function () {
+												r.style.display =
+													'none';
+											},
+									});
+								}
+							});
+					},
+				);
+			}
+			function collapseCard(
+				card,
+				show,
+			) {
+				gsap.killTweensOf(card);
+				if (show) {
+					card.style.display = '';
+					card.style.flex = '0 0 auto';
+					gsap.set(card, {
+						width: 'auto',
+						opacity: 1,
+						paddingLeft: 16,
+						paddingRight: 16,
+					});
+					const w = card.offsetWidth;
+					gsap.fromTo(
+						card,
+						{
+							width: 0,
+							opacity: 0,
+							paddingLeft: 0,
+							paddingRight: 0,
+						},
+						{
+							width: w,
+							opacity: 1,
+							paddingLeft: 16,
+							paddingRight: 16,
+							duration: 0.3,
+							ease: 'power2.out',
+							onComplete: function () {
+								card.style.flex =
+									'1 1 0';
+								card.style.width = '';
+							},
+						},
+					);
+				} else {
+					card.style.flex = '0 0 auto';
+					const w = card.offsetWidth;
+					gsap.fromTo(
+						card,
+						{ width: w, opacity: 1 },
+						{
+							width: 0,
+							opacity: 0,
+							paddingLeft: 0,
+							paddingRight: 0,
+							duration: 0.3,
+							ease: 'power2.in',
+							onComplete: function () {
+								card.style.display =
+									'none';
+							},
+						},
+					);
+				}
+			}
+
+			/* ---- visit table ---- */
+			function renderTable() {
+				$('visitTable').innerHTML =
+					VISITS.map(function (v) {
+						return (
+							'<div class="v-rowwrap" data-sp="' +
+							v.sp +
+							'" data-id="' +
+							v.id +
+							'">' +
+							'<div class="v-row">' +
+							'<div class="v-avatar">S' +
+							v.sp +
+							'</div>' +
+							'<div class="v-name">Sales ' +
+							v.sp +
+							'</div>' +
+							'<div class="v-store">' +
+							v.store +
+							'</div>' +
+							'<div class="v-loc">' +
+							v.loc +
+							'</div>' +
+							'<div class="v-date">' +
+							v.date +
+							'</div>' +
+							'<div class="v-time">' +
+							v.time +
+							'</div>' +
+							'<div class="v-desc">' +
+							v.desc +
+							'</div>' +
+							'<div class="v-view" data-id="' +
+							v.id +
+							'">View</div>' +
+							'</div>' +
+							'<div class="v-expand" id="exp-' +
+							v.id +
+							'"></div>' +
+							'</div>'
+						);
+					}).join('');
+				$(
+					'visitTable',
+				).addEventListener(
+					'click',
+					function (e) {
+						const wrap =
+							e.target.closest(
+								'.v-rowwrap',
+							);
+						if (!wrap) return;
+						if (
+							e.target.closest(
+								'.v-expand',
+							)
+						)
+							return;
+						toggleExpand(
+							+wrap.dataset.id,
+						);
+					},
+				);
+			}
+			function expandHTML(v) {
+				return (
+					'<div class="v-expand-inner">' +
+					'<div class="v-ex-left">' +
+					'<div class="v-ex-head"><div class="v-ex-avatar">S' +
+					v.sp +
+					'</div><div class="v-ex-name">Sales ' +
+					v.sp +
+					'</div></div>' +
+					'<div class="v-ex-store">' +
+					v.store +
+					'</div>' +
+					'<div class="v-ex-loc">' +
+					v.loc +
+					'</div>' +
+					'<div class="v-ex-gps"><span class="gdot"></span><span class="gtxt">GPS Verified</span></div>' +
+					(v.isNew
+						? '<div class="v-ex-newtag"><span class="nstar">★</span>New Store</div>'
+						: '') +
+					'</div>' +
+					'<div class="v-ex-right">' +
+					'<div class="v-ex-desc">' +
+					v.desc +
+					' ' +
+					v.desc +
+					'</div>' +
+					'<div class="v-ex-meta">' +
+					v.date +
+					'&nbsp;&nbsp;' +
+					v.time +
+					'<br>Last Updated: ' +
+					v.date +
+					' 09:14<br>Created: ' +
+					v.date +
+					' 07:46</div>' +
+					'</div>' +
+					'</div>'
+				);
+			}
+			function toggleExpand(id) {
+				if (openRow === id) {
+					closeExpand(id);
+					openRow = null;
+					return;
+				}
+				if (openRow !== null)
+					closeExpand(openRow);
+				const panel =
+					document.getElementById(
+						'exp-' + id,
+					);
+				panel.innerHTML = expandHTML(
+					VISITS[id],
+				);
+				gsap.set(panel, {
+					height: 'auto',
+				});
+				const h = panel.offsetHeight;
+				gsap.fromTo(
+					panel,
+					{ height: 0, opacity: 0 },
+					{
+						height: h,
+						opacity: 1,
+						duration: 0.4,
+						ease: 'power2.out',
+						onComplete: function () {
+							gsap.set(panel, {
+								height: 'auto',
+							});
+						},
+					},
+				);
+				openRow = id;
+			}
+			function closeExpand(id) {
+				const panel =
+					document.getElementById(
+						'exp-' + id,
+					);
+				gsap.to(panel, {
+					height: 0,
+					opacity: 0,
+					duration: 0.3,
+					ease: 'power2.in',
+					onComplete: function () {
+						panel.innerHTML = '';
+					},
+				});
+			}
+
+			/* ---- date range pills ---- */
+			document
+				.querySelectorAll('.date-pill')
+				.forEach(function (p) {
+					const input =
+						p.dataset.target === 'start'
+							? $('dateStart')
+							: $('dateEnd');
+					p.addEventListener(
+						'click',
+						function () {
+							if (input.showPicker) {
+								try {
+									input.showPicker();
+								} catch (err) {
+									input.focus();
+								}
+							} else input.focus();
+						},
+					);
+					input.addEventListener(
+						'change',
+						function () {
+							if (!input.value) return;
+							const d = new Date(
+								input.value,
+							);
+							const mm = String(
+								d.getMonth() + 1,
+							).padStart(2, '0');
+							const dd = String(
+								d.getDate(),
+							).padStart(2, '0');
+							p.textContent =
+								mm + '/' + dd;
+						},
+					);
+				});
+
+			/* ---- monthly / weekly ---- */
+			$('mwToggle').addEventListener(
+				'click',
+				function (e) {
+					const b =
+						e.target.closest('button');
+					if (!b) return;
+					$('mwToggle')
+						.querySelectorAll('button')
+						.forEach(function (x) {
+							x.classList.remove(
+								'active',
+							);
+						});
+					b.classList.add('active');
+				},
+			);
+
+			/* ---- view per page ---- */
+			const PP = [10, 25, 50];
+			let ppIdx = 0;
+			$('perPage').addEventListener(
+				'click',
+				function () {
+					ppIdx =
+						(ppIdx + 1) % PP.length;
+					$('perPage').textContent =
+						PP[ppIdx];
+					curPage = 1;
+					renderPagination();
+				},
+			);
+
+			/* ---- pagination ---- */
+			const TOTAL = 50;
+			let curPage = 1;
+			function renderPagination() {
+				const per = PP[ppIdx];
+				const pages = Math.ceil(
+					TOTAL / per,
+				);
+				if (curPage > pages)
+					curPage = pages;
+				const start =
+					(curPage - 1) * per + 1;
+				const end = Math.min(
+					curPage * per,
+					TOTAL,
+				);
+				let h =
+					'<span class="pg-info">Showing ' +
+					start +
+					'-' +
+					end +
+					' of ' +
+					TOTAL +
+					'</span>';
+				h +=
+					'<button class="pg-btn" data-pg="prev">Prev</button>';
+				for (
+					let i = 1;
+					i <= pages;
+					i++
+				) {
+					h +=
+						'<button class="pg-btn' +
+						(i === curPage
+							? ' active'
+							: '') +
+						'" data-pg="' +
+						i +
+						'">' +
+						i +
+						'</button>';
+				}
+				h +=
+					'<button class="pg-btn" data-pg="next">Next</button>';
+				$('pagination').innerHTML = h;
+			}
+			$('pagination').addEventListener(
+				'click',
+				function (e) {
+					const b =
+						e.target.closest('.pg-btn');
+					if (!b) return;
+					const per = PP[ppIdx];
+					const pages = Math.ceil(
+						TOTAL / per,
+					);
+					const v = b.dataset.pg;
+					if (v === 'prev')
+						curPage = Math.max(
+							1,
+							curPage - 1,
+						);
+					else if (v === 'next')
+						curPage = Math.min(
+							pages,
+							curPage + 1,
+						);
+					else curPage = +v;
+					renderPagination();
+				},
+			);
+
+			/* ---- init + entrance ---- */
+			renderSummary();
+			renderFilter();
+			renderTable();
+			renderPagination();
+			gsap.from(
+				'.main > .welcome, .export-row, .vcard',
+				{
+					opacity: 0,
+					y: 16,
+					duration: 0.5,
+					stagger: 0.06,
+					ease: 'power2.out',
+				},
+			);
+		</script>
+		<script>
+			/* access-level: Staff sees only their own records (group totals stay visible) */
+			(function () {
+				if (!window.DKI) return;
+				var s = DKI.getSession();
+				if (!s) return;
+				document.body.setAttribute(
+					'data-role',
+					s.role,
+				);
+				if (s.level)
+					document.body.setAttribute(
+						'data-level',
+						s.level,
+					);
+				var own = DKI.ownerSP();
+				if (!own) return; // supervisor / manager / superadmin: see all
+				var idx = parseInt(
+					String(own).replace(
+						/\D/g,
+						'',
+					),
+					10,
+				);
+				try {
+					if (
+						typeof activeSP !==
+							'undefined' &&
+						activeSP &&
+						activeSP.clear
+					) {
+						activeSP.clear();
+						activeSP.add(idx);
+					}
+					var f =
+						document.getElementById(
+							'spFilter',
+						);
+					if (f)
+						f.style.display = 'none';
+					document
+						.querySelectorAll(
+							'.summary-row',
+						)
+						.forEach(function (el) {
+							el.style.display = 'none';
+							var nx =
+								el.nextElementSibling;
+							while (
+								nx &&
+								getComputedStyle(nx)
+									.display === 'none'
+							)
+								nx =
+									nx.nextElementSibling;
+							if (
+								nx &&
+								!nx.style.marginTop
+							)
+								nx.style.marginTop =
+									'16px';
+						});
+					if (
+						typeof applyFilters ===
+						'function'
+					) {
+						applyFilters();
+						if (window.gsap) {
+							try {
+								gsap.globalTimeline.progress(
+									1,
+								);
+							} catch (e) {}
+						}
+					}
+					if (
+						typeof renderValueSummary ===
+						'function'
+					)
+						renderValueSummary();
+					if (
+						typeof renderSummary ===
+						'function'
+					)
+						renderSummary();
+				} catch (e) {
+					console.warn(
+						'staff-lock skipped',
+						e,
+					);
+				}
+			})();
+		</script>
+	</body>
+</html>

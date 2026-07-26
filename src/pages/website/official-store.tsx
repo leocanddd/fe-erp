@@ -215,244 +215,347 @@ export default function OfficialStore() {
 	const isUploading = Object.keys(uploadingImages).length > 0;
 
 	return (
-		<MainLayout>
-			<div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-				<div className="max-w-7xl mx-auto">
-					<div className="mb-8 flex justify-between items-center">
-						<div>
-							<h1 className="text-3xl font-bold text-gray-900">
-								Official Store
-							</h1>
-							<p className="mt-2 text-sm text-gray-600">
-								Kelola katalog official store website
-							</p>
-						</div>
-						<button
-							onClick={() => handleOpenModal()}
-							className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-						>
-							+ Tambah Item
-						</button>
+		<MainLayout title="Official Store">
+			<style jsx global>{`
+				.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+				.pcard { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #fff; transition: .18s; }
+				.pcard:hover { box-shadow: 0 8px 22px rgba(0,0,0,.08); transform: translateY(-2px); }
+				.pcover { height: 140px; background: linear-gradient(135deg, #E8F1F9, #D6E6F2); display: flex; align-items: center; justify-content: center; color: #9FB4C8; position: relative; overflow: hidden; }
+				.pcover img { width: 100%; height: 100%; object-fit: cover; }
+				.pcard-body { padding: 15px 16px; }
+				.pcard-title { font-weight: 700; font-size: 15px; color: var(--dark); line-height: 1.35; margin-bottom: 6px; }
+				.pcard-sub { font-weight: 400; font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+				.pcard-foot { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
+				.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+				.modal-box { background: white; border-radius: 12px; max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; }
+				.modal-header { padding: 24px 28px 20px; border-bottom: 1px solid var(--border); }
+				.modal-title { margin: 0; font-weight: 700; font-size: 18px; color: var(--dark); }
+				.modal-body { padding: 24px 28px; }
+				.field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
+				.field label { font-weight: 600; font-size: 12px; color: var(--dark); }
+				.field .hint { font-weight: 400; font-size: 11px; color: var(--muted); margin-top: -3px; }
+				.input, .textarea { font-family: 'Montserrat', sans-serif; font-size: 13px; color: var(--text); border: 1px solid var(--border); border-radius: 9px; padding: 10px 13px; background: #fff; outline: none; transition: border-color 0.18s; width: 100%; }
+				.input:focus, .textarea:focus { border-color: var(--blue); }
+				.textarea { resize: vertical; min-height: 96px; line-height: 1.6; }
+				.img-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+				.img-preview-item { position: relative; aspect-ratio: 1; border-radius: 9px; overflow: hidden; }
+				.img-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+				.img-remove-btn { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; background: var(--red); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; line-height: 1; opacity: 0; transition: 0.18s; }
+				.img-preview-item:hover .img-remove-btn { opacity: 1; }
+				.upload-btn-wrapper { display: flex; align-items: center; gap: 10px; }
+				.upload-btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 18px; border: none; border-radius: 9px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; color: #fff; background: var(--grad); transition: 0.18s; }
+				.upload-btn:hover { filter: brightness(1.07); }
+				.upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+				.modal-actions { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
+				.btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 18px; border: none; border-radius: 9px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; color: #fff; background: var(--grad); transition: 0.18s; }
+				.btn:hover { filter: brightness(1.07); transform: translateY(-1px); }
+				.btn.ghost { background: #fff; border: 1px solid var(--border); color: var(--text); }
+				.btn.ghost:hover { border-color: var(--blue); color: var(--blue); transform: none; filter: none; }
+				.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+			`}</style>
+
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
+						Official Store
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
-
-					{error && (
-						<div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-							{error}
-						</div>
-					)}
-
-					{loading ? (
-						<div className="flex justify-center items-center h-64">
-							<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-						</div>
-					) : (
-						<div className="bg-white shadow-md rounded-lg overflow-hidden">
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Judul
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Gambar
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Deskripsi
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Dibuat
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Diperbarui
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Aksi
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-200">
-										{catalogues.length === 0 ? (
-											<tr>
-												<td
-													colSpan={6}
-													className="px-6 py-4 text-center text-gray-500"
-												>
-													Tidak ada data
-												</td>
-											</tr>
-										) : (
-											catalogues.map((item) => (
-												<tr key={getItemId(item)} className="hover:bg-gray-50">
-													<td className="px-6 py-4 text-sm font-medium text-gray-900">
-														{item.title}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="flex gap-2 flex-wrap">
-															{item.images.slice(0, 3).map((img, idx) => (
-																// eslint-disable-next-line @next/next/no-img-element
-																<img
-																	key={idx}
-																	src={img}
-																	alt={`Image ${idx + 1}`}
-																	className="w-16 h-16 object-cover rounded"
-																/>
-															))}
-															{item.images.length > 3 && (
-																<div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-600">
-																	+{item.images.length - 3}
-																</div>
-															)}
-														</div>
-													</td>
-													<td className="px-6 py-4 text-sm text-gray-900">
-														<div className="max-w-md truncate" title={item.descText}>
-															{item.descText}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-														{formatDate(item.createdAt)}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-														{formatDate(item.updatedAt)}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-														<button
-															onClick={() => handleOpenModal(item)}
-															className="text-blue-600 hover:text-blue-900 mr-4"
-														>
-															Edit
-														</button>
-														<button
-															onClick={() => handleDelete(item)}
-															className="text-red-600 hover:text-red-900"
-														>
-															Hapus
-														</button>
-													</td>
-												</tr>
-											))
-										)}
-									</tbody>
-								</table>
-							</div>
-						</div>
-					)}
 				</div>
+				<button
+					onClick={() => handleOpenModal()}
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 18px',
+						border: 'none',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						color: '#fff',
+						background: 'var(--grad)',
+						transition: '0.18s'
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.filter = 'brightness(1.07)';
+						e.currentTarget.style.transform = 'translateY(-1px)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.filter = 'none';
+						e.currentTarget.style.transform = 'none';
+					}}
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+						<path d="M12 5v14M5 12h14"/>
+					</svg>
+					Tambah Item
+				</button>
 			</div>
+
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Main Card */}
+			<section style={{
+				background: 'white',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Memuat data...</span>
+						</div>
+					</div>
+				) : catalogues.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						Tidak ada data
+					</div>
+				) : (
+					<div className="pgrid">
+						{catalogues.map((item) => (
+							<div key={getItemId(item)} className="pcard">
+								<div className="pcover">
+									{item.images.length > 0 ? (
+										// eslint-disable-next-line @next/next/no-img-element
+										<img src={item.images[0]} alt={item.title} />
+									) : (
+										<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+											<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+											<circle cx="8.5" cy="8.5" r="1.5"/>
+											<polyline points="21 15 16 10 5 21"/>
+										</svg>
+									)}
+								</div>
+								<div className="pcard-body">
+									<div className="pcard-title">{item.title}</div>
+									<div className="pcard-sub">{item.descText}</div>
+									<div className="pcard-foot">
+										<span>{item.images.length} gambar</span>
+										<div style={{ display: 'flex', gap: '8px' }}>
+											<button
+												onClick={() => handleOpenModal(item)}
+												style={{
+													display: 'inline-flex',
+													alignItems: 'center',
+													gap: '6px',
+													height: '32px',
+													padding: '0 13px',
+													border: '1px solid var(--border)',
+													borderRadius: '8px',
+													cursor: 'pointer',
+													fontFamily: "'Montserrat', sans-serif",
+													fontWeight: 700,
+													fontSize: '12px',
+													color: 'var(--text)',
+													background: '#fff',
+													transition: '0.18s'
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.borderColor = 'var(--blue)';
+													e.currentTarget.style.color = 'var(--blue)';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.borderColor = 'var(--border)';
+													e.currentTarget.style.color = 'var(--text)';
+												}}
+											>
+												Edit
+											</button>
+											<button
+												onClick={() => handleDelete(item)}
+												style={{
+													width: '32px',
+													height: '32px',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													border: '1px solid var(--border)',
+													borderRadius: '8px',
+													background: '#fff',
+													color: 'var(--muted)',
+													cursor: 'pointer',
+													transition: '0.18s'
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.borderColor = 'var(--red)';
+													e.currentTarget.style.color = 'var(--red)';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.borderColor = 'var(--border)';
+													e.currentTarget.style.color = 'var(--muted)';
+												}}
+											>
+												<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+													<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+												</svg>
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+			</section>
 
 			{/* Modal */}
 			{showModal && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-					<div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-						<div className="p-6">
-							<h2 className="text-2xl font-bold mb-4">
-								{editingItem ? 'Edit Item' : 'Tambah Item Baru'}
-							</h2>
-							<form onSubmit={handleSubmit}>
-								<div className="mb-4">
-									<label className="block text-sm font-medium text-gray-700 mb-2">
-										Judul
-									</label>
-									<input
-										type="text"
-										value={formData.title}
-										onChange={(e) =>
-											setFormData({ ...formData, title: e.target.value })
-										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-										placeholder="Masukkan judul..."
-										required
-									/>
-								</div>
-
-								<div className="mb-4">
-									<label className="block text-sm font-medium text-gray-700 mb-2">
-										Gambar
-									</label>
-
-									{/* Uploaded Images Preview */}
-									{formData.images.length > 0 && (
-										<div className="grid grid-cols-3 gap-4 mb-4">
-											{formData.images.map((img, index) => (
-												<div key={index} className="relative group">
-													{/* eslint-disable-next-line @next/next/no-img-element */}
-													<img
-														src={img}
-														alt={`Upload ${index + 1}`}
-														className="w-full h-32 object-cover rounded-lg"
-													/>
-													<button
-														type="button"
-														onClick={() => handleRemoveImage(index)}
-														className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-													>
-														×
-													</button>
-												</div>
-											))}
-										</div>
-									)}
-
-									{/* Upload Button */}
-									<div className="flex items-center gap-2">
-										<label className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer inline-block">
-											{isUploading ? 'Mengupload...' : '+ Upload Gambar'}
-											<input
-												type="file"
-												accept="image/*"
-												multiple
-												onChange={handleImageUpload}
-												className="hidden"
-												disabled={isUploading || submitting}
-											/>
-										</label>
-										{isUploading && (
-											<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-										)}
+				<div className="modal-overlay" onClick={handleCloseModal}>
+						<div className="modal-box" onClick={(e) => e.stopPropagation()}>
+							<div className="modal-header">
+								<h3 className="modal-title">
+									{editingItem ? 'Edit Item' : 'Tambah Item Baru'}
+								</h3>
+							</div>
+							<div className="modal-body">
+								<form onSubmit={handleSubmit}>
+									<div className="field">
+										<label>Judul</label>
+										<input
+											type="text"
+											className="input"
+											value={formData.title}
+											onChange={(e) =>
+												setFormData({ ...formData, title: e.target.value })
+											}
+											placeholder="Masukkan judul..."
+											required
+										/>
 									</div>
-									<p className="text-xs text-gray-500 mt-2">
-										Anda bisa mengupload beberapa gambar sekaligus
-									</p>
-								</div>
 
-								<div className="mb-4">
-									<label className="block text-sm font-medium text-gray-700 mb-2">
-										Deskripsi
-									</label>
-									<textarea
-										value={formData.descText}
-										onChange={(e) =>
-											setFormData({ ...formData, descText: e.target.value })
-										}
-										rows={4}
-										className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-										placeholder="Masukkan deskripsi produk..."
-										required
-									/>
-								</div>
+									<div className="field">
+										<label>Gambar</label>
+										{formData.images.length > 0 && (
+											<div className="img-preview-grid">
+												{formData.images.map((img, index) => (
+													<div key={index} className="img-preview-item">
+														{/* eslint-disable-next-line @next/next/no-img-element */}
+														<img src={img} alt={`Upload ${index + 1}`} />
+														<button
+															type="button"
+															className="img-remove-btn"
+															onClick={() => handleRemoveImage(index)}
+														>
+															×
+														</button>
+													</div>
+												))}
+											</div>
+										)}
+										<div className="upload-btn-wrapper">
+											<label className="upload-btn" style={{ cursor: isUploading || submitting ? 'not-allowed' : 'pointer', opacity: isUploading || submitting ? 0.5 : 1 }}>
+												{isUploading ? 'Mengupload...' : '+ Upload Gambar'}
+												<input
+													type="file"
+													accept="image/*"
+													multiple
+													onChange={handleImageUpload}
+													style={{ display: 'none' }}
+													disabled={isUploading || submitting}
+												/>
+											</label>
+											{isUploading && (
+												<div style={{
+													width: '20px',
+													height: '20px',
+													border: '3px solid rgba(28, 167, 236, 0.3)',
+													borderTopColor: '#1ca7ec',
+													borderRadius: '50%',
+													animation: 'spin 1s linear infinite'
+												}}></div>
+											)}
+										</div>
+										<div className="hint">Anda bisa mengupload beberapa gambar sekaligus</div>
+									</div>
 
-								<div className="flex justify-end gap-2">
-									<button
-										type="button"
-										onClick={handleCloseModal}
-										className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-										disabled={submitting || isUploading}
-									>
-										Batal
-									</button>
-									<button
-										type="submit"
-										className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-										disabled={submitting || isUploading}
-									>
-										{submitting ? 'Menyimpan...' : 'Simpan'}
-									</button>
-								</div>
-							</form>
+									<div className="field">
+										<label>Deskripsi</label>
+										<textarea
+											className="textarea"
+											value={formData.descText}
+											onChange={(e) =>
+												setFormData({ ...formData, descText: e.target.value })
+											}
+											placeholder="Masukkan deskripsi produk..."
+											required
+										/>
+									</div>
+
+									<div className="modal-actions">
+										<button
+											type="button"
+											className="btn ghost"
+											onClick={handleCloseModal}
+											disabled={submitting || isUploading}
+										>
+											Batal
+										</button>
+										<button
+											type="submit"
+											className="btn"
+											disabled={submitting || isUploading}
+										>
+											{submitting ? 'Menyimpan...' : 'Simpan'}
+										</button>
+									</div>
+								</form>
+							</div>
 						</div>
 					</div>
-				</div>
 			)}
 		</MainLayout>
 	);

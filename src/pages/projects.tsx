@@ -172,11 +172,29 @@ export default function Projects() {
 					onClick={() =>
 						handlePageChange(i)
 					}
-					className={`px-3 py-1 mx-1 rounded transition-colors ${
-						i === currentPage
-							? 'bg-blue-600 text-white'
-							: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-					}`}
+					style={{
+						padding: '6px 12px',
+						margin: '0 4px',
+						borderRadius: '6px',
+						border: 'none',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontSize: '13px',
+						fontWeight: 600,
+						transition: '0.18s',
+						background: i === currentPage ? 'var(--grad)' : '#E5E7EB',
+						color: i === currentPage ? '#fff' : 'var(--text)'
+					}}
+					onMouseEnter={(e) => {
+						if (i !== currentPage) {
+							e.currentTarget.style.background = '#D1D5DB';
+						}
+					}}
+					onMouseLeave={(e) => {
+						if (i !== currentPage) {
+							e.currentTarget.style.background = '#E5E7EB';
+						}
+					}}
 				>
 					{i}
 				</button>
@@ -184,8 +202,17 @@ export default function Projects() {
 		}
 
 		return (
-			<div className="flex items-center justify-between mt-6">
-				<div className="text-sm text-gray-600">
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				justifyContent: 'space-between',
+				marginTop: '24px',
+				padding: '16px 0'
+			}}>
+				<div style={{
+					fontSize: '13px',
+					color: 'var(--muted)'
+				}}>
 					Menampilkan{' '}
 					{Math.min(
 						(currentPage - 1) *
@@ -200,7 +227,7 @@ export default function Projects() {
 					)}{' '}
 					dari {totalItems} projects
 				</div>
-				<div className="flex items-center">
+				<div style={{ display: 'flex', alignItems: 'center' }}>
 					<button
 						onClick={() =>
 							handlePageChange(
@@ -208,7 +235,28 @@ export default function Projects() {
 							)
 						}
 						disabled={currentPage === 1}
-						className="px-3 py-1 mx-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						style={{
+							padding: '6px 12px',
+							margin: '0 4px',
+							borderRadius: '6px',
+							border: 'none',
+							cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+							fontFamily: "'Montserrat', sans-serif",
+							fontSize: '13px',
+							fontWeight: 600,
+							transition: '0.18s',
+							background: '#E5E7EB',
+							color: 'var(--text)',
+							opacity: currentPage === 1 ? 0.5 : 1
+						}}
+						onMouseEnter={(e) => {
+							if (currentPage !== 1) {
+								e.currentTarget.style.background = '#D1D5DB';
+							}
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.background = '#E5E7EB';
+						}}
 					>
 						Previous
 					</button>
@@ -222,7 +270,28 @@ export default function Projects() {
 						disabled={
 							currentPage === totalPages
 						}
-						className="px-3 py-1 mx-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						style={{
+							padding: '6px 12px',
+							margin: '0 4px',
+							borderRadius: '6px',
+							border: 'none',
+							cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+							fontFamily: "'Montserrat', sans-serif",
+							fontSize: '13px',
+							fontWeight: 600,
+							transition: '0.18s',
+							background: '#E5E7EB',
+							color: 'var(--text)',
+							opacity: currentPage === totalPages ? 0.5 : 1
+						}}
+						onMouseEnter={(e) => {
+							if (currentPage !== totalPages) {
+								e.currentTarget.style.background = '#D1D5DB';
+							}
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.background = '#E5E7EB';
+						}}
 					>
 						Next
 					</button>
@@ -233,209 +302,459 @@ export default function Projects() {
 
 	return (
 		<MainLayout title="Projects">
-			<div className="max-w-7xl mx-auto">
-				{/* Header */}
-				<div className="mb-8">
-					<h2 className="text-2xl font-bold text-[#000000] mb-2">
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
 						Projects
-					</h2>
-					<p className="text-gray-600">
-						Kelola dan pantau semua
-						project
-					</p>
-				</div>
-
-				{/* Filters */}
-				<div className="bg-white p-6 rounded-xl shadow-md mb-6">
-					<form onSubmit={handleSearch}>
-						<div className="flex flex-col md:flex-row gap-4 items-end">
-							<div className="flex-1">
-								<label className="block text-sm font-medium text-gray-900 mb-2">
-									Nama Project
-								</label>
-								<input
-									type="text"
-									value={
-										filters.projectName
-									}
-									onChange={(e) =>
-										handleFilterChange(
-											'projectName',
-											e.target.value
-										)
-									}
-									className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-									placeholder="Cari nama project..."
-								/>
-							</div>
-
-							<div className="w-full md:w-48">
-								<label className="block text-sm font-medium text-gray-900 mb-2">
-									Items per page
-								</label>
-								<select
-									value={filters.limit}
-									onChange={(e) =>
-										handleLimitChange(
-											parseInt(
-												e.target.value
-											)
-										)
-									}
-									className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								>
-									<option value="10">
-										10
-									</option>
-									<option value="25">
-										25
-									</option>
-									<option value="50">
-										50
-									</option>
-									<option value="100">
-										100
-									</option>
-								</select>
-							</div>
-
-							<div className="flex gap-2">
-								<button
-									type="submit"
-									className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors whitespace-nowrap"
-								>
-									Search
-								</button>
-								<button
-									type="button"
-									onClick={clearFilters}
-									className="bg-gray-200 hover:bg-gray-300 text-black font-semibold py-2 px-6 rounded-lg transition-colors whitespace-nowrap"
-								>
-									Clear
-								</button>
-							</div>
-						</div>
-					</form>
-				</div>
-
-				{/* Error Message */}
-				{error && (
-					<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-						{error}
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
-				)}
-
-				{/* Projects Table */}
-				<div className="bg-white rounded-xl shadow-md overflow-hidden">
-					{loading ? (
-						<div className="flex items-center justify-center py-12">
-							<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-						</div>
-					) : projects.length === 0 ? (
-						<div className="text-center py-12">
-							<p className="text-gray-500 text-lg">
-								No projects found
-							</p>
-						</div>
-					) : (
-						<>
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Project Name
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Location
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												PIC
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Contact
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Status
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Created By
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Last Updated By
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-200">
-										{projects.map(
-											(project) => (
-												<tr
-													key={
-														project.id
-													}
-													className="hover:bg-gray-50 transition-colors"
-												>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm font-medium text-gray-900">
-															{
-																project.projectName
-															}
-														</div>
-													</td>
-													<td className="px-6 py-4">
-														<div className="text-sm text-gray-900">
-															{
-																project.location
-															}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm text-gray-900">
-															{
-																project.pic
-															}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{
-															project.contact
-														}
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm text-gray-900 capitalize">
-															{
-																project.status || '-'
-															}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm text-gray-900">
-															{
-																project.createdBy || '-'
-															}
-														</div>
-													</td>
-													<td className="px-6 py-4 whitespace-nowrap">
-														<div className="text-sm text-gray-900">
-															{
-																project.updatedBy || '-'
-															}
-														</div>
-													</td>
-												</tr>
-											)
-										)}
-									</tbody>
-								</table>
-							</div>
-
-							{/* Pagination */}
-							{totalPages > 1 &&
-								renderPagination()}
-						</>
-					)}
 				</div>
 			</div>
+
+			{/* Filters */}
+			<div style={{
+				background: '#fff',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+				marginBottom: '18px'
+			}}>
+				<form onSubmit={handleSearch}>
+					<div style={{
+						display: 'flex',
+						flexWrap: 'wrap',
+						gap: '16px',
+						alignItems: 'flex-end'
+					}}>
+						<div style={{ flex: 1, minWidth: '250px' }}>
+							<label style={{
+								display: 'block',
+								fontSize: '12px',
+								fontWeight: 600,
+								color: 'var(--dark)',
+								marginBottom: '8px'
+							}}>
+								Nama Project
+							</label>
+							<input
+								type="text"
+								value={filters.projectName}
+								onChange={(e) =>
+									handleFilterChange(
+										'projectName',
+										e.target.value
+									)
+								}
+								style={{
+									width: '100%',
+									height: '38px',
+									padding: '0 14px',
+									border: '1px solid var(--border)',
+									borderRadius: '9px',
+									fontFamily: "'Montserrat', sans-serif",
+									fontSize: '13px',
+									color: 'var(--text)',
+									outline: 'none',
+									transition: '0.18s'
+								}}
+								placeholder="Cari nama project..."
+								onFocus={(e) => {
+									e.currentTarget.style.borderColor = 'var(--blue)';
+									e.currentTarget.style.boxShadow = '0 0 0 3px rgba(28,167,236,0.1)';
+								}}
+								onBlur={(e) => {
+									e.currentTarget.style.borderColor = 'var(--border)';
+									e.currentTarget.style.boxShadow = 'none';
+								}}
+							/>
+						</div>
+
+						<div style={{ width: '180px' }}>
+							<label style={{
+								display: 'block',
+								fontSize: '12px',
+								fontWeight: 600,
+								color: 'var(--dark)',
+								marginBottom: '8px'
+							}}>
+								Items per page
+							</label>
+							<select
+								value={filters.limit}
+								onChange={(e) =>
+									handleLimitChange(
+										parseInt(e.target.value)
+									)
+								}
+								style={{
+									width: '100%',
+									height: '38px',
+									padding: '0 14px',
+									border: '1px solid var(--border)',
+									borderRadius: '9px',
+									fontFamily: "'Montserrat', sans-serif",
+									fontSize: '13px',
+									color: 'var(--text)',
+									outline: 'none',
+									background: '#fff',
+									cursor: 'pointer',
+									transition: '0.18s'
+								}}
+								onFocus={(e) => {
+									e.currentTarget.style.borderColor = 'var(--blue)';
+									e.currentTarget.style.boxShadow = '0 0 0 3px rgba(28,167,236,0.1)';
+								}}
+								onBlur={(e) => {
+									e.currentTarget.style.borderColor = 'var(--border)';
+									e.currentTarget.style.boxShadow = 'none';
+								}}
+							>
+								<option value="10">10</option>
+								<option value="25">25</option>
+								<option value="50">50</option>
+								<option value="100">100</option>
+							</select>
+						</div>
+
+						<div style={{ display: 'flex', gap: '8px' }}>
+							<button
+								type="submit"
+								style={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									height: '38px',
+									padding: '0 18px',
+									border: 'none',
+									borderRadius: '9px',
+									cursor: 'pointer',
+									fontFamily: "'Montserrat', sans-serif",
+									fontWeight: 700,
+									fontSize: '13px',
+									color: '#fff',
+									background: 'var(--grad)',
+									transition: '0.18s',
+									whiteSpace: 'nowrap'
+								}}
+								onMouseEnter={(e) => {
+									e.currentTarget.style.filter = 'brightness(1.07)';
+									e.currentTarget.style.transform = 'translateY(-1px)';
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.style.filter = 'none';
+									e.currentTarget.style.transform = 'none';
+								}}
+							>
+								Search
+							</button>
+							<button
+								type="button"
+								onClick={clearFilters}
+								style={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									height: '38px',
+									padding: '0 18px',
+									border: '1px solid var(--border)',
+									borderRadius: '9px',
+									cursor: 'pointer',
+									fontFamily: "'Montserrat', sans-serif",
+									fontWeight: 700,
+									fontSize: '13px',
+									color: 'var(--text)',
+									background: '#fff',
+									transition: '0.18s',
+									whiteSpace: 'nowrap'
+								}}
+								onMouseEnter={(e) => {
+									e.currentTarget.style.background = '#F3F4F6';
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.style.background = '#fff';
+								}}
+							>
+								Clear
+							</button>
+						</div>
+					</div>
+				</form>
+			</div>
+
+			{/* Error Message */}
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Projects Table */}
+			<section style={{
+				background: '#fff',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Memuat projects...</span>
+						</div>
+					</div>
+				) : !projects || projects.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						No projects found
+					</div>
+				) : (
+					<>
+						<div style={{ overflowX: 'auto' }}>
+							<table style={{
+								width: '100%',
+								borderCollapse: 'collapse',
+								background: '#fff'
+							}}>
+								<thead>
+									<tr style={{ background: '#fff' }}>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Project Name
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Location
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											PIC
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Contact
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Status
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Created By
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Last Updated By
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									{projects.map((project) => (
+										<tr
+											key={project.id}
+											style={{ background: '#fff', transition: 'background 0.15s ease' }}
+											onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+											onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+										>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												verticalAlign: 'middle'
+											}}>
+												<div style={{
+													fontWeight: 700,
+													fontSize: '13.5px',
+													color: 'var(--dark)'
+												}}>
+													{project.projectName}
+												</div>
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle'
+											}}>
+												{project.location}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle',
+												whiteSpace: 'nowrap'
+											}}>
+												{project.pic}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle',
+												whiteSpace: 'nowrap'
+											}}>
+												{project.contact}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												verticalAlign: 'middle',
+												whiteSpace: 'nowrap'
+											}}>
+												<span style={{
+													display: 'inline-block',
+													fontWeight: 600,
+													fontSize: '11px',
+													padding: '3px 9px',
+													borderRadius: '6px',
+													background: '#e6f4fc',
+													color: '#1573a8',
+													textTransform: 'capitalize'
+												}}>
+													{project.status || '-'}
+												</span>
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle',
+												whiteSpace: 'nowrap'
+											}}>
+												{project.createdBy || '-'}
+											</td>
+											<td style={{
+												padding: '14px',
+												borderBottom: '1px solid #F1F4F8',
+												fontSize: '13px',
+												color: 'var(--text)',
+												verticalAlign: 'middle',
+												whiteSpace: 'nowrap'
+											}}>
+												{project.updatedBy || '-'}
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+
+						{/* Pagination */}
+						{totalPages > 1 && renderPagination()}
+					</>
+				)}
+			</section>
 		</MainLayout>
 	);
 }

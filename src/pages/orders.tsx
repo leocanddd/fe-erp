@@ -1300,82 +1300,171 @@ export default function Orders() {
 	};
 
 	return (
-		<MainLayout title="Pesanan">
-			<div className="max-w-7xl mx-auto">
-				{/* Header with search and add button */}
-				<div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Pesanan
-						</h2>
-						<p className="text-gray-600">
-							Kelola pesanan dan status
-							pengiriman
-						</p>
+		<MainLayout title="Orders">
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
+						Orders
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
-					<div className="mt-4 sm:mt-0">
-						<button
-							onClick={() =>
-								setShowAddModal(true)
-							}
-							className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-						>
-							Tambah Pesanan
-						</button>
+				</div>
+				<button
+					onClick={() => setShowAddModal(true)}
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 18px',
+						border: 'none',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						color: '#fff',
+						background: 'var(--grad)',
+						transition: '0.18s'
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.filter = 'brightness(1.07)';
+						e.currentTarget.style.transform = 'translateY(-1px)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.filter = 'none';
+						e.currentTarget.style.transform = 'none';
+					}}
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+						<path d="M12 5v14M5 12h14"/>
+					</svg>
+					Buat Order
+				</button>
+			</div>
+
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Main Card */}
+			<section style={{
+				background: '#fff',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{/* Search Toolbar */}
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '12px',
+					flexWrap: 'wrap',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 14px',
+						background: '#fff',
+						border: '1px solid var(--border)',
+						borderRadius: '9px',
+						minWidth: '300px',
+						color: 'var(--muted)',
+						flex: 1
+					}}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<circle cx="11" cy="11" r="7"/>
+							<path d="m21 21-4.3-4.3"/>
+						</svg>
+						<input
+							type="text"
+							value={search}
+							onChange={(e) => {
+								setSearch(e.target.value);
+								setCurrentPage(1);
+							}}
+							placeholder="Cari pesanan..."
+							style={{
+								border: 'none',
+								outline: 'none',
+								fontFamily: "'Montserrat', sans-serif",
+								fontSize: '13px',
+								color: 'var(--text)',
+								width: '100%',
+								background: 'transparent'
+							}}
+						/>
 					</div>
 				</div>
 
-				{/* Search */}
-				<div className="mb-6">
-					<form
-						onSubmit={handleSearch}
-						className="flex gap-4"
-					>
-						<div className="flex-1">
-							<input
-								type="text"
-								value={search}
-								onChange={(e) =>
-									setSearch(
-										e.target.value,
-									)
-								}
-								placeholder="Cari pesanan berdasarkan nama customer..."
-								className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-							/>
-						</div>
-						<button
-							type="submit"
-							className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
-						>
-							Cari
-						</button>
-					</form>
-				</div>
-
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
-							{error}
-						</div>
-					</div>
-				)}
+				<div style={{
+					height: '1px',
+					background: 'var(--border)',
+					width: '100%',
+					margin: '20px 0'
+				}}></div>
 
 				{/* Orders table */}
-				<div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+				<div style={{ marginTop: '4px' }}>
 					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat pesanan...
-								</span>
+						<div style={{
+							display: 'flex',
+							justifyContent: 'center',
+							padding: '48px 20px',
+							color: 'var(--muted)'
+						}}>
+							<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+								<div style={{
+									width: '32px',
+									height: '32px',
+									border: '4px solid rgba(28, 167, 236, 0.3)',
+									borderTopColor: '#1ca7ec',
+									borderRadius: '50%',
+									animation: 'spin 1s linear infinite'
+								}}></div>
+								<span>Memuat pesanan...</span>
 							</div>
 						</div>
 					) : orders.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada pesanan yang
-							ditemukan
+						<div style={{
+							textAlign: 'center',
+							color: 'var(--muted)',
+							padding: '48px 20px'
+						}}>
+							Tidak ada pesanan yang ditemukan
 						</div>
 					) : (
 						<>
@@ -1926,7 +2015,7 @@ export default function Orders() {
 						</>
 					)}
 				</div>
-			</div>
+			</section>
 
 			{/* Add Order Modal */}
 			{showAddModal && (

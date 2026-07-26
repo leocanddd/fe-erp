@@ -344,382 +344,425 @@ export default function Quotations() {
 
 	return (
 		<MainLayout title="Quotation">
-			<div className="max-w-7xl mx-auto">
-				{/* Header with search and add button */}
-				<div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Quotation
-						</h2>
-						<p className="text-gray-600">
-							Kelola quotation pelanggan
-						</p>
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
+						Quotation
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
-				</div>
-
-				{/* Search */}
-				<div className="mb-6">
-					<form
-						onSubmit={handleSearch}
-						className="flex gap-4"
-					>
-						<div className="flex-1">
-							<input
-								type="text"
-								value={search}
-								onChange={(e) =>
-									setSearch(
-										e.target.value,
-									)
-								}
-								placeholder="Cari berdasarkan nama customer atau sales..."
-								className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-							/>
-						</div>
-						<button
-							type="submit"
-							className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
-						>
-							Cari
-						</button>
-					</form>
-				</div>
-
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
-							{error}
-						</div>
-					</div>
-				)}
-
-				{/* Quotations table */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat quotation...
-								</span>
-							</div>
-						</div>
-					) : !quotations ||
-					  quotations.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada quotation yang
-							ditemukan
-						</div>
-					) : (
-						<>
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Customer
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Sales
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Tanggal
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Produk
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Total
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Status
-											</th>
-											<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Aksi
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-200">
-										{quotations.map(
-											(quotation) => {
-												const {
-													total,
-												} =
-													calculateTotal(
-														quotation,
-													);
-												return (
-													<tr
-														key={
-															quotation.id
-														}
-														className="hover:bg-gray-50"
-													>
-														<td className="px-6 py-4 whitespace-nowrap">
-															<div className="text-sm font-medium text-gray-900">
-																{
-																	quotation.customerName
-																}
-															</div>
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap">
-															<div className="text-sm text-gray-900">
-																{
-																	quotation.salesName
-																}
-															</div>
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-															{new Date(
-																quotation.date,
-															).toLocaleDateString(
-																'id-ID',
-															)}
-														</td>
-														<td className="px-6 py-4 text-sm text-gray-900">
-															<div className="max-w-xs">
-																{quotation.products
-																	.map(
-																		(
-																			p,
-																		) =>
-																			p.name,
-																	)
-																	.join(
-																		', ',
-																	)}
-															</div>
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-															Rp{' '}
-															{total.toLocaleString(
-																'id-ID',
-															)}
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap">
-															<span
-																className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-																	quotation.isApproved
-																		? 'bg-green-100 text-green-800'
-																		: 'bg-yellow-100 text-yellow-800'
-																}`}
-															>
-																{quotation.isApproved
-																	? 'Approved'
-																	: 'Pending'}
-															</span>
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-															<div className="flex items-center justify-end space-x-2">
-																<button
-																	onClick={() =>
-																		handlePreview(
-																			quotation,
-																		)
-																	}
-																	className="text-blue-600 hover:text-blue-900 p-1 rounded"
-																	title="Preview quotation"
-																>
-																	<svg
-																		className="w-4 h-4"
-																		fill="none"
-																		stroke="currentColor"
-																		viewBox="0 0 24 24"
-																	>
-																		<path
-																			strokeLinecap="round"
-																			strokeLinejoin="round"
-																			strokeWidth={
-																				2
-																			}
-																			d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-																		/>
-																		<path
-																			strokeLinecap="round"
-																			strokeLinejoin="round"
-																			strokeWidth={
-																				2
-																			}
-																			d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-																		/>
-																	</svg>
-																</button>
-																{!quotation.isApproved && (
-																	<button
-																		onClick={() =>
-																			handleApprove(
-																				quotation,
-																			)
-																		}
-																		className="text-green-600 hover:text-green-900 p-1 rounded"
-																		title="Approve quotation"
-																	>
-																		<svg
-																			className="w-4 h-4"
-																			fill="none"
-																			stroke="currentColor"
-																			viewBox="0 0 24 24"
-																		>
-																			<path
-																				strokeLinecap="round"
-																				strokeLinejoin="round"
-																				strokeWidth={
-																					2
-																				}
-																				d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-																			/>
-																		</svg>
-																	</button>
-																)}
-																<button
-																	onClick={() =>
-																		handleDelete(
-																			quotation,
-																		)
-																	}
-																	className="text-red-600 hover:text-red-900 p-1 rounded"
-																	title="Hapus quotation"
-																>
-																	<svg
-																		className="w-4 h-4"
-																		fill="none"
-																		stroke="currentColor"
-																		viewBox="0 0 24 24"
-																	>
-																		<path
-																			strokeLinecap="round"
-																			strokeLinejoin="round"
-																			strokeWidth={
-																				2
-																			}
-																			d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																		/>
-																	</svg>
-																</button>
-															</div>
-														</td>
-													</tr>
-												);
-											},
-										)}
-									</tbody>
-								</table>
-							</div>
-
-							{/* Pagination */}
-							<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-								<div className="flex-1 flex justify-between sm:hidden">
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.max(
-													1,
-													currentPage -
-														1,
-												),
-											)
-										}
-										disabled={
-											currentPage === 1
-										}
-										className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Sebelumnya
-									</button>
-									<button
-										onClick={() =>
-											setCurrentPage(
-												Math.min(
-													totalPages,
-													currentPage +
-														1,
-												),
-											)
-										}
-										disabled={
-											currentPage ===
-											totalPages
-										}
-										className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Berikutnya
-									</button>
-								</div>
-								<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-									<div>
-										<p className="text-sm text-gray-700">
-											Menampilkan{' '}
-											<span className="font-medium">
-												{(currentPage -
-													1) *
-													10 +
-													1}
-											</span>{' '}
-											sampai{' '}
-											<span className="font-medium">
-												{Math.min(
-													currentPage *
-														10,
-													totalItems,
-												)}
-											</span>{' '}
-											dari{' '}
-											<span className="font-medium">
-												{totalItems}
-											</span>{' '}
-											hasil
-										</p>
-									</div>
-									<div>
-										<nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-											<button
-												onClick={() =>
-													setCurrentPage(
-														Math.max(
-															1,
-															currentPage -
-																1,
-														),
-													)
-												}
-												disabled={
-													currentPage ===
-													1
-												}
-												className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-											>
-												Sebelumnya
-											</button>
-											<button
-												onClick={() =>
-													setCurrentPage(
-														Math.min(
-															totalPages,
-															currentPage +
-																1,
-														),
-													)
-												}
-												disabled={
-													currentPage ===
-													totalPages
-												}
-												className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-											>
-												Berikutnya
-											</button>
-										</nav>
-									</div>
-								</div>
-							</div>
-						</>
-					)}
 				</div>
 			</div>
 
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Main Card */}
+			<section style={{
+				background: '#fff',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{/* Toolbar with search */}
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '12px',
+					flexWrap: 'wrap',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 14px',
+						background: '#fff',
+						border: '1px solid var(--border)',
+						borderRadius: '9px',
+						minWidth: '300px',
+						color: 'var(--muted)'
+					}}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<circle cx="11" cy="11" r="7"/>
+							<path d="m21 21-4.3-4.3"/>
+						</svg>
+						<input
+							type="text"
+							value={search}
+							onChange={(e) => {
+								setSearch(e.target.value);
+								setCurrentPage(1);
+							}}
+							placeholder="Cari berdasarkan nama customer atau sales..."
+							style={{
+								border: 'none',
+								outline: 'none',
+								fontFamily: "'Montserrat', sans-serif",
+								fontSize: '13px',
+								color: 'var(--text)',
+								width: '100%',
+								background: 'transparent'
+							}}
+						/>
+					</div>
+				</div>
+
+				{/* Table */}
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Memuat quotation...</span>
+						</div>
+					</div>
+				) : !quotations || quotations.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						Tidak ada quotation yang ditemukan
+					</div>
+				) : (
+					<>
+						<div style={{ overflowX: 'auto' }}>
+							<table style={{
+								width: '100%',
+								borderCollapse: 'collapse',
+								background: '#fff'
+							}}>
+								<thead>
+									<tr style={{ background: '#fff' }}>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Customer
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Sales
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Tanggal
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Produk
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Total
+										</th>
+										<th style={{
+											textAlign: 'left',
+											fontWeight: 600,
+											fontSize: '11px',
+											textTransform: 'uppercase',
+											letterSpacing: '0.04em',
+											color: 'var(--muted)',
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)',
+											whiteSpace: 'nowrap'
+										}}>
+											Status
+										</th>
+										<th style={{
+											padding: '0 14px 12px',
+											borderBottom: '1px solid var(--border)'
+										}}></th>
+									</tr>
+								</thead>
+								<tbody>
+									{quotations.map((quotation) => {
+										const { total } = calculateTotal(quotation);
+										return (
+											<tr
+												key={quotation.id}
+												style={{ background: '#fff', transition: 'background 0.15s ease' }}
+												onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+												onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+											>
+												<td style={{
+													padding: '14px',
+													borderBottom: '1px solid #F1F4F8',
+													fontSize: '13px',
+													verticalAlign: 'middle'
+												}}>
+													<div style={{
+														fontWeight: 700,
+														fontSize: '13.5px',
+														color: 'var(--dark)'
+													}}>
+														{quotation.customerName}
+													</div>
+												</td>
+												<td style={{
+													padding: '14px',
+													borderBottom: '1px solid #F1F4F8',
+													fontSize: '13px',
+													color: 'var(--text)',
+													verticalAlign: 'middle',
+													whiteSpace: 'nowrap'
+												}}>
+													{quotation.salesName}
+												</td>
+												<td style={{
+													padding: '14px',
+													borderBottom: '1px solid #F1F4F8',
+													fontSize: '13px',
+													color: 'var(--text)',
+													verticalAlign: 'middle',
+													whiteSpace: 'nowrap'
+												}}>
+													{new Date(quotation.date).toLocaleDateString('id-ID')}
+												</td>
+												<td style={{
+													padding: '14px',
+													borderBottom: '1px solid #F1F4F8',
+													fontSize: '13px',
+													color: 'var(--text)',
+													verticalAlign: 'middle',
+													maxWidth: '200px',
+													overflow: 'hidden',
+													textOverflow: 'ellipsis',
+													whiteSpace: 'nowrap'
+												}}>
+													{quotation.products.map(p => p.name).join(', ')}
+												</td>
+												<td style={{
+													padding: '14px',
+													borderBottom: '1px solid #F1F4F8',
+													fontSize: '13px',
+													color: 'var(--text)',
+													verticalAlign: 'middle',
+													fontWeight: 600,
+													whiteSpace: 'nowrap'
+												}}>
+													Rp {total.toLocaleString('id-ID')}
+												</td>
+												<td style={{
+													padding: '14px',
+													borderBottom: '1px solid #F1F4F8',
+													fontSize: '13px',
+													verticalAlign: 'middle',
+													whiteSpace: 'nowrap'
+												}}>
+													<span style={{
+														display: 'inline-block',
+														fontWeight: 600,
+														fontSize: '11px',
+														padding: '3px 9px',
+														borderRadius: '6px',
+														background: quotation.isApproved ? '#d1fae5' : '#fef3c7',
+														color: quotation.isApproved ? '#065f46' : '#92400e'
+													}}>
+														{quotation.isApproved ? 'Approved' : 'Pending'}
+													</span>
+												</td>
+												<td style={{
+													padding: '14px',
+													borderBottom: '1px solid #F1F4F8',
+													fontSize: '13px',
+													verticalAlign: 'middle',
+													textAlign: 'right'
+												}}>
+													<div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
+														<button
+															onClick={() => handlePreview(quotation)}
+															style={{
+																width: '30px',
+																height: '30px',
+																display: 'inline-flex',
+																alignItems: 'center',
+																justifyContent: 'center',
+																border: '1px solid var(--border)',
+																borderRadius: '7px',
+																background: '#fff',
+																color: 'var(--muted)',
+																cursor: 'pointer',
+																transition: '0.18s'
+															}}
+															onMouseEnter={(e) => {
+																e.currentTarget.style.borderColor = 'var(--blue)';
+																e.currentTarget.style.color = 'var(--blue)';
+															}}
+															onMouseLeave={(e) => {
+																e.currentTarget.style.borderColor = 'var(--border)';
+																e.currentTarget.style.color = 'var(--muted)';
+															}}
+															title="Preview quotation"
+														>
+															<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+																<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+																<circle cx="12" cy="12" r="3"/>
+															</svg>
+														</button>
+														{!quotation.isApproved && (
+															<button
+																onClick={() => handleApprove(quotation)}
+																style={{
+																	width: '30px',
+																	height: '30px',
+																	display: 'inline-flex',
+																	alignItems: 'center',
+																	justifyContent: 'center',
+																	border: '1px solid var(--border)',
+																	borderRadius: '7px',
+																	background: '#fff',
+																	color: 'var(--muted)',
+																	cursor: 'pointer',
+																	transition: '0.18s'
+																}}
+																onMouseEnter={(e) => {
+																	e.currentTarget.style.borderColor = '#10b981';
+																	e.currentTarget.style.color = '#10b981';
+																}}
+																onMouseLeave={(e) => {
+																	e.currentTarget.style.borderColor = 'var(--border)';
+																	e.currentTarget.style.color = 'var(--muted)';
+																}}
+																title="Approve quotation"
+															>
+																<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+																	<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+																	<path d="m9 11 3 3L22 4"/>
+																</svg>
+															</button>
+														)}
+														<button
+															onClick={() => handleDelete(quotation)}
+															style={{
+																width: '30px',
+																height: '30px',
+																display: 'inline-flex',
+																alignItems: 'center',
+																justifyContent: 'center',
+																border: '1px solid var(--border)',
+																borderRadius: '7px',
+																background: '#fff',
+																color: 'var(--muted)',
+																cursor: 'pointer',
+																transition: '0.18s'
+															}}
+															onMouseEnter={(e) => {
+																e.currentTarget.style.borderColor = 'var(--red)';
+																e.currentTarget.style.color = 'var(--red)';
+															}}
+															onMouseLeave={(e) => {
+																e.currentTarget.style.borderColor = 'var(--border)';
+																e.currentTarget.style.color = 'var(--muted)';
+															}}
+															title="Hapus quotation"
+														>
+															<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+																<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+															</svg>
+														</button>
+													</div>
+												</td>
+											</tr>
+										);
+									})}
+								</tbody>
+							</table>
+						</div>
+					</>
+				)}
+			</section>
+
 			{/* Add Quotation Modal */}
 			{showAddModal && (
-				<div className="fixed inset-0 z-[60] overflow-y-auto">
+				<div className="fixed inset-0 z-[110] overflow-y-auto">
 					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 						<div
 							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
@@ -1074,7 +1117,7 @@ export default function Quotations() {
 
 			{/* Preview Modal */}
 			{showPreviewModal && selectedQuotation && (
-				<div className="fixed inset-0 z-[60] overflow-y-auto">
+				<div className="fixed inset-0 z-[110] overflow-y-auto">
 					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 						<div
 							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
@@ -1312,7 +1355,7 @@ export default function Quotations() {
 
 			{/* Delete confirmation modal */}
 			{showDeleteModal && (
-				<div className="fixed inset-0 z-[60] overflow-y-auto">
+				<div className="fixed inset-0 z-[110] overflow-y-auto">
 					<div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 						<div
 							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"

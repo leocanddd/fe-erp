@@ -22,7 +22,7 @@ export default function Jobs() {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
-	const [itemsPerPage, setItemsPerPage] = useState(10);
+	const [itemsPerPage] = useState(10);
 
 	const [jobData, setJobData] = useState<CreateJobData>({
 		title: '',
@@ -65,17 +65,6 @@ export default function Jobs() {
 	useEffect(() => {
 		fetchJobs();
 	}, [fetchJobs]);
-
-	const handleSearch = (e: React.FormEvent) => {
-		e.preventDefault();
-		setCurrentPage(1);
-		fetchJobs();
-	};
-
-	const clearFilters = () => {
-		setTitleFilter('');
-		setCurrentPage(1);
-	};
 
 	const handleCreateJob = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -200,365 +189,600 @@ export default function Jobs() {
 		}
 	};
 
-	const handlePageChange = (page: number) => {
-		setCurrentPage(page);
-	};
+	const filteredJobs = jobs.filter((job) => {
+		const query = titleFilter.toLowerCase();
+		return job.title.toLowerCase().includes(query) || job.department.toLowerCase().includes(query);
+	});
 
 	return (
 		<>
-			<MainLayout title="Jobs">
-				<div className="max-w-7xl mx-auto">
-					{/* Header */}
-					<div className="mb-8 flex justify-between items-center">
-						<div>
-							<h2 className="text-2xl font-bold text-gray-900 mb-2">
-								Jobs
-							</h2>
-							<p className="text-gray-600">Kelola daftar lowongan pekerjaan</p>
+			<MainLayout title="Career">
+				<style jsx global>{`
+					.chip {
+						display: inline-flex;
+						align-items: center;
+						gap: 6px;
+						font-weight: 700;
+						font-size: 11px;
+						padding: 4px 11px;
+						border-radius: 100px;
+						white-space: nowrap;
+					}
+					.chip .cdot {
+						width: 6px;
+						height: 6px;
+						border-radius: 50%;
+						background: currentColor;
+					}
+					.chip.green { background: #E7F7EE; color: #1F8A4D; }
+					.chip.grey { background: #EEF1F5; color: #697789; }
+					.tag {
+						display: inline-block;
+						font-weight: 600;
+						font-size: 11px;
+						padding: 3px 9px;
+						border-radius: 6px;
+						background: #EEF1F5;
+						color: #5A6675;
+					}
+				`}</style>
+
+				{/* Header */}
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					marginBottom: '24px'
+				}}>
+					<div style={{ flex: 1 }}>
+						<h1 style={{
+							margin: 0,
+							fontWeight: 800,
+							fontSize: '24px',
+							color: 'var(--dark)'
+						}}>
+							Career
+						</h1>
+						<div style={{
+							fontSize: '13px',
+							color: 'var(--muted)',
+							marginTop: '4px'
+						}}>
+							{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 						</div>
-						<button
-							onClick={() => {
-								setEditingJob(null);
-								setJobData({
-									title: '',
-									department: '',
-									location: '',
-									locations: [],
-									type: 'Full Time',
-									salaryRange: '',
-									probationPeriod: '',
-									intro: '',
-									responsibilities: [],
-									qualifications: [],
-									outro: '',
-									isActive: true,
-								});
-								setShowModal(true);
-							}}
-							className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-						>
-							+ Tambah Job
-						</button>
+					</div>
+					<button
+						onClick={() => {
+							setEditingJob(null);
+							setJobData({
+								title: '',
+								department: '',
+								location: '',
+								locations: [],
+								type: 'Full Time',
+								salaryRange: '',
+								probationPeriod: '',
+								intro: '',
+								responsibilities: [],
+								qualifications: [],
+								outro: '',
+								isActive: true,
+							});
+							setShowModal(true);
+						}}
+						style={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: '8px',
+							height: '38px',
+							padding: '0 18px',
+							border: 'none',
+							borderRadius: '9px',
+							cursor: 'pointer',
+							fontFamily: "'Montserrat', sans-serif",
+							fontWeight: 700,
+							fontSize: '13px',
+							color: '#fff',
+							background: 'var(--grad)',
+							transition: '0.18s'
+						}}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.filter = 'brightness(1.07)';
+							e.currentTarget.style.transform = 'translateY(-1px)';
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.filter = 'none';
+							e.currentTarget.style.transform = 'none';
+						}}
+					>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+							<path d="M12 5v14M5 12h14"/>
+						</svg>
+						Buka Lowongan
+					</button>
+				</div>
+
+				{error && (
+					<div style={{
+						background: '#FDECEA',
+						border: '1px solid #FE2C23',
+						borderRadius: '9px',
+						padding: '12px 16px',
+						marginBottom: '18px'
+					}}>
+						<div style={{
+							fontSize: '13px',
+							color: '#FE2C23',
+							fontWeight: 600
+						}}>
+							{error}
+						</div>
+					</div>
+				)}
+
+				{/* Main Card */}
+				<div style={{
+					background: 'white',
+					border: '1px solid var(--border)',
+					borderRadius: '12px',
+					padding: '24px 28px',
+					boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+				}}>
+					{/* Toolbar */}
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '12px',
+						flexWrap: 'wrap',
+						marginBottom: '18px'
+					}}>
+						<div style={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '8px',
+							height: '38px',
+							padding: '0 14px',
+							background: '#fff',
+							border: '1px solid var(--border)',
+							borderRadius: '9px',
+							minWidth: '240px',
+							color: 'var(--muted)'
+						}}>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+								<circle cx="11" cy="11" r="7"/>
+								<path d="m21 21-4.3-4.3"/>
+							</svg>
+							<input
+								value={titleFilter}
+								onChange={(e) => setTitleFilter(e.target.value)}
+								placeholder="Cari posisi..."
+								style={{
+									border: 'none',
+									outline: 'none',
+									fontFamily: "'Montserrat', sans-serif",
+									fontSize: '13px',
+									color: 'var(--text)',
+									width: '100%',
+									background: 'transparent'
+								}}
+							/>
+						</div>
+						<div style={{ flex: 1 }}></div>
+						<span style={{
+							display: 'inline-block',
+							fontSize: '12px',
+							color: 'var(--muted)',
+							background: 'var(--bg)',
+							borderRadius: '100px',
+							padding: '5px 12px'
+						}}>
+							Pelamar masuk ke HRGA › Pelamar
+						</span>
 					</div>
 
-					{/* Filters */}
-					<div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-						<form onSubmit={handleSearch} className="space-y-4">
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-								<div className="md:col-span-2">
-									<label
-										htmlFor="title"
-										className="block text-sm font-medium text-gray-700 mb-2"
-									>
-										Judul Pekerjaan
-									</label>
-									<input
-										type="text"
-										id="title"
-										value={titleFilter}
-										onChange={(e) => setTitleFilter(e.target.value)}
-										placeholder="Cari berdasarkan judul..."
-										className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-									/>
-								</div>
-								<div className="flex items-end space-x-2">
-									<button
-										type="submit"
-										className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-									>
-										Filter
-									</button>
-									<button
-										type="button"
-										onClick={clearFilters}
-										className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
-									>
-										Clear
-									</button>
-								</div>
-							</div>
-						</form>
-					</div>
-
-					{error && (
-						<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-							<div className="text-sm text-red-600 font-medium">{error}</div>
-						</div>
-					)}
-
-					{/* Jobs table */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-						{loading ? (
-							<div className="p-8 text-center">
-								<div className="inline-flex items-center space-x-3">
-									<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-									<span className="text-gray-600">Memuat jobs...</span>
-								</div>
-							</div>
-						) : jobs.length === 0 ? (
-							<div className="p-8 text-center text-gray-500">
-								Tidak ada job yang ditemukan
-							</div>
-						) : (
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Judul
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Department
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Lokasi
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Type
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Salary Range
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Status
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Actions
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-200">
-										{jobs.map((job) => (
-											<tr key={job._id} className="hover:bg-gray-50">
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm font-medium text-gray-900">
-														{job.title}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900">
-														{job.department}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900">
-														{job.location}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900">
-														{job.type}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-900">
-														{job.salaryRange}
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													<span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-														job.isActive
-															? 'bg-green-100 text-green-800'
-															: 'bg-gray-100 text-gray-800'
-													}`}>
-														{job.isActive ? 'Active' : 'Inactive'}
-													</span>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-													<div className="flex space-x-2">
-														<button
-															onClick={() => handleEditJob(job)}
-															className="text-indigo-600 hover:text-indigo-900 transition-colors duration-200"
-															title="Edit job"
-														>
-															<svg
-																className="w-5 h-5"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={2}
-																	d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																/>
-															</svg>
-														</button>
-														<button
-															onClick={() => setDeleteConfirm(job._id)}
-															className="text-red-600 hover:text-red-900 transition-colors duration-200"
-															title="Delete job"
-														>
-															<svg
-																className="w-5 h-5"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={2}
-																	d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																/>
-															</svg>
-														</button>
-													</div>
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						)}
-					</div>
-
-					{/* Pagination */}
-					{!loading && totalPages > 1 && (
-						<div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20">
-							<div className="flex items-center justify-between">
-								<div className="text-sm text-gray-600">
-									Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-									{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}{' '}
-									results
-								</div>
-								<div className="flex space-x-2">
-									<button
-										onClick={() => handlePageChange(currentPage - 1)}
-										disabled={currentPage === 1}
-										className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Previous
-									</button>
-									{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-										<button
-											key={page}
-											onClick={() => handlePageChange(page)}
-											className={`px-3 py-1 rounded-lg ${
-												currentPage === page
-													? 'bg-blue-600 text-white'
-													: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-											}`}
-										>
-											{page}
-										</button>
-									))}
-									<button
-										onClick={() => handlePageChange(currentPage + 1)}
-										disabled={currentPage === totalPages}
-										className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Next
-									</button>
-								</div>
+					{/* Table */}
+					{loading ? (
+						<div style={{
+							display: 'flex',
+							justifyContent: 'center',
+							padding: '48px 20px',
+							color: 'var(--muted)'
+						}}>
+							<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+								<div style={{
+									width: '32px',
+									height: '32px',
+									border: '4px solid rgba(28, 167, 236, 0.3)',
+									borderTopColor: '#1ca7ec',
+									borderRadius: '50%',
+									animation: 'spin 1s linear infinite'
+								}}></div>
+								<span>Memuat jobs...</span>
 							</div>
 						</div>
-					)}
-
-					{/* Summary */}
-					{!loading && jobs.length > 0 && (
-						<div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20">
-							<div className="text-sm text-gray-600">
-								Total jobs ditemukan:{' '}
-								<span className="font-semibold text-gray-900">{totalItems}</span>
-							</div>
+					) : filteredJobs.length === 0 ? (
+						<div style={{
+							textAlign: 'center',
+							color: 'var(--muted)',
+							padding: '48px 20px'
+						}}>
+							Tidak ada job yang ditemukan
 						</div>
+					) : (
+						<table style={{
+							width: '100%',
+							borderCollapse: 'collapse'
+						}}>
+							<thead>
+								<tr>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Posisi
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Departemen
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Tipe
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Lokasi
+									</th>
+									<th style={{
+										textAlign: 'right',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Pelamar
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Status
+									</th>
+									<th style={{
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)'
+									}}></th>
+								</tr>
+							</thead>
+							<tbody>
+								{filteredJobs.map((job) => (
+									<tr
+										key={job._id}
+										style={{
+											transition: 'background 0.15s ease'
+										}}
+										onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+										onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+									>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle',
+											fontWeight: 600
+										}}>
+											{job.title}
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--muted)',
+											verticalAlign: 'middle'
+										}}>
+											{job.department}
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											verticalAlign: 'middle'
+										}}>
+											<span className="tag">{job.type}</span>
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--muted)',
+											verticalAlign: 'middle'
+										}}>
+											{job.location}
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle',
+											textAlign: 'right',
+											fontWeight: 600
+										}}>
+											0
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											verticalAlign: 'middle'
+										}}>
+											<span className={`chip ${job.isActive ? 'green' : 'grey'}`}>
+												<span className="cdot"></span>
+												{job.isActive ? 'Open' : 'Closed'}
+											</span>
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle',
+											textAlign: 'right'
+										}}>
+											<div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
+												<button
+													onClick={() => handleEditJob(job)}
+													style={{
+														display: 'inline-flex',
+														alignItems: 'center',
+														gap: '8px',
+														height: '32px',
+														padding: '0 13px',
+														borderRadius: '8px',
+														cursor: 'pointer',
+														fontFamily: "'Montserrat', sans-serif",
+														fontWeight: 700,
+														fontSize: '12px',
+														background: '#fff',
+														border: '1px solid var(--border)',
+														color: 'var(--text)',
+														transition: '0.18s'
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.borderColor = 'var(--blue)';
+														e.currentTarget.style.color = 'var(--blue)';
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.borderColor = 'var(--border)';
+														e.currentTarget.style.color = 'var(--text)';
+													}}
+												>
+													Kelola
+												</button>
+												<button
+													onClick={() => setDeleteConfirm(job._id)}
+													style={{
+														width: '30px',
+														height: '30px',
+														display: 'inline-flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														border: '1px solid var(--border)',
+														borderRadius: '7px',
+														background: '#fff',
+														color: 'var(--muted)',
+														cursor: 'pointer',
+														transition: '0.18s'
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.borderColor = 'var(--red)';
+														e.currentTarget.style.color = 'var(--red)';
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.borderColor = 'var(--border)';
+														e.currentTarget.style.color = 'var(--muted)';
+													}}
+												>
+													<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+														<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+													</svg>
+												</button>
+											</div>
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
 					)}
 				</div>
+
+				{/* Summary */}
+				{!loading && jobs.length > 0 && (
+					<div style={{
+						marginTop: '16px',
+						fontSize: '13px',
+						color: 'var(--muted)',
+						textAlign: 'right'
+					}}>
+						Total lowongan: <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+							{totalItems}
+						</span>
+					</div>
+				)}
 			</MainLayout>
 
 			{/* Create/Edit Job Modal */}
 			{showModal && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-					<div className="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-						<div className="flex justify-between items-center mb-6">
-							<h3 className="text-lg font-semibold text-gray-900">
-								{editingJob ? 'Edit Job' : 'Tambah Job Baru'}
+				<div style={{
+					position: 'fixed',
+					inset: 0,
+					background: 'rgba(0, 0, 0, 0.5)',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					zIndex: 50,
+					padding: '16px'
+				}}>
+					<div style={{
+						background: 'white',
+						borderRadius: '12px',
+						padding: '24px 28px',
+						width: '100%',
+						maxWidth: '800px',
+						maxHeight: '90vh',
+						overflowY: 'auto'
+					}}>
+						<div style={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							marginBottom: '24px'
+						}}>
+							<h3 style={{
+								fontWeight: 700,
+								fontSize: '18px',
+								color: 'var(--dark)',
+								margin: 0
+							}}>
+								{editingJob ? 'Edit Lowongan' : 'Buka Lowongan Baru'}
 							</h3>
 							<button
 								onClick={() => {
 									setShowModal(false);
 									setEditingJob(null);
-									setJobData({
-										title: '',
-										department: '',
-										location: '',
-										locations: [],
-										type: 'Full Time',
-										salaryRange: '',
-										probationPeriod: '',
-										intro: '',
-										responsibilities: [],
-										qualifications: [],
-										outro: '',
-										isActive: true,
-									});
 								}}
-								className="text-gray-400 hover:text-gray-600 transition-colors"
+								style={{
+									background: 'none',
+									border: 'none',
+									cursor: 'pointer',
+									color: 'var(--muted)',
+									padding: 0
+								}}
 							>
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M6 18L18 6M6 6l12 12"
-									/>
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<path d="M18 6L6 18M6 6l12 12"/>
 								</svg>
 							</button>
 						</div>
-						<form
-							onSubmit={editingJob ? handleUpdateJob : handleCreateJob}
-							className="space-y-4"
-						>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
+						<form onSubmit={editingJob ? handleUpdateJob : handleCreateJob}>
+							<div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '18px 22px' }}>
+								<div style={{ gridColumn: '1 / -1' }}>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
 										Judul Pekerjaan *
 									</label>
 									<input
 										type="text"
 										required
 										value={jobData.title}
-										onChange={(e) =>
-											setJobData((prev) => ({ ...prev, title: e.target.value }))
-										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+										onChange={(e) => setJobData((prev) => ({ ...prev, title: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
 									/>
 								</div>
 								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
 										Department *
 									</label>
 									<input
 										type="text"
 										required
 										value={jobData.department}
-										onChange={(e) =>
-											setJobData((prev) => ({ ...prev, department: e.target.value }))
-										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+										onChange={(e) => setJobData((prev) => ({ ...prev, department: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
 									/>
 								</div>
-							</div>
-
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
 										Type *
 									</label>
 									<select
 										required
 										value={jobData.type}
-										onChange={(e) =>
-											setJobData((prev) => ({ ...prev, type: e.target.value }))
-										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+										onChange={(e) => setJobData((prev) => ({ ...prev, type: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.currentTarget.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
 									>
 										<option value="Full Time">Full Time</option>
 										<option value="Part Time">Part Time</option>
@@ -567,39 +791,32 @@ export default function Jobs() {
 									</select>
 								</div>
 								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
-										Probation Period *
-									</label>
-									<input
-										type="text"
-										required
-										placeholder="e.g., 3 Months"
-										value={jobData.probationPeriod}
-										onChange={(e) =>
-											setJobData((prev) => ({ ...prev, probationPeriod: e.target.value }))
-										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-									/>
-								</div>
-							</div>
-
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
-										Primary Location *
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Lokasi *
 									</label>
 									<input
 										type="text"
 										required
 										value={jobData.location}
-										onChange={(e) =>
-											setJobData((prev) => ({ ...prev, location: e.target.value }))
-										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+										onChange={(e) => setJobData((prev) => ({ ...prev, location: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
 									/>
 								</div>
 								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
 										Salary Range *
 									</label>
 									<input
@@ -607,158 +824,194 @@ export default function Jobs() {
 										required
 										placeholder="e.g., Rp 5,000,000 - Rp 7,000,000"
 										value={jobData.salaryRange}
-										onChange={(e) =>
-											setJobData((prev) => ({ ...prev, salaryRange: e.target.value }))
-										}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+										onChange={(e) => setJobData((prev) => ({ ...prev, salaryRange: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
 									/>
 								</div>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Additional Locations (comma-separated)
-								</label>
-								<input
-									type="text"
-									placeholder="e.g., Jakarta Barat, Tangerang Kota"
-									value={jobData.locations.join(', ')}
-									onChange={(e) =>
-										setJobData((prev) => ({
+								<div style={{ gridColumn: '1 / -1' }}>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Introduction *
+									</label>
+									<textarea
+										required
+										rows={3}
+										value={jobData.intro}
+										onChange={(e) => setJobData((prev) => ({ ...prev, intro: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%',
+											resize: 'vertical'
+										}}
+										onFocus={(e) => e.currentTarget.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div style={{ gridColumn: '1 / -1' }}>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Responsibilities (one per line) *
+									</label>
+									<textarea
+										required
+										rows={5}
+										placeholder="Enter each responsibility on a new line"
+										value={jobData.responsibilities.join('\n')}
+										onChange={(e) => setJobData((prev) => ({
 											...prev,
-											locations: e.target.value.split(',').map(s => s.trim()).filter(s => s),
-										}))
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Introduction *
-								</label>
-								<textarea
-									required
-									rows={3}
-									value={jobData.intro}
-									onChange={(e) =>
-										setJobData((prev) => ({
+											responsibilities: e.target.value.split('\n').filter(s => s.trim())
+										}))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%',
+											resize: 'vertical'
+										}}
+										onFocus={(e) => e.currentTarget.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div style={{ gridColumn: '1 / -1' }}>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Qualifications (one per line) *
+									</label>
+									<textarea
+										required
+										rows={5}
+										placeholder="Enter each qualification on a new line"
+										value={jobData.qualifications.join('\n')}
+										onChange={(e) => setJobData((prev) => ({
 											...prev,
-											intro: e.target.value,
-										}))
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
+											qualifications: e.target.value.split('\n').filter(s => s.trim())
+										}))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%',
+											resize: 'vertical'
+										}}
+										onFocus={(e) => e.currentTarget.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px' }}>
+									<input
+										type="checkbox"
+										id="isActive"
+										checked={jobData.isActive}
+										onChange={(e) => setJobData((prev) => ({ ...prev, isActive: e.target.checked }))}
+										style={{
+											width: '16px',
+											height: '16px',
+											cursor: 'pointer'
+										}}
+									/>
+									<label htmlFor="isActive" style={{ fontSize: '13px', color: 'var(--text)', cursor: 'pointer' }}>
+										Active Job Posting
+									</label>
+								</div>
 							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Responsibilities (one per line) *
-								</label>
-								<textarea
-									required
-									rows={5}
-									placeholder="Enter each responsibility on a new line"
-									value={jobData.responsibilities.join('\n')}
-									onChange={(e) =>
-										setJobData((prev) => ({
-											...prev,
-											responsibilities: e.target.value.split('\n').filter(s => s.trim()),
-										}))
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Qualifications (one per line) *
-								</label>
-								<textarea
-									required
-									rows={5}
-									placeholder="Enter each qualification on a new line"
-									value={jobData.qualifications.join('\n')}
-									onChange={(e) =>
-										setJobData((prev) => ({
-											...prev,
-											qualifications: e.target.value.split('\n').filter(s => s.trim()),
-										}))
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Closing Statement *
-								</label>
-								<textarea
-									required
-									rows={3}
-									value={jobData.outro}
-									onChange={(e) =>
-										setJobData((prev) => ({
-											...prev,
-											outro: e.target.value,
-										}))
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-
-							<div className="flex items-center">
-								<input
-									type="checkbox"
-									id="isActive"
-									checked={jobData.isActive}
-									onChange={(e) =>
-										setJobData((prev) => ({ ...prev, isActive: e.target.checked }))
-									}
-									className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-								/>
-								<label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
-									Active Job Posting
-								</label>
-							</div>
-
-							<div className="flex space-x-3 pt-4">
+							<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
 								<button
 									type="button"
 									onClick={() => {
 										setShowModal(false);
 										setEditingJob(null);
-										setJobData({
-											title: '',
-											department: '',
-											location: '',
-											locations: [],
-											type: 'Full Time',
-											salaryRange: '',
-											probationPeriod: '',
-											intro: '',
-											responsibilities: [],
-											qualifications: [],
-											outro: '',
-											isActive: true,
-										});
 									}}
-									className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+									style={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '8px',
+										height: '38px',
+										padding: '0 18px',
+										borderRadius: '9px',
+										cursor: 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 700,
+										fontSize: '13px',
+										background: '#fff',
+										border: '1px solid var(--border)',
+										color: 'var(--text)',
+										transition: '0.18s'
+									}}
+									onMouseEnter={(e) => {
+										e.currentTarget.style.borderColor = 'var(--blue)';
+										e.currentTarget.style.color = 'var(--blue)';
+									}}
+									onMouseLeave={(e) => {
+										e.currentTarget.style.borderColor = 'var(--border)';
+										e.currentTarget.style.color = 'var(--text)';
+									}}
 								>
-									Cancel
+									Batal
 								</button>
 								<button
 									type="submit"
 									disabled={submitting}
-									className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+									style={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '8px',
+										height: '38px',
+										padding: '0 18px',
+										border: 'none',
+										borderRadius: '9px',
+										cursor: submitting ? 'not-allowed' : 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 700,
+										fontSize: '13px',
+										color: '#fff',
+										background: 'var(--grad)',
+										transition: '0.18s',
+										opacity: submitting ? 0.5 : 1
+									}}
+									onMouseEnter={(e) => {
+										if (!submitting) {
+											e.currentTarget.style.filter = 'brightness(1.07)';
+											e.currentTarget.style.transform = 'translateY(-1px)';
+										}
+									}}
+									onMouseLeave={(e) => {
+										if (!submitting) {
+											e.currentTarget.style.filter = 'none';
+											e.currentTarget.style.transform = 'none';
+										}
+									}}
 								>
-									{submitting
-										? editingJob
-											? 'Updating...'
-											: 'Creating...'
-										: editingJob
-										? 'Update Job'
-										: 'Create Job'}
+									{submitting ? 'Menyimpan...' : editingJob ? 'Update' : 'Buat Lowongan'}
 								</button>
 							</div>
 						</form>
@@ -768,31 +1021,102 @@ export default function Jobs() {
 
 			{/* Delete Confirmation Modal */}
 			{deleteConfirm && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
-						<div className="mb-4">
-							<h3 className="text-lg font-semibold text-gray-900 mb-2">
+				<div style={{
+					position: 'fixed',
+					inset: 0,
+					background: 'rgba(0, 0, 0, 0.5)',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					zIndex: 50
+				}}>
+					<div style={{
+						background: 'white',
+						borderRadius: '12px',
+						padding: '24px 28px',
+						width: '100%',
+						maxWidth: '400px',
+						margin: '0 16px'
+					}}>
+						<div style={{ marginBottom: '20px' }}>
+							<h3 style={{
+								fontWeight: 700,
+								fontSize: '18px',
+								color: 'var(--dark)',
+								margin: '0 0 10px'
+							}}>
 								Konfirmasi Hapus
 							</h3>
-							<p className="text-gray-600">
-								Apakah Anda yakin ingin menghapus job ini? Tindakan ini tidak dapat
-								dibatalkan.
+							<p style={{
+								fontSize: '13px',
+								color: 'var(--muted)',
+								margin: 0
+							}}>
+								Apakah Anda yakin ingin menghapus lowongan ini? Tindakan ini tidak dapat dibatalkan.
 							</p>
 						</div>
-						<div className="flex space-x-3">
+						<div style={{ display: 'flex', gap: '10px' }}>
 							<button
 								onClick={() => setDeleteConfirm(null)}
 								disabled={submitting}
-								className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+								style={{
+									flex: 1,
+									height: '38px',
+									borderRadius: '9px',
+									cursor: submitting ? 'not-allowed' : 'pointer',
+									fontFamily: "'Montserrat', sans-serif",
+									fontWeight: 700,
+									fontSize: '13px',
+									background: '#fff',
+									border: '1px solid var(--border)',
+									color: 'var(--text)',
+									transition: '0.18s',
+									opacity: submitting ? 0.5 : 1
+								}}
+								onMouseEnter={(e) => {
+									if (!submitting) {
+										e.currentTarget.style.borderColor = 'var(--blue)';
+										e.currentTarget.style.color = 'var(--blue)';
+									}
+								}}
+								onMouseLeave={(e) => {
+									if (!submitting) {
+										e.currentTarget.style.borderColor = 'var(--border)';
+										e.currentTarget.style.color = 'var(--text)';
+									}
+								}}
 							>
-								Cancel
+								Batal
 							</button>
 							<button
 								onClick={() => handleDeleteJob(deleteConfirm)}
 								disabled={submitting}
-								className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+								style={{
+									flex: 1,
+									height: '38px',
+									border: 'none',
+									borderRadius: '9px',
+									cursor: submitting ? 'not-allowed' : 'pointer',
+									fontFamily: "'Montserrat', sans-serif",
+									fontWeight: 700,
+									fontSize: '13px',
+									color: '#fff',
+									background: 'var(--red)',
+									transition: '0.18s',
+									opacity: submitting ? 0.5 : 1
+								}}
+								onMouseEnter={(e) => {
+									if (!submitting) {
+										e.currentTarget.style.filter = 'brightness(1.07)';
+									}
+								}}
+								onMouseLeave={(e) => {
+									if (!submitting) {
+										e.currentTarget.style.filter = 'none';
+									}
+								}}
 							>
-								{submitting ? 'Deleting...' : 'Delete'}
+								{submitting ? 'Menghapus...' : 'Hapus'}
 							</button>
 						</div>
 					</div>

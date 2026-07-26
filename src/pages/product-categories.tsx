@@ -16,6 +16,7 @@ export default function ProductCategories() {
 		useState(true);
 	const [error, setError] =
 		useState('');
+	const [searchQuery, setSearchQuery] = useState('');
 	const [
 		deleteLoading,
 		setDeleteLoading,
@@ -75,7 +76,7 @@ export default function ProductCategories() {
 	) => {
 		if (
 			!confirm(
-				'Are you sure you want to delete this category?',
+				'Yakin ingin menghapus kategori ini?',
 			)
 		)
 			return;
@@ -104,132 +105,334 @@ export default function ProductCategories() {
 		} catch (err) {
 			console.error(err);
 			alert(
-				'Failed to delete category',
+				'Gagal menghapus kategori',
 			);
 		} finally {
 			setDeleteLoading(null);
 		}
 	};
 
+	const filteredCategories = categories.filter((cat) => {
+		const query = searchQuery.toLowerCase();
+		return cat.name.toLowerCase().includes(query) || cat.key.toLowerCase().includes(query);
+	});
+
 	return (
 		<MainLayout title="Product Categories">
-			<div className="max-w-6xl mx-auto">
-				{/* Header */}
-				<div className="mb-8 flex justify-between items-center">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Kategori Produk
-						</h2>
-						<p className="text-gray-600">
-							Kelola kategori produk
-							website
-						</p>
+			<style jsx global>{`
+				.chip {
+					display: inline-flex;
+					align-items: center;
+					gap: 6px;
+					font-weight: 700;
+					font-size: 11px;
+					padding: 4px 11px;
+					border-radius: 100px;
+					white-space: nowrap;
+				}
+				.chip .cdot {
+					width: 6px;
+					height: 6px;
+					border-radius: 50%;
+					background: currentColor;
+				}
+				.chip.green { background: #E7F7EE; color: #1F8A4D; }
+				.chip.amber { background: #FEF3E0; color: #C77E12; }
+				.chip.blue { background: #E6F4FC; color: #1573A8; }
+				.chip.red { background: #FDECEA; color: #D93A2F; }
+				.chip.grey { background: #EEF1F5; color: #697789; }
+				.chip.violet { background: #F0E9FA; color: #7B4FB5; }
+			`}</style>
+
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
+						Product Categories
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
-
-					<button
-						onClick={() =>
-							router.push(
-								'/product-categories/new',
-							)
-						}
-						className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-2 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
-					>
-						+ Tambah Kategori
-					</button>
 				</div>
+				<button
+					onClick={() => router.push('/product-categories/new')}
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 18px',
+						border: 'none',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						color: '#fff',
+						background: 'var(--grad)',
+						transition: '0.18s'
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.filter = 'brightness(1.07)';
+						e.currentTarget.style.transform = 'translateY(-1px)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.filter = 'none';
+						e.currentTarget.style.transform = 'none';
+					}}
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+						<path d="M12 5v14M5 12h14"/>
+					</svg>
+					Tambah Kategori
+				</button>
+			</div>
 
-				{/* Error */}
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm">
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
 						{error}
 					</div>
-				)}
+				</div>
+			)}
 
-				{/* Table */}
-				<div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat kategori...
-								</span>
-							</div>
-						</div>
-					) : categories.length ===
-					  0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada kategori
-							ditemukan
-						</div>
-					) : (
-						<table className="min-w-full divide-y divide-gray-200">
-							<thead className="bg-gray-50">
-								<tr>
-									<th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-										Name
-									</th>
-									<th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-										Key
-									</th>
-									<th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-										Action
-									</th>
-								</tr>
-							</thead>
-							<tbody className="divide-y divide-gray-100">
-								{categories.map(
-									(cat) => (
-										<tr
-											key={cat.id}
-											className="hover:bg-gray-50 transition"
-										>
-											<td className="px-6 py-4 font-medium text-gray-900">
-												{cat.name}
-											</td>
-											<td className="px-6 py-4 text-gray-600">
-												{cat.key}
-											</td>
-											<td className="px-6 py-4 text-right space-x-2">
-												{canDelete && (
-													<button
-														onClick={() =>
-															handleDelete(
-																cat.id,
-															)
-														}
-														disabled={
-															deleteLoading ===
-															cat.id
-														}
-														className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
-													>
-														{deleteLoading ===
-														cat.id
-															? 'Deleting...'
-															: 'Delete'}
-													</button>
-												)}
-											</td>
-										</tr>
-									),
-								)}
-							</tbody>
-						</table>
-					)}
+			{/* Main Card */}
+			<div style={{
+				background: 'white',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{/* Search */}
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '12px',
+					flexWrap: 'wrap',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 14px',
+						background: '#fff',
+						border: '1px solid var(--border)',
+						borderRadius: '9px',
+						minWidth: '240px',
+						color: 'var(--muted)'
+					}}>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<circle cx="11" cy="11" r="7"/>
+							<path d="m21 21-4.3-4.3"/>
+						</svg>
+						<input
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder="Cari kategori..."
+							style={{
+								border: 'none',
+								outline: 'none',
+								fontFamily: "'Montserrat', sans-serif",
+								fontSize: '13px',
+								color: 'var(--text)',
+								width: '100%',
+								background: 'transparent'
+							}}
+						/>
+					</div>
 				</div>
 
-				{/* Summary */}
-				{!loading &&
-					categories.length > 0 && (
-						<div className="mt-6 bg-white rounded-2xl p-4 shadow text-black">
-							Total kategori:{' '}
-							<span className="font-semibold">
-								{categories.length}
-							</span>
+				{/* Table */}
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Memuat kategori...</span>
 						</div>
-					)}
+					</div>
+				) : filteredCategories.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						{searchQuery ? 'Tidak ada kategori yang ditemukan' : 'Tidak ada kategori'}
+					</div>
+				) : (
+					<table style={{
+						width: '100%',
+						borderCollapse: 'collapse'
+					}}>
+						<thead>
+							<tr>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Name
+								</th>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Key
+								</th>
+								{canDelete && (
+									<th style={{
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)'
+									}}></th>
+								)}
+							</tr>
+						</thead>
+						<tbody>
+							{filteredCategories.map((cat) => (
+								<tr
+									key={cat.id}
+									style={{
+										transition: 'background 0.15s ease'
+									}}
+									onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+									onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+								>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										color: 'var(--text)',
+										verticalAlign: 'middle',
+										fontWeight: 600
+									}}>
+										{cat.name}
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										color: 'var(--muted)',
+										verticalAlign: 'middle'
+									}}>
+										{cat.key}
+									</td>
+									{canDelete && (
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle',
+											textAlign: 'right'
+										}}>
+											<div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
+												<button
+													onClick={() => handleDelete(cat.id)}
+													disabled={deleteLoading === cat.id}
+													style={{
+														width: '30px',
+														height: '30px',
+														display: 'inline-flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														border: '1px solid var(--border)',
+														borderRadius: '7px',
+														background: '#fff',
+														color: 'var(--muted)',
+														cursor: deleteLoading === cat.id ? 'not-allowed' : 'pointer',
+														transition: '0.18s',
+														opacity: deleteLoading === cat.id ? 0.5 : 1
+													}}
+													onMouseEnter={(e) => {
+														if (deleteLoading !== cat.id) {
+															e.currentTarget.style.borderColor = 'var(--red)';
+															e.currentTarget.style.color = 'var(--red)';
+														}
+													}}
+													onMouseLeave={(e) => {
+														if (deleteLoading !== cat.id) {
+															e.currentTarget.style.borderColor = 'var(--border)';
+															e.currentTarget.style.color = 'var(--muted)';
+														}
+													}}
+												>
+													<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+														<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+													</svg>
+												</button>
+											</div>
+										</td>
+									)}
+								</tr>
+							))}
+						</tbody>
+					</table>
+				)}
 			</div>
+
+			{/* Summary */}
+			{!loading && categories.length > 0 && (
+				<div style={{
+					marginTop: '16px',
+					fontSize: '13px',
+					color: 'var(--muted)',
+					textAlign: 'right'
+				}}>
+					Total kategori: <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+						{categories.length}
+					</span>
+				</div>
+			)}
 		</MainLayout>
 	);
 }

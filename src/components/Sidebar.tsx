@@ -3,9 +3,13 @@ import {
 	NAV_ITEMS,
 	NavItem,
 } from '@/lib/navigation';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import {
+	useEffect,
+	useState,
+} from 'react';
 
 interface User {
 	username: string;
@@ -18,6 +22,10 @@ interface SidebarProps {
 	user: User;
 	sidebarOpen: boolean;
 	onLogout: () => void;
+	collapsed: boolean;
+	setCollapsed: (
+		collapsed: boolean,
+	) => void;
 }
 
 const ICONS: Record<
@@ -411,15 +419,68 @@ const ICONS: Record<
 			/>
 		</svg>
 	),
+	'/inventory': (
+		<svg
+			className="w-5 h-5"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M21 8L12 3 3 8l9 5 9-5Z"
+			/>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M3 8v8l9 5 9-5V8"
+			/>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="m7.5 5.5 9 5"
+			/>
+		</svg>
+	),
+	'/admin': (
+		<svg
+			className="w-5 h-5"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M12 3L4 6v5c0 4.5 3.2 7.8 8 10 4.8-2.2 8-5.5 8-10V6l-8-3Z"
+			/>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M9 12l2 2 4-4"
+			/>
+		</svg>
+	),
 };
 
 export default function Sidebar({
 	user,
 	sidebarOpen,
 	onLogout,
+	collapsed,
+	setCollapsed,
 }: SidebarProps) {
 	const router = useRouter();
-	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+	const [
+		openDropdown,
+		setOpenDropdown,
+	] = useState<string | null>(null);
 
 	const permissions =
 		getMenuPermissions();
@@ -431,126 +492,633 @@ export default function Sidebar({
 			(item) =>
 				!item.permissionOnly &&
 				(user.role === 5 ||
-				(
-					permissions[item.href] ??
-					item.defaultRoles
-				).includes(user.role)),
+					(
+						permissions[item.href] ??
+						item.defaultRoles
+					).includes(user.role)),
 		);
 
-	const toggleDropdown = (href: string) => {
-		setOpenDropdown(openDropdown === href ? null : href);
+	useEffect(() => {
+		const savedCollapsed =
+			localStorage.getItem(
+				'sidebarCollapsed',
+			);
+		if (savedCollapsed === '1') {
+			setCollapsed(true);
+		}
+	}, [setCollapsed]);
+
+	const toggleCollapse = () => {
+		const newCollapsed = !collapsed;
+		setCollapsed(newCollapsed);
+		localStorage.setItem(
+			'sidebarCollapsed',
+			newCollapsed ? '1' : '0',
+		);
+		if (newCollapsed) {
+			setOpenDropdown(null);
+		}
+	};
+
+	const toggleDropdown = (
+		href: string,
+	) => {
+		if (!collapsed) {
+			setOpenDropdown(
+				openDropdown === href
+					? null
+					: href,
+			);
+		}
 	};
 
 	const isActive = (item: NavItem) => {
 		if (item.submenu) {
-			return item.submenu.some(sub => router.pathname === sub.href);
+			return item.submenu.some(
+				(sub) =>
+					router.pathname === sub.href,
+			);
 		}
-		return router.pathname === item.href;
+		return (
+			router.pathname === item.href
+		);
 	};
 
 	return (
-		<div
-			className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform ${
-				sidebarOpen
-					? 'translate-x-0'
-					: '-translate-x-full'
-			} transition-transform duration-300 ease-in-out`}
-		>
-			<div className="flex flex-col h-full">
-				<div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-					<div className="flex items-center space-x-3">
-						{/* eslint-disable-next-line @next/next/no-img-element */}
-						<img
-							src="https://assetsdki.my.id/dki-logo.jpeg"
-							alt="Logo"
-							className="w-8 h-8 rounded-xl object-cover"
-						/>
-						<span className="text-xs font-bold text-gray-900 leading-tight">
-							PT. DUTA KENCANA INDAH
-						</span>
-					</div>
+		<>
+			<Head>
+				<link
+					rel="preconnect"
+					href="https://fonts.googleapis.com"
+				/>
+				<link
+					rel="preconnect"
+					href="https://fonts.gstatic.com"
+					crossOrigin="anonymous"
+				/>
+				<link
+					href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800&display=swap"
+					rel="stylesheet"
+				/>
+			</Head>
+			<style jsx global>{`
+				:root {
+					--dark: #121567;
+					--blue: #1ca7ec;
+					--red: #fe2c23;
+					--text: #111111;
+					--muted: #9a9a9a;
+					--border: #e0e0e0;
+					--grad: linear-gradient(
+						90deg,
+						#61bedf 0%,
+						#1ca7ec 50%,
+						#1590cd 100%
+					);
+					--sidebar-w: 220px;
+				}
+			`}</style>
+			<div
+				className={`sidebar ${collapsed ? 'collapsed' : ''}`}
+				style={{
+					position: 'fixed',
+					left: 0,
+					top: 0,
+					height: '100vh',
+					width: collapsed
+						? '64px'
+						: '220px',
+					background: 'white',
+					borderRight:
+						'1px solid var(--border)',
+					zIndex: 200,
+					display: 'flex',
+					flexDirection: 'column',
+					overflow: 'hidden',
+					transition: 'width 0.3s ease',
+					fontFamily:
+						"'Montserrat', sans-serif",
+				}}
+			>
+				{/* Logo */}
+				<div
+					style={{
+						height: '64px',
+						minHeight: '64px',
+						borderBottom:
+							'1px solid var(--border)',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: collapsed
+							? 'center'
+							: 'center',
+						padding: collapsed
+							? '0'
+							: '0 16px',
+						overflow: 'hidden',
+					}}
+				>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
+						src="https://assetsdki.my.id/dki-logo.jpeg"
+						alt="PT Duta Kencana Indah"
+						style={{
+							height: collapsed
+								? '34px'
+								: '40px',
+							width: 'auto',
+							objectFit: 'contain',
+							display: 'block',
+						}}
+					/>
 				</div>
 
-				<nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+				{/* Navigation */}
+				<nav
+					style={{
+						flex: 1,
+						overflowY: 'auto',
+						overflowX: 'hidden',
+						padding: '12px 0',
+					}}
+				>
 					{navigationItems.map(
 						(item) => {
 							if (item.submenu) {
-								// Menu with submenu (dropdown)
-								const isOpen = openDropdown === item.href;
-								const active = isActive(item);
+								const isOpen =
+									openDropdown ===
+									item.href;
+								const active =
+									isActive(item);
+								const selectedSubIndex =
+									item.submenu.findIndex(
+										(sub) =>
+											router.pathname ===
+											sub.href,
+									);
 
 								return (
-									<div key={item.href} className="space-y-1">
+									<div
+										key={item.href}
+										style={{
+											position:
+												'relative',
+										}}
+										className="nav-group"
+									>
 										<div
-											className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-												active
-													? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-													: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-											}`}
+											onClick={() => {
+												if (!collapsed)
+													toggleDropdown(
+														item.href,
+													);
+												else
+													router.push(
+														item.href,
+													);
+											}}
+											style={{
+												height: '48px',
+												display: 'flex',
+												alignItems:
+													'center',
+												gap: '12px',
+												padding:
+													collapsed
+														? '0'
+														: '0 16px',
+												cursor:
+													'pointer',
+												position:
+													'relative',
+												color: active
+													? '#fff'
+													: 'var(--text)',
+												background:
+													active
+														? 'var(--grad)'
+														: 'transparent',
+												borderRadius:
+													active
+														? '10px'
+														: '0',
+												margin: active
+													? '0 8px'
+													: '0',
+												transition:
+													'color 0.2s ease, background 0.2s ease',
+												whiteSpace:
+													'nowrap',
+												justifyContent:
+													collapsed
+														? 'center'
+														: 'flex-start',
+											}}
+											onMouseEnter={(
+												e,
+											) => {
+												if (!active)
+													e.currentTarget.style.color =
+														'var(--blue)';
+											}}
+											onMouseLeave={(
+												e,
+											) => {
+												if (!active)
+													e.currentTarget.style.color =
+														'var(--text)';
+											}}
+											className="nav-item"
 										>
-											<Link href={item.href} className="flex items-center space-x-3 flex-1">
-												{ICONS[item.href] ?? (
+											<div
+												style={{
+													flex: collapsed
+														? 'none'
+														: '0 0 20px',
+													width: '20px',
+													height:
+														'20px',
+													color: active
+														? '#fff'
+														: 'var(--muted)',
+													transition:
+														'color 0.2s ease',
+												}}
+											>
+												{
+													ICONS[
+														item.href
+													]
+												}
+											</div>
+											{!collapsed && (
+												<>
+													<span
+														style={{
+															fontWeight: 500,
+															fontSize:
+																'14px',
+															flex: 1,
+														}}
+													>
+														{item.name}
+													</span>
 													<svg
-														className="w-5 h-5"
+														style={{
+															width:
+																'16px',
+															height:
+																'16px',
+															color:
+																active
+																	? '#fff'
+																	: 'var(--muted)',
+															transition:
+																'transform 0.2s ease, color 0.2s ease',
+															transform:
+																isOpen
+																	? 'rotate(180deg)'
+																	: 'rotate(0deg)',
+														}}
+														viewBox="0 0 24 24"
 														fill="none"
 														stroke="currentColor"
-														viewBox="0 0 24 24"
-													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															strokeWidth={2}
-															d="M4 6h16M4 12h16M4 18h16"
-														/>
-													</svg>
-												)}
-												<span>{item.name}</span>
-											</Link>
-											<button
-												onClick={() => toggleDropdown(item.href)}
-												className="p-1"
-											>
-												<svg
-													className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
+														strokeWidth="2"
 														strokeLinecap="round"
 														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M19 9l-7 7-7-7"
+													>
+														<polyline points="6 9 12 15 18 9" />
+													</svg>
+												</>
+											)}
+											{collapsed && (
+												<span
+													style={{
+														position:
+															'absolute',
+														left: '64px',
+														top: '50%',
+														transform:
+															'translateY(-50%)',
+														background:
+															'var(--dark)',
+														color:
+															'#fff',
+														fontSize:
+															'12px',
+														fontWeight: 600,
+														padding:
+															'5px 10px',
+														borderRadius:
+															'6px',
+														whiteSpace:
+															'nowrap',
+														opacity: 0,
+														pointerEvents:
+															'none',
+														transition:
+															'opacity 0.15s ease',
+														zIndex: 300,
+														marginLeft:
+															'8px',
+													}}
+													className="tooltip"
+												>
+													{item.name}
+													<span
+														style={{
+															content:
+																'""',
+															position:
+																'absolute',
+															left: '-4px',
+															top: '50%',
+															transform:
+																'translateY(-50%) rotate(45deg)',
+															width:
+																'8px',
+															height:
+																'8px',
+															background:
+																'var(--dark)',
+														}}
 													/>
-												</svg>
-											</button>
+												</span>
+											)}
 										</div>
 
 										{/* Submenu */}
-										{isOpen && (
-											<div className="ml-8 space-y-1">
+										{!collapsed &&
+											isOpen && (
+												<div
+													style={{
+														overflow:
+															'hidden',
+														transition:
+															'height 0.25s ease',
+													}}
+												>
+													{item.submenu
+														.filter(
+															(
+																subItem,
+															) =>
+																user.role ===
+																	5 ||
+																(
+																	permissions[
+																		subItem
+																			.href
+																	] ??
+																	subItem.defaultRoles
+																).includes(
+																	user.role,
+																),
+														)
+														.map(
+															(
+																subItem,
+															) => {
+																const isSelected =
+																	router.pathname ===
+																	subItem.href;
+																return (
+																	<Link
+																		key={
+																			subItem.href
+																		}
+																		href={
+																			subItem.href
+																		}
+																		style={{
+																			display:
+																				'block',
+																			height:
+																				'38px',
+																			lineHeight:
+																				'38px',
+																			paddingLeft:
+																				'48px',
+																			fontSize:
+																				'13px',
+																			color:
+																				isSelected
+																					? 'var(--blue)'
+																					: 'var(--muted)',
+																			textDecoration:
+																				'none',
+																			whiteSpace:
+																				'nowrap',
+																			transition:
+																				'color 0.2s ease',
+																			fontWeight:
+																				isSelected
+																					? 600
+																					: 400,
+																			position:
+																				'relative',
+																		}}
+																		onMouseEnter={(
+																			e,
+																		) =>
+																			(e.currentTarget.style.color =
+																				'var(--blue)')
+																		}
+																		onMouseLeave={(
+																			e,
+																		) => {
+																			if (
+																				!isSelected
+																			)
+																				e.currentTarget.style.color =
+																					'var(--muted)';
+																		}}
+																	>
+																		{isSelected && (
+																			<span
+																				style={{
+																					content:
+																						'""',
+																					position:
+																						'absolute',
+																					left: '32px',
+																					top: '50%',
+																					transform:
+																						'translateY(-50%)',
+																					width:
+																						'6px',
+																					height:
+																						'6px',
+																					borderRadius:
+																						'50%',
+																					background:
+																						'var(--grad)',
+																				}}
+																			/>
+																		)}
+																		{
+																			subItem.name
+																		}
+																	</Link>
+																);
+															},
+														)}
+												</div>
+											)}
+
+										{/* Collapsed flyout submenu */}
+										{collapsed && (
+											<div
+												className="submenu-flyout"
+												style={{
+													position:
+														'absolute',
+													left: '60px',
+													top: 0,
+													minWidth:
+														'184px',
+													background:
+														'white',
+													border:
+														'1px solid var(--border)',
+													borderRadius:
+														'12px',
+													boxShadow:
+														'0 12px 32px rgba(18,21,103,0.16)',
+													padding:
+														'8px 0',
+													opacity: 0,
+													visibility:
+														'hidden',
+													transform:
+														'translateX(-6px)',
+													transition:
+														'opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease',
+													zIndex: 300,
+													pointerEvents:
+														'none',
+												}}
+											>
+												<div
+													style={{
+														display:
+															'block',
+														padding:
+															'2px 18px 8px',
+														marginBottom:
+															'4px',
+														fontWeight: 700,
+														fontSize:
+															'13px',
+														color:
+															'var(--text)',
+														borderBottom:
+															'1px solid var(--border)',
+													}}
+												>
+													{item.name}
+												</div>
 												{item.submenu
 													.filter(
 														(subItem) =>
-															user.role === 5 ||
+															user.role ===
+																5 ||
 															(
-																permissions[subItem.href] ??
+																permissions[
+																	subItem
+																		.href
+																] ??
 																subItem.defaultRoles
-															).includes(user.role),
+															).includes(
+																user.role,
+															),
 													)
-													.map((subItem) => (
-														<Link
-															key={subItem.href}
-															href={subItem.href}
-															className={`w-full flex items-center space-x-3 px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
-																router.pathname === subItem.href
-																	? 'bg-blue-50 text-blue-600 font-medium'
-																	: 'text-gray-600 hover:bg-gray-100'
-															}`}
-														>
-															<span>{subItem.name}</span>
-														</Link>
-													))}
+													.map(
+														(
+															subItem,
+														) => {
+															const isSelected =
+																router.pathname ===
+																subItem.href;
+															return (
+																<Link
+																	key={
+																		subItem.href
+																	}
+																	href={
+																		subItem.href
+																	}
+																	style={{
+																		display:
+																			'block',
+																		height:
+																			'36px',
+																		lineHeight:
+																			'36px',
+																		paddingLeft:
+																			'18px',
+																		fontSize:
+																			'13px',
+																		color:
+																			isSelected
+																				? 'var(--blue)'
+																				: 'var(--muted)',
+																		textDecoration:
+																			'none',
+																		transition:
+																			'color 0.2s ease',
+																		fontWeight:
+																			isSelected
+																				? 600
+																				: 400,
+																		position:
+																			'relative',
+																	}}
+																	onMouseEnter={(
+																		e,
+																	) =>
+																		(e.currentTarget.style.color =
+																			'var(--blue)')
+																	}
+																	onMouseLeave={(
+																		e,
+																	) => {
+																		if (
+																			!isSelected
+																		)
+																			e.currentTarget.style.color =
+																				'var(--muted)';
+																	}}
+																>
+																	{isSelected && (
+																		<span
+																			style={{
+																				content:
+																					'""',
+																				position:
+																					'absolute',
+																				left: '6px',
+																				top: '50%',
+																				transform:
+																					'translateY(-50%)',
+																				width:
+																					'6px',
+																				height:
+																					'6px',
+																				borderRadius:
+																					'50%',
+																				background:
+																					'var(--grad)',
+																			}}
+																		/>
+																	)}
+																	{
+																		subItem.name
+																	}
+																</Link>
+															);
+														},
+													)}
 											</div>
 										)}
 									</div>
@@ -558,82 +1126,295 @@ export default function Sidebar({
 							}
 
 							// Regular menu item
+							const active =
+								router.pathname ===
+								item.href;
 							return (
 								<Link
 									key={item.href}
 									href={item.href}
-									className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
-										router.pathname ===
-										item.href
-											? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-											: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-									}`}
+									style={{
+										height: '48px',
+										display: 'flex',
+										alignItems:
+											'center',
+										gap: '12px',
+										padding: collapsed
+											? '0'
+											: '0 16px',
+										cursor: 'pointer',
+										position:
+											'relative',
+										color: active
+											? '#fff'
+											: 'var(--text)',
+										background: active
+											? 'var(--grad)'
+											: 'transparent',
+										borderRadius: active
+											? '10px'
+											: '0',
+										margin: active
+											? '0 8px'
+											: '0',
+										transition:
+											'color 0.2s ease, background 0.2s ease',
+										whiteSpace:
+											'nowrap',
+										textDecoration:
+											'none',
+										justifyContent:
+											collapsed
+												? 'center'
+												: 'flex-start',
+									}}
+									onMouseEnter={(e) => {
+										if (!active)
+											e.currentTarget.style.color =
+												'var(--blue)';
+									}}
+									onMouseLeave={(e) => {
+										if (!active)
+											e.currentTarget.style.color =
+												'var(--text)';
+									}}
 								>
-									{ICONS[item.href] ?? (
-										<svg
-											className="w-5 h-5"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
+									<div
+										style={{
+											flex: collapsed
+												? 'none'
+												: '0 0 20px',
+											width: '20px',
+											height: '20px',
+											color: active
+												? '#fff'
+												: 'var(--muted)',
+											transition:
+												'color 0.2s ease',
+										}}
+									>
+										{ICONS[item.href]}
+									</div>
+									{!collapsed && (
+										<span
+											style={{
+												fontWeight: 500,
+												fontSize:
+													'14px',
+												flex: 1,
+											}}
 										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M4 6h16M4 12h16M4 18h16"
-											/>
-										</svg>
+											{item.name}
+										</span>
 									)}
-									<span>{item.name}</span>
+									{collapsed && (
+										<span
+											style={{
+												position:
+													'absolute',
+												left: '64px',
+												top: '50%',
+												transform:
+													'translateY(-50%)',
+												background:
+													'var(--dark)',
+												color: '#fff',
+												fontSize:
+													'12px',
+												fontWeight: 600,
+												padding:
+													'5px 10px',
+												borderRadius:
+													'6px',
+												whiteSpace:
+													'nowrap',
+												opacity: 0,
+												pointerEvents:
+													'none',
+												transition:
+													'opacity 0.15s ease',
+												zIndex: 300,
+												marginLeft:
+													'8px',
+											}}
+											className="tooltip"
+										>
+											{item.name}
+											<span
+												style={{
+													content: '""',
+													position:
+														'absolute',
+													left: '-4px',
+													top: '50%',
+													transform:
+														'translateY(-50%) rotate(45deg)',
+													width: '8px',
+													height: '8px',
+													background:
+														'var(--dark)',
+												}}
+											/>
+										</span>
+									)}
 								</Link>
 							);
 						},
 					)}
 				</nav>
 
-				<div className="px-4 py-6 border-t border-gray-200">
-					<div className="flex items-center space-x-3 mb-4">
-						<div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-							<span className="text-white font-semibold text-sm">
-								{user?.firstName?.charAt(
-									0,
-								)}
-								{user?.lastName?.charAt(
-									0,
-								)}
-							</span>
+				{/* User section */}
+				<div
+					style={{
+						borderTop:
+							'1px solid var(--border)',
+						padding: '8px 0',
+					}}
+				>
+					<div
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '10px',
+							padding: '10px 16px',
+							whiteSpace: 'nowrap',
+							justifyContent: collapsed
+								? 'center'
+								: 'flex-start',
+						}}
+					>
+						<div
+							style={{
+								flex: '0 0 40px',
+								width: '40px',
+								height: '40px',
+								borderRadius: '50%',
+								background:
+									'var(--grad)',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent:
+									'center',
+								color: '#fff',
+								fontWeight: 700,
+								fontSize: '16px',
+							}}
+						>
+							{user?.firstName?.charAt(
+								0,
+							)}
+							{user?.lastName?.charAt(
+								0,
+							)}
 						</div>
-						<div className="flex-1 min-w-0">
-							<p className="text-sm font-semibold text-gray-900 truncate">
-								{user.firstName}{' '}
-								{user.lastName}
-							</p>
-							<p className="text-xs text-gray-500 truncate">
-								{user.username}
-							</p>
-						</div>
+						{!collapsed && (
+							<div style={{ flex: 1 }}>
+								<div
+									style={{
+										fontWeight: 700,
+										fontSize: '14px',
+										color:
+											'var(--dark)',
+										lineHeight: 1.2,
+									}}
+								>
+									{user.firstName}
+								</div>
+								<div
+									style={{
+										fontSize: '12px',
+										color:
+											'var(--muted)',
+									}}
+								>
+									{user.username}
+								</div>
+							</div>
+						)}
 					</div>
 					<button
 						onClick={onLogout}
-						className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '12px',
+							padding: collapsed
+								? '10px 0'
+								: '10px 16px',
+							cursor: 'pointer',
+							color: 'var(--muted)',
+							transition:
+								'color 0.2s ease',
+							whiteSpace: 'nowrap',
+							textDecoration: 'none',
+							background: 'none',
+							border: 'none',
+							width: '100%',
+							justifyContent: collapsed
+								? 'center'
+								: 'flex-start',
+							fontFamily:
+								"'Montserrat', sans-serif",
+						}}
+						onMouseEnter={(e) =>
+							(e.currentTarget.style.color =
+								'var(--red)')
+						}
+						onMouseLeave={(e) =>
+							(e.currentTarget.style.color =
+								'var(--muted)')
+						}
 					>
 						<svg
-							className="w-4 h-4"
+							style={{
+								flex: '0 0 20px',
+								width: '20px',
+								height: '20px',
+							}}
+							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
-							viewBox="0 0 24 24"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
 						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-							/>
+							<path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
 						</svg>
-						<span>Keluar</span>
+						{!collapsed && (
+							<span
+								style={{
+									fontWeight: 600,
+									fontSize: '13px',
+								}}
+							>
+								Keluar
+							</span>
+						)}
 					</button>
 				</div>
 			</div>
-		</div>
+
+			{/* Hover styles for collapsed submenu */}
+			<style jsx global>{`
+				.nav-group:hover
+					.submenu-flyout {
+					opacity: 1 !important;
+					visibility: visible !important;
+					transform: translateX(
+						0
+					) !important;
+					pointer-events: auto !important;
+				}
+				.nav-item:hover .tooltip {
+					opacity: ${collapsed
+						? '1'
+						: '0'} !important;
+				}
+				.nav-group:has(.submenu-flyout)
+					.tooltip {
+					display: none !important;
+				}
+			`}</style>
+		</>
 	);
 }

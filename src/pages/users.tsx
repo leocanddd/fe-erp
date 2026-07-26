@@ -1,6 +1,5 @@
 import MainLayout from '@/components/MainLayout';
 import {
-	getRoleColor,
 	getRoleName,
 	getUsers,
 	registerUser,
@@ -15,117 +14,59 @@ import {
 } from 'react';
 
 export default function Users() {
-	const [users, setUsers] = useState<
-		User[]
-	>([]);
-	const [loading, setLoading] =
-		useState(true);
-	const [error, setError] =
-		useState('');
-	const [
-		usernameFilter,
-		setUsernameFilter,
-	] = useState('');
-	const [roleFilter, setRoleFilter] =
-		useState<number | ''>('');
-	const [
-		showNewUserModal,
-		setShowNewUserModal,
-	] = useState(false);
-	const [
-		showEditModal,
-		setShowEditModal,
-	] = useState(false);
-	const [editingUser, setEditingUser] =
-		useState<User | null>(null);
-	const [submitting, setSubmitting] =
-		useState(false);
-	const [newUserData, setNewUserData] =
-		useState<RegisterUserData>({
-			username: '',
-			password: '',
-			firstName: '',
-			lastName: '',
-			role: 4,
-			target: 0,
-			currentOmset: 0,
-		});
+	const [users, setUsers] = useState<User[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState('');
+	const [searchQuery, setSearchQuery] = useState('');
+	const [showNewUserModal, setShowNewUserModal] = useState(false);
+	const [showEditModal, setShowEditModal] = useState(false);
+	const [editingUser, setEditingUser] = useState<User | null>(null);
+	const [submitting, setSubmitting] = useState(false);
+	const [newUserData, setNewUserData] = useState<RegisterUserData>({
+		username: '',
+		password: '',
+		firstName: '',
+		lastName: '',
+		role: 4,
+		target: 0,
+		currentOmset: 0,
+	});
 
-	const fetchUsers =
-		useCallback(async () => {
-			setLoading(true);
-			try {
-				const response = await getUsers(
-					usernameFilter || undefined,
-					roleFilter !== ''
-						? roleFilter
-						: undefined
-				);
-				if (
-					response.statusCode === 200
-				) {
-					// Ensure we have an array
-					const userData =
-						response.data;
-					if (Array.isArray(userData)) {
-						setUsers(userData);
-					} else {
-						console.log(
-							'API response data:',
-							userData
-						);
-						setUsers([]);
-						setError(
-							'Invalid response format from server'
-						);
-					}
-					setError('');
+	const fetchUsers = useCallback(async () => {
+		setLoading(true);
+		try {
+			const response = await getUsers();
+			if (response.statusCode === 200) {
+				const userData = response.data;
+				if (Array.isArray(userData)) {
+					setUsers(userData);
 				} else {
-					setError(
-						response.error ||
-							'Failed to fetch users'
-					);
 					setUsers([]);
+					setError('Invalid response format from server');
 				}
-			} catch {
-				console.error(
-					'Error fetching users'
-				);
-				setError(
-					'Failed to fetch users'
-				);
+				setError('');
+			} else {
+				setError(response.error || 'Failed to fetch users');
 				setUsers([]);
-			} finally {
-				setLoading(false);
 			}
-		}, [usernameFilter, roleFilter]);
+		} catch {
+			setError('Failed to fetch users');
+			setUsers([]);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
 	useEffect(() => {
 		fetchUsers();
 	}, [fetchUsers]);
 
-	const handleSearch = (
-		e: React.FormEvent
-	) => {
-		e.preventDefault();
-		fetchUsers();
-	};
-
-	const clearFilters = () => {
-		setUsernameFilter('');
-		setRoleFilter('');
-	};
-
-	const handleCreateUser = async (
-		e: React.FormEvent
-	) => {
+	const handleCreateUser = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setSubmitting(true);
 
 		try {
-			const result = await registerUser(
-				newUserData
-			);
+			const result = await registerUser(newUserData);
 			if (result.statusCode === 201) {
 				setShowNewUserModal(false);
 				setNewUserData({
@@ -140,10 +81,7 @@ export default function Users() {
 				fetchUsers();
 				setError('');
 			} else {
-				setError(
-					result.error ||
-						'Failed to create user'
-				);
+				setError(result.error || 'Failed to create user');
 			}
 		} catch {
 			setError('Failed to create user');
@@ -152,9 +90,7 @@ export default function Users() {
 		}
 	};
 
-	const handleEditUser = (
-		user: User
-	) => {
+	const handleEditUser = (user: User) => {
 		setEditingUser(user);
 		setNewUserData({
 			username: user.username,
@@ -168,30 +104,20 @@ export default function Users() {
 		setShowEditModal(true);
 	};
 
-	const handleUpdateUser = async (
-		e: React.FormEvent
-	) => {
+	const handleUpdateUser = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!editingUser) return;
 
 		setSubmitting(true);
 
 		try {
-			const {
-				password,
-				...updateData
-			} = newUserData;
+			const { password, ...updateData } = newUserData;
 			const finalUpdateData = password
 				? { ...updateData, password }
 				: updateData;
 
-			const result = await updateUser(
-				finalUpdateData
-			);
-			if (
-				result.statusCode === 200 ||
-				result.statusCode === 201
-			) {
+			const result = await updateUser(finalUpdateData);
+			if (result.statusCode === 200 || result.statusCode === 201) {
 				setShowEditModal(false);
 				setEditingUser(null);
 				setNewUserData({
@@ -206,10 +132,7 @@ export default function Users() {
 				fetchUsers();
 				setError('');
 			} else {
-				setError(
-					result.error ||
-						'Failed to update user'
-				);
+				setError(result.error || 'Failed to update user');
 			}
 		} catch {
 			setError('Failed to update user');
@@ -218,559 +141,649 @@ export default function Users() {
 		}
 	};
 
+	const getRoleChipColor = (role: number) => {
+		const colors: Record<number, string> = {
+			5: 'violet', // superadmin
+			1: 'blue',   // retail
+			2: 'blue',   // project
+			3: 'amber',  // admin
+			4: 'blue',   // manager retail
+			6: 'amber',  // approver
+			7: 'amber',  // pricing
+			8: 'grey',   // gudang
+			9: 'blue',   // manager project
+			10: 'amber', // hrd
+			11: 'blue',  // kolektor
+			12: 'grey',  // blog
+			13: 'grey',  // telemarketer
+		};
+		return colors[role] || 'grey';
+	};
+
+	const filteredUsers = users.filter((user) => {
+		const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+		const username = user.username.toLowerCase();
+		const query = searchQuery.toLowerCase();
+		return fullName.includes(query) || username.includes(query);
+	});
+
 	return (
 		<>
-			<MainLayout title="Pengguna">
-				<div className="max-w-7xl mx-auto">
-					{/* Header */}
-					<div className="mb-8 flex justify-between items-center">
-						<div>
-							<h2 className="text-2xl font-bold text-gray-900 mb-2">
-								Pengguna
-							</h2>
-							<p className="text-gray-600">
-								Kelola daftar pengguna
-								sistem
-							</p>
-						</div>
-						<button
-							onClick={() =>
-								setShowNewUserModal(
-									true
-								)
-							}
-							className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-						>
-							+ Tambah Pengguna
-						</button>
-					</div>
+			<MainLayout title="Accounts">
+				<style jsx global>{`
+					.chip {
+						display: inline-flex;
+						align-items: center;
+						gap: 6px;
+						font-weight: 700;
+						font-size: 11px;
+						padding: 4px 11px;
+						border-radius: 100px;
+						white-space: nowrap;
+					}
+					.chip .cdot {
+						width: 6px;
+						height: 6px;
+						border-radius: 50%;
+						background: currentColor;
+					}
+					.chip.green { background: #E7F7EE; color: #1F8A4D; }
+					.chip.amber { background: #FEF3E0; color: #C77E12; }
+					.chip.blue { background: #E6F4FC; color: #1573A8; }
+					.chip.red { background: #FDECEA; color: #D93A2F; }
+					.chip.grey { background: #EEF1F5; color: #697789; }
+					.chip.violet { background: #F0E9FA; color: #7B4FB5; }
+				`}</style>
 
-					{/* Filters */}
-					<div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-						<form
-							onSubmit={handleSearch}
-							className="space-y-4"
-						>
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-								<div>
-									<label
-										htmlFor="username"
-										className="block text-sm font-medium text-gray-700 mb-2"
-									>
-										Username
-									</label>
-									<input
-										type="text"
-										id="username"
-										value={
-											usernameFilter
-										}
-										onChange={(e) =>
-											setUsernameFilter(
-												e.target.value
-											)
-										}
-										placeholder="Cari berdasarkan username..."
-										className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-									/>
-								</div>
-								<div>
-									<label
-										htmlFor="role"
-										className="block text-sm font-medium text-gray-700 mb-2"
-									>
-										Role
-									</label>
-									<select
-										id="role"
-										value={roleFilter}
-										onChange={(e) =>
-											setRoleFilter(
-												e.target
-													.value === ''
-													? ''
-													: Number(
-															e.target
-																.value
-													  )
-											)
-										}
-										className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-									>
-										<option value="">
-											Semua Role
-										</option>
-										<option value={1}>
-											Sales Retail
-										</option>
-										<option value={2}>
-											Sales Project
-										</option>
-										<option value={3}>
-											Admin
-										</option>
-										<option value={4}>
-											Manager Retail
-										</option>
-										<option value={5}>
-											Superadmin
-										</option>
-										<option value={6}>
-											Approver
-										</option>
-										<option value={7}>
-											Pricing
-										</option>
-										<option value={8}>
-											Gudang
-										</option>
-										<option value={9}>
-											Manager Project
-										</option>
-										<option value={10}>
-											HRD
-										</option>
-										<option value={11}>
-											Kolektor
-										</option>
-										<option value={12}>
-											Blog
-										</option>
-										<option value={13}>
-											Telemarketer
-										</option>
-									</select>
-								</div>
-								<div className="flex items-end space-x-2">
-									<button
-										type="submit"
-										className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-									>
-										Filter
-									</button>
-									<button
-										type="button"
-										onClick={
-											clearFilters
-										}
-										className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
-									>
-										Clear
-									</button>
-								</div>
-							</div>
-						</form>
+				{/* Header */}
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					marginBottom: '24px'
+				}}>
+					<div style={{ flex: 1 }}>
+						<h1 style={{
+							margin: 0,
+							fontWeight: 800,
+							fontSize: '24px',
+							color: 'var(--dark)'
+						}}>
+							Accounts
+						</h1>
+						<div style={{
+							fontSize: '13px',
+							color: 'var(--muted)',
+							marginTop: '4px'
+						}}>
+							{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+						</div>
+					</div>
+					<button
+						onClick={() => setShowNewUserModal(true)}
+						style={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: '8px',
+							height: '38px',
+							padding: '0 18px',
+							border: 'none',
+							borderRadius: '9px',
+							cursor: 'pointer',
+							fontFamily: "'Montserrat', sans-serif",
+							fontWeight: 700,
+							fontSize: '13px',
+							color: '#fff',
+							background: 'var(--grad)',
+							transition: '0.18s'
+						}}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.filter = 'brightness(1.07)';
+							e.currentTarget.style.transform = 'translateY(-1px)';
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.filter = 'none';
+							e.currentTarget.style.transform = 'none';
+						}}
+					>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+							<path d="M12 5v14M5 12h14"/>
+						</svg>
+						Tambah Akun
+					</button>
+				</div>
+
+				{/* Main Card */}
+				<div style={{
+					background: 'white',
+					border: '1px solid var(--border)',
+					borderRadius: '12px',
+					padding: '24px 28px',
+					boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+				}}>
+					{/* Search */}
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '12px',
+						flexWrap: 'wrap',
+						marginBottom: '18px'
+					}}>
+						<div style={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '8px',
+							height: '38px',
+							padding: '0 14px',
+							background: '#fff',
+							border: '1px solid var(--border)',
+							borderRadius: '9px',
+							minWidth: '240px',
+							color: 'var(--muted)'
+						}}>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+								<circle cx="11" cy="11" r="7"/>
+								<path d="m21 21-4.3-4.3"/>
+							</svg>
+							<input
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								placeholder="Cari akun..."
+								style={{
+									border: 'none',
+									outline: 'none',
+									fontFamily: "'Montserrat', sans-serif",
+									fontSize: '13px',
+									color: 'var(--text)',
+									width: '100%',
+									background: 'transparent'
+								}}
+							/>
+						</div>
 					</div>
 
 					{error && (
-						<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-							<div className="text-sm text-red-600 font-medium">
+						<div style={{
+							background: '#FDECEA',
+							border: '1px solid #FE2C23',
+							borderRadius: '9px',
+							padding: '12px 16px',
+							marginBottom: '18px'
+						}}>
+							<div style={{
+								fontSize: '13px',
+								color: '#FE2C23',
+								fontWeight: 600
+							}}>
 								{error}
 							</div>
 						</div>
 					)}
 
-					{/* Users table */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-						{loading ? (
-							<div className="p-8 text-center">
-								<div className="inline-flex items-center space-x-3">
-									<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-									<span className="text-gray-600">
-										Memuat pengguna...
-									</span>
-								</div>
+					{/* Table */}
+					{loading ? (
+						<div style={{
+							display: 'flex',
+							justifyContent: 'center',
+							padding: '48px 20px',
+							color: 'var(--muted)'
+						}}>
+							<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+								<div style={{
+									width: '32px',
+									height: '32px',
+									border: '4px solid rgba(28, 167, 236, 0.3)',
+									borderTopColor: '#1ca7ec',
+									borderRadius: '50%',
+									animation: 'spin 1s linear infinite'
+								}}></div>
+								<span>Memuat...</span>
 							</div>
-						) : !Array.isArray(users) ||
-						  users.length === 0 ? (
-							<div className="p-8 text-center text-gray-500">
-								Tidak ada pengguna yang
-								ditemukan
-							</div>
-						) : (
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												User Info
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Username
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Role
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Target
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Omset
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Actions
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white divide-y divide-gray-200">
-										{Array.isArray(
-											users
-										) &&
-											users.map(
-												(user) => (
-													<tr
-														key={
-															user._id ||
-															user.id
-														}
-														className="hover:bg-gray-50"
-													>
-														<td className="px-6 py-4 whitespace-nowrap">
-															<div className="flex items-center">
-																<div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-																	<span className="text-white font-semibold text-sm">
-																		{user.firstName.charAt(
-																			0
-																		)}
-																		{user.lastName.charAt(
-																			0
-																		)}
-																	</span>
-																</div>
-																<div className="ml-4">
-																	<div className="text-sm font-medium text-gray-900">
-																		{
-																			user.firstName
-																		}{' '}
-																		{
-																			user.lastName
-																		}
-																	</div>
-																</div>
-															</div>
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap">
-															<div className="text-sm text-gray-900 font-medium">
-																{
-																	user.username
-																}
-															</div>
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap">
-															<span
-																className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(
-																	user.role
-																)}`}
-															>
-																{getRoleName(
-																	user.role
-																)}
-															</span>
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-															{user.target
-																? `Rp ${user.target.toLocaleString(
-																		'id-ID'
-																  )}`
-																: '-'}
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-															{user.currentOmset
-																? `Rp ${user.currentOmset.toLocaleString(
-																		'id-ID'
-																  )}`
-																: '-'}
-														</td>
-														<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-															<button
-																onClick={() =>
-																	handleEditUser(
-																		user
-																	)
-																}
-																className="text-indigo-600 hover:text-indigo-900 transition-colors duration-200"
-																title="Edit user"
-															>
-																<svg
-																	className="w-5 h-5"
-																	fill="none"
-																	stroke="currentColor"
-																	viewBox="0 0 24 24"
-																>
-																	<path
-																		strokeLinecap="round"
-																		strokeLinejoin="round"
-																		strokeWidth={
-																			2
-																		}
-																		d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																	/>
-																</svg>
-															</button>
-														</td>
-													</tr>
-												)
-											)}
-									</tbody>
-								</table>
-							</div>
-						)}
-					</div>
-
-					{/* Summary */}
-					{!loading &&
-						users.length > 0 && (
-							<div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20">
-								<div className="text-sm text-gray-600">
-									Total pengguna
-									ditemukan:{' '}
-									<span className="font-semibold text-gray-900">
-										{users.length}
-									</span>
-								</div>
-							</div>
-						)}
+						</div>
+					) : filteredUsers.length === 0 ? (
+						<div style={{
+							textAlign: 'center',
+							color: 'var(--muted)',
+							padding: '48px 20px'
+						}}>
+							Tidak ada akun yang ditemukan
+						</div>
+					) : (
+						<table style={{
+							width: '100%',
+							borderCollapse: 'collapse'
+						}}>
+							<thead>
+								<tr>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Nama
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Role
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Terakhir Login
+									</th>
+									<th style={{
+										textAlign: 'left',
+										fontWeight: 600,
+										fontSize: '11px',
+										textTransform: 'uppercase',
+										letterSpacing: '0.04em',
+										color: 'var(--muted)',
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)',
+										whiteSpace: 'nowrap'
+									}}>
+										Status
+									</th>
+									<th style={{
+										padding: '0 14px 12px',
+										borderBottom: '1px solid var(--border)'
+									}}></th>
+								</tr>
+							</thead>
+							<tbody>
+								{filteredUsers.map((user) => (
+									<tr
+										key={user._id || user.id}
+										style={{
+											transition: 'background 0.15s ease'
+										}}
+										onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+										onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+									>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle'
+										}}>
+											<div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+												<div style={{
+													flex: '0 0 34px',
+													width: '34px',
+													height: '34px',
+													borderRadius: '50%',
+													background: 'var(--grad)',
+													color: '#fff',
+													fontWeight: 700,
+													fontSize: '13px',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center'
+												}}>
+													{user.firstName.charAt(0)}{user.lastName.charAt(0)}
+												</div>
+												<span style={{ fontWeight: 600, color: 'var(--text)' }}>
+													{user.firstName} {user.lastName}
+												</span>
+											</div>
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle'
+										}}>
+											<span className={`chip ${getRoleChipColor(user.role)}`}>
+												<span className="cdot"></span>
+												{getRoleName(user.role)}
+											</span>
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--muted)',
+											verticalAlign: 'middle'
+										}}>
+											—
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											verticalAlign: 'middle'
+										}}>
+											<span className="chip green">
+												<span className="cdot"></span>
+												Active
+											</span>
+										</td>
+										<td style={{
+											padding: '14px',
+											borderBottom: '1px solid #F1F4F8',
+											fontSize: '13px',
+											color: 'var(--text)',
+											verticalAlign: 'middle',
+											textAlign: 'right'
+										}}>
+											<div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
+												<button
+													onClick={() => handleEditUser(user)}
+													style={{
+														width: '30px',
+														height: '30px',
+														display: 'inline-flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														border: '1px solid var(--border)',
+														borderRadius: '7px',
+														background: '#fff',
+														color: 'var(--muted)',
+														cursor: 'pointer',
+														transition: '0.18s'
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.borderColor = 'var(--blue)';
+														e.currentTarget.style.color = 'var(--blue)';
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.borderColor = 'var(--border)';
+														e.currentTarget.style.color = 'var(--muted)';
+													}}
+												>
+													<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+														<path d="M12 20h9"/>
+														<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+													</svg>
+												</button>
+											</div>
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					)}
 				</div>
 			</MainLayout>
 
 			{/* New User Modal */}
 			{showNewUserModal && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-						<div className="flex justify-between items-center mb-6">
-							<h3 className="text-lg font-semibold text-gray-900">
-								Tambah Pengguna Baru
+				<div style={{
+					position: 'fixed',
+					inset: 0,
+					background: 'rgba(0, 0, 0, 0.5)',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					zIndex: 50
+				}}>
+					<div style={{
+						background: 'white',
+						borderRadius: '12px',
+						padding: '24px 28px',
+						width: '100%',
+						maxWidth: '500px',
+						margin: '0 16px',
+						maxHeight: '90vh',
+						overflowY: 'auto'
+					}}>
+						<div style={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							marginBottom: '24px'
+						}}>
+							<h3 style={{
+								fontWeight: 700,
+								fontSize: '18px',
+								color: 'var(--dark)',
+								margin: 0
+							}}>
+								Tambah Akun
 							</h3>
 							<button
-								onClick={() =>
-									setShowNewUserModal(
-										false
-									)
-								}
-								className="text-gray-400 hover:text-gray-600 transition-colors"
+								onClick={() => setShowNewUserModal(false)}
+								style={{
+									background: 'none',
+									border: 'none',
+									cursor: 'pointer',
+									color: 'var(--muted)',
+									padding: 0
+								}}
 							>
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M6 18L18 6M6 6l12 12"
-									/>
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<path d="M18 6L6 18M6 6l12 12"/>
 								</svg>
 							</button>
 						</div>
-						<form
-							onSubmit={
-								handleCreateUser
-							}
-							className="space-y-4"
-						>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Username
-								</label>
-								<input
-									type="text"
-									required
-									autoComplete="username"
-									value={
-										newUserData.username
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												username:
-													e.target
-														.value,
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
+						<form onSubmit={handleCreateUser}>
+							<div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '18px 22px' }}>
+								<div style={{ gridColumn: '1 / -1' }}>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Nama
+									</label>
+									<input
+										type="text"
+										required
+										value={newUserData.firstName}
+										onChange={(e) => setNewUserData(prev => ({ ...prev, firstName: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Username
+									</label>
+									<input
+										type="text"
+										required
+										value={newUserData.username}
+										onChange={(e) => setNewUserData(prev => ({ ...prev, username: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Password
+									</label>
+									<input
+										type="password"
+										required
+										value={newUserData.password}
+										onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Role
+									</label>
+									<select
+										value={newUserData.role}
+										onChange={(e) => setNewUserData(prev => ({ ...prev, role: Number(e.target.value) }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.currentTarget.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+									>
+										<option value={5}>Superadmin</option>
+										<option value={1}>Sales Retail</option>
+										<option value={2}>Sales Project</option>
+										<option value={3}>Admin</option>
+										<option value={4}>Manager Retail</option>
+										<option value={6}>Approver</option>
+										<option value={7}>Pricing</option>
+										<option value={8}>Gudang</option>
+										<option value={9}>Manager Project</option>
+										<option value={10}>HRD</option>
+										<option value={11}>Kolektor</option>
+										<option value={12}>Blog</option>
+										<option value={13}>Telemarketer</option>
+									</select>
+								</div>
+								<div>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Status
+									</label>
+									<select
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.currentTarget.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+									>
+										<option value="active">Active</option>
+										<option value="suspended">Suspended</option>
+									</select>
+								</div>
 							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Password
-								</label>
-								<input
-									type="password"
-									required
-									autoComplete="new-password"
-									value={
-										newUserData.password
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												password:
-													e.target
-														.value,
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									First Name
-								</label>
-								<input
-									type="text"
-									required
-									autoComplete="given-name"
-									value={
-										newUserData.firstName
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												firstName:
-													e.target
-														.value,
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Last Name
-								</label>
-								<input
-									type="text"
-									required
-									autoComplete="family-name"
-									value={
-										newUserData.lastName
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												lastName:
-													e.target
-														.value,
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Role
-								</label>
-								<select
-									value={
-										newUserData.role
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												role: Number(
-													e.target.value
-												),
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								>
-									<option value={1}>
-										Sales Retail
-									</option>
-									<option value={2}>
-										Sales Project
-									</option>
-									<option value={3}>
-										Admin
-									</option>
-									<option value={4}>
-										Manager Retail
-									</option>
-									<option value={5}>
-										Superadmin
-									</option>
-									<option value={6}>
-										Approver
-									</option>
-									<option value={7}>
-										Pricing
-									</option>
-									<option value={8}>
-										Gudang
-									</option>
-									<option value={9}>
-										Manager Project
-									</option>
-									<option value={10}>
-										HRD
-									</option>
-									<option value={11}>
-										Kolektor
-									</option>
-									<option value={12}>
-										Blog
-									</option>
-									<option value={13}>
-										Telemarketer
-									</option>
-								</select>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Target
-								</label>
-								<input
-									type="number"
-									step="0.01"
-									autoComplete="off"
-									value={
-										newUserData.target
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												target: Number(
-													e.target.value
-												),
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div className="flex space-x-3 pt-4">
+							<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
 								<button
 									type="button"
-									onClick={() =>
-										setShowNewUserModal(
-											false
-										)
-									}
-									className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+									onClick={() => setShowNewUserModal(false)}
+									style={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '8px',
+										height: '38px',
+										padding: '0 18px',
+										borderRadius: '9px',
+										cursor: 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 700,
+										fontSize: '13px',
+										background: '#fff',
+										border: '1px solid var(--border)',
+										color: 'var(--text)',
+										transition: '0.18s'
+									}}
+									onMouseEnter={(e) => {
+										e.currentTarget.style.borderColor = 'var(--blue)';
+										e.currentTarget.style.color = 'var(--blue)';
+									}}
+									onMouseLeave={(e) => {
+										e.currentTarget.style.borderColor = 'var(--border)';
+										e.currentTarget.style.color = 'var(--text)';
+									}}
 								>
-									Cancel
+									Batal
 								</button>
 								<button
 									type="submit"
 									disabled={submitting}
-									className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+									style={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '8px',
+										height: '38px',
+										padding: '0 18px',
+										border: 'none',
+										borderRadius: '9px',
+										cursor: submitting ? 'not-allowed' : 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 700,
+										fontSize: '13px',
+										color: '#fff',
+										background: 'var(--grad)',
+										transition: '0.18s',
+										opacity: submitting ? 0.5 : 1
+									}}
+									onMouseEnter={(e) => {
+										if (!submitting) {
+											e.currentTarget.style.filter = 'brightness(1.07)';
+											e.currentTarget.style.transform = 'translateY(-1px)';
+										}
+									}}
+									onMouseLeave={(e) => {
+										if (!submitting) {
+											e.currentTarget.style.filter = 'none';
+											e.currentTarget.style.transform = 'none';
+										}
+									}}
 								>
-									{submitting
-										? 'Creating...'
-										: 'Create User'}
+									{submitting ? 'Menyimpan...' : 'Tambah'}
 								</button>
 							</div>
 						</form>
@@ -780,242 +793,258 @@ export default function Users() {
 
 			{/* Edit User Modal */}
 			{showEditModal && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-						<div className="flex justify-between items-center mb-6">
-							<h3 className="text-lg font-semibold text-gray-900">
-								Edit Pengguna
+				<div style={{
+					position: 'fixed',
+					inset: 0,
+					background: 'rgba(0, 0, 0, 0.5)',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					zIndex: 50
+				}}>
+					<div style={{
+						background: 'white',
+						borderRadius: '12px',
+						padding: '24px 28px',
+						width: '100%',
+						maxWidth: '500px',
+						margin: '0 16px',
+						maxHeight: '90vh',
+						overflowY: 'auto'
+					}}>
+						<div style={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							marginBottom: '24px'
+						}}>
+							<h3 style={{
+								fontWeight: 700,
+								fontSize: '18px',
+								color: 'var(--dark)',
+								margin: 0
+							}}>
+								Edit Akun
 							</h3>
 							<button
-								onClick={() =>
-									setShowEditModal(
-										false
-									)
-								}
-								className="text-gray-400 hover:text-gray-600 transition-colors"
+								onClick={() => setShowEditModal(false)}
+								style={{
+									background: 'none',
+									border: 'none',
+									cursor: 'pointer',
+									color: 'var(--muted)',
+									padding: 0
+								}}
 							>
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M6 18L18 6M6 6l12 12"
-									/>
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<path d="M18 6L6 18M6 6l12 12"/>
 								</svg>
 							</button>
 						</div>
-						<form
-							onSubmit={
-								handleUpdateUser
-							}
-							className="space-y-4"
-						>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Username
-								</label>
-								<input
-									type="text"
-									required
-									autoComplete="username"
-									value={
-										newUserData.username
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												username:
-													e.target
-														.value,
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
+						<form onSubmit={handleUpdateUser}>
+							<div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '18px 22px' }}>
+								<div style={{ gridColumn: '1 / -1' }}>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Nama
+									</label>
+									<input
+										type="text"
+										required
+										value={newUserData.firstName}
+										onChange={(e) => setNewUserData(prev => ({ ...prev, firstName: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Username
+									</label>
+									<input
+										type="text"
+										required
+										value={newUserData.username}
+										onChange={(e) => setNewUserData(prev => ({ ...prev, username: e.target.value }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Password
+									</label>
+									<input
+										type="password"
+										value={newUserData.password}
+										onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
+										placeholder="Kosongkan jika tidak ingin mengubah"
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.target.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+									/>
+								</div>
+								<div>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Role
+									</label>
+									<select
+										value={newUserData.role}
+										onChange={(e) => setNewUserData(prev => ({ ...prev, role: Number(e.target.value) }))}
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.currentTarget.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+									>
+										<option value={5}>Superadmin</option>
+										<option value={1}>Sales Retail</option>
+										<option value={2}>Sales Project</option>
+										<option value={3}>Admin</option>
+										<option value={4}>Manager Retail</option>
+										<option value={6}>Approver</option>
+										<option value={7}>Pricing</option>
+										<option value={8}>Gudang</option>
+										<option value={9}>Manager Project</option>
+										<option value={10}>HRD</option>
+										<option value={11}>Kolektor</option>
+										<option value={12}>Blog</option>
+										<option value={13}>Telemarketer</option>
+									</select>
+								</div>
+								<div>
+									<label style={{ fontWeight: 600, fontSize: '12px', color: 'var(--dark)', display: 'block', marginBottom: '7px' }}>
+										Status
+									</label>
+									<select
+										style={{
+											fontFamily: "'Montserrat', sans-serif",
+											fontSize: '13px',
+											color: 'var(--text)',
+											border: '1px solid var(--border)',
+											borderRadius: '9px',
+											padding: '10px 13px',
+											background: '#fff',
+											outline: 'none',
+											transition: 'border-color 0.18s',
+											width: '100%'
+										}}
+										onFocus={(e) => e.currentTarget.style.borderColor = 'var(--blue)'}
+										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+									>
+										<option value="active">Active</option>
+										<option value="suspended">Suspended</option>
+									</select>
+								</div>
 							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Password (leave empty
-									to keep current)
-								</label>
-								<input
-									type="password"
-									autoComplete="new-password"
-									value={
-										newUserData.password
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												password:
-													e.target
-														.value,
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									First Name
-								</label>
-								<input
-									type="text"
-									required
-									autoComplete="given-name"
-									value={
-										newUserData.firstName
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												firstName:
-													e.target
-														.value,
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Last Name
-								</label>
-								<input
-									type="text"
-									required
-									autoComplete="family-name"
-									value={
-										newUserData.lastName
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												lastName:
-													e.target
-														.value,
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Role
-								</label>
-								<select
-									value={
-										newUserData.role
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												role: Number(
-													e.target.value
-												),
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								>
-									<option value={1}>
-										Sales Retail
-									</option>
-									<option value={2}>
-										Sales Project
-									</option>
-									<option value={3}>
-										Admin
-									</option>
-									<option value={4}>
-										Manager Retail
-									</option>
-									<option value={5}>
-										Superadmin
-									</option>
-									<option value={6}>
-										Approver
-									</option>
-									<option value={7}>
-										Pricing
-									</option>
-									<option value={8}>
-										Gudang
-									</option>
-									<option value={9}>
-										Manager Project
-									</option>
-									<option value={10}>
-										HRD
-									</option>
-									<option value={11}>
-										Kolektor
-									</option>
-									<option value={12}>
-										Blog
-									</option>
-									<option value={13}>
-										Telemarketer
-									</option>
-								</select>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Target
-								</label>
-								<input
-									type="number"
-									step="0.01"
-									autoComplete="off"
-									value={
-										newUserData.target
-									}
-									onChange={(e) =>
-										setNewUserData(
-											(prev) => ({
-												...prev,
-												target: Number(
-													e.target.value
-												),
-											})
-										)
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-								/>
-							</div>
-							<div className="flex space-x-3 pt-4">
+							<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
 								<button
 									type="button"
-									onClick={() =>
-										setShowEditModal(
-											false
-										)
-									}
-									className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+									onClick={() => setShowEditModal(false)}
+									style={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '8px',
+										height: '38px',
+										padding: '0 18px',
+										borderRadius: '9px',
+										cursor: 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 700,
+										fontSize: '13px',
+										background: '#fff',
+										border: '1px solid var(--border)',
+										color: 'var(--text)',
+										transition: '0.18s'
+									}}
+									onMouseEnter={(e) => {
+										e.currentTarget.style.borderColor = 'var(--blue)';
+										e.currentTarget.style.color = 'var(--blue)';
+									}}
+									onMouseLeave={(e) => {
+										e.currentTarget.style.borderColor = 'var(--border)';
+										e.currentTarget.style.color = 'var(--text)';
+									}}
 								>
-									Cancel
+									Batal
 								</button>
 								<button
 									type="submit"
 									disabled={submitting}
-									className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+									style={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '8px',
+										height: '38px',
+										padding: '0 18px',
+										border: 'none',
+										borderRadius: '9px',
+										cursor: submitting ? 'not-allowed' : 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 700,
+										fontSize: '13px',
+										color: '#fff',
+										background: 'var(--grad)',
+										transition: '0.18s',
+										opacity: submitting ? 0.5 : 1
+									}}
+									onMouseEnter={(e) => {
+										if (!submitting) {
+											e.currentTarget.style.filter = 'brightness(1.07)';
+											e.currentTarget.style.transform = 'translateY(-1px)';
+										}
+									}}
+									onMouseLeave={(e) => {
+										if (!submitting) {
+											e.currentTarget.style.filter = 'none';
+											e.currentTarget.style.transform = 'none';
+										}
+									}}
 								>
-									{submitting
-										? 'Updating...'
-										: 'Update User'}
+									{submitting ? 'Menyimpan...' : 'Simpan'}
 								</button>
 							</div>
 						</form>

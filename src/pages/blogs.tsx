@@ -10,25 +10,18 @@ import {
 
 export default function Blogs() {
 	const router = useRouter();
-	const [blogs, setBlogs] = useState<
-		Blog[]
-	>([]);
-	const [loading, setLoading] =
-		useState(true);
-	const [error, setError] =
-		useState('');
-	const [
-		deleteLoading,
-		setDeleteLoading,
-	] = useState<string | null>(null);
-	const [
-		approveLoading,
-		setApproveLoading,
-	] = useState<string | null>(null);
-	const [
-		canApproveBlog,
-		setCanApproveBlog,
-	] = useState(false);
+	const [blogs, setBlogs] = useState<Blog[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState('');
+	const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+	const [approveLoading, setApproveLoading] = useState<string | null>(null);
+	const [canApproveBlog, setCanApproveBlog] = useState(false);
+	const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved'>('all');
+	const [currentPage, setCurrentPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
+	const [totalItems, setTotalItems] = useState(0);
+	const [itemsPerPage, setItemsPerPage] = useState(10);
+	const [allBlogsCount, setAllBlogsCount] = useState({ all: 0, pending: 0, approved: 0 });
 
 	useEffect(() => {
 		const user = getStoredUser();
@@ -38,68 +31,59 @@ export default function Blogs() {
 			setCanApproveBlog(approveRoles.includes(user.role));
 		}
 		fetchBlogs();
-	}, []);
+	}, [activeTab, currentPage]);
 
 	const fetchBlogs = async () => {
 		setLoading(true);
 		try {
-			const token =
-				localStorage.getItem('token');
-			const response = await fetch(
-				'/api/blogs',
-				{
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
-				},
-			);
+			const token = localStorage.getItem('token');
 
-			if (!response.ok) {
-				throw new Error(
-					'Failed to fetch blogs',
-				);
+			// Build query params
+			const params = new URLSearchParams({
+				page: currentPage.toString(),
+				limit: itemsPerPage.toString(),
+			});
+
+			// Add filter based on active tab
+			if (activeTab === 'pending') {
+				params.append('isApproved', 'false');
+			} else if (activeTab === 'approved') {
+				params.append('isApproved', 'true');
 			}
 
-			const data =
-				await response.json();
-			console.log(
-				'Backend response:',
-				data,
-			);
-			const blogsData =
-				data.data || data || [];
-			console.log(
-				'Blogs data:',
-				blogsData,
-			);
-			// Ensure all blogs have _id field (some backends use id instead)
-			const normalizedBlogs =
-				Array.isArray(blogsData)
-					? blogsData.map(
-							(
-								blog: Blog & {
-									id?: string;
-								},
-							) => ({
-								...blog,
-								_id:
-									blog._id ||
-									blog.id ||
-									'',
-							}),
-						)
-					: [];
-			console.log(
-				'Normalized blogs:',
-				normalizedBlogs,
-			);
+			const response = await fetch(`/api/blogs?${params.toString()}`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to fetch blogs');
+			}
+
+			const data = await response.json();
+			const blogsData = data.data || data || [];
+			const normalizedBlogs = Array.isArray(blogsData)
+				? blogsData.map((blog: Blog & { id?: string }) => ({
+						...blog,
+						_id: blog._id || blog.id || '',
+				  }))
+				: [];
 			setBlogs(normalizedBlogs);
+
+			// Set pagination data from API
+			if (data.pagination) {
+				setTotalPages(data.pagination.totalPages);
+				setTotalItems(data.pagination.totalItems);
+				setItemsPerPage(data.pagination.itemsPerPage);
+			}
+
+			// Fetch counts for tabs if we don't have them
+			fetchBlogCounts();
+
 			setError('');
 		} catch (err) {
-			console.error(
-				'Error fetching blogs:',
-				err,
-			);
+			console.error('Error fetching blogs:', err);
 			setError('Failed to fetch blogs');
 			setBlogs([]);
 		} finally {
@@ -107,315 +91,813 @@ export default function Blogs() {
 		}
 	};
 
-	const handleDelete = async (
-		id: string,
-	) => {
-		if (
-			!confirm(
-				'Are you sure you want to delete this blog?',
-			)
-		) {
+	const fetchBlogCounts = async () => {
+		try {
+			const token = localStorage.getItem('token');
+
+			// Fetch all counts in parallel
+			const [allRes, pendingRes, approvedRes] = await Promise.all([
+				fetch('/api/blogs?limit=1', {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+				fetch('/api/blogs?limit=1&isApproved=false', {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+				fetch('/api/blogs?limit=1&isApproved=true', {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+			]);
+
+			const [allData, pendingData, approvedData] = await Promise.all([
+				allRes.json(),
+				pendingRes.json(),
+				approvedRes.json(),
+			]);
+
+			setAllBlogsCount({
+				all: allData.pagination?.totalItems || 0,
+				pending: pendingData.pagination?.totalItems || 0,
+				approved: approvedData.pagination?.totalItems || 0,
+			});
+		} catch (err) {
+			console.error('Error fetching blog counts:', err);
+		}
+	};
+
+	const handleDelete = async (id: string) => {
+		if (!confirm('Yakin ingin menghapus blog ini?')) {
 			return;
 		}
 
 		setDeleteLoading(id);
 		try {
-			const token =
-				localStorage.getItem('token');
-			const response = await fetch(
-				`/api/blogs/${id}`,
-				{
-					method: 'DELETE',
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
+			const token = localStorage.getItem('token');
+			const response = await fetch(`/api/blogs/${id}`, {
+				method: 'DELETE',
+				headers: {
+					Authorization: `Bearer ${token}`,
 				},
-			);
+			});
 
 			if (!response.ok) {
-				throw new Error(
-					'Failed to delete blog',
-				);
+				throw new Error('Failed to delete blog');
 			}
 
 			fetchBlogs();
 		} catch (err) {
-			console.error(
-				'Error deleting blog:',
-				err,
-			);
-			alert('Failed to delete blog');
+			console.error('Error deleting blog:', err);
+			alert('Gagal menghapus blog');
 		} finally {
 			setDeleteLoading(null);
 		}
 	};
 
-	const handleApprove = async (
-		id: string,
-		currentStatus: boolean,
-	) => {
+	const handleApprove = async (id: string, currentStatus: boolean) => {
 		const newStatus = !currentStatus;
 
 		setApproveLoading(id);
 		try {
-			const token =
-				localStorage.getItem('token');
-			const response = await fetch(
-				`/api/blogs/${id}`,
-				{
-					method: 'PUT',
-					headers: {
-						'Content-Type':
-							'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify({
-						isApproved: newStatus,
-					}),
+			const token = localStorage.getItem('token');
+			const response = await fetch(`/api/blogs/${id}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
 				},
-			);
+				body: JSON.stringify({
+					isApproved: newStatus,
+				}),
+			});
 
 			if (!response.ok) {
-				throw new Error(
-					'Failed to update approval status',
-				);
+				throw new Error('Failed to update approval status');
 			}
 
 			fetchBlogs();
 		} catch (err) {
-			console.error(
-				'Error updating approval status:',
-				err,
-			);
-			alert(
-				'Failed to update approval status',
-			);
+			console.error('Error updating approval status:', err);
+			alert('Gagal mengubah status approval');
 		} finally {
 			setApproveLoading(null);
 		}
 	};
 
-	const formatDate = (
-		dateString: string,
-	) => {
-		return new Date(
-			dateString,
-		).toLocaleDateString('id-ID', {
+	const formatDate = (dateString: string) => {
+		return new Date(dateString).toLocaleDateString('id-ID', {
 			year: 'numeric',
-			month: 'long',
+			month: 'short',
 			day: 'numeric',
 		});
 	};
 
+	// Pagination display calculations
+	const startIndex = (currentPage - 1) * itemsPerPage;
+	const endIndex = startIndex + itemsPerPage;
+
+	// Reset to page 1 when changing tabs
+	const handleTabChange = (tab: 'all' | 'pending' | 'approved') => {
+		setActiveTab(tab);
+		setCurrentPage(1);
+	};
+
 	return (
 		<MainLayout title="Blogs">
-			<div className="max-w-7xl mx-auto">
-				{/* Header */}
-				<div className="mb-8 flex justify-between items-center">
-					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
-							Blogs
-						</h2>
-						<p className="text-gray-600">
-							Kelola blog dan artikel
-						</p>
+			<style jsx global>{`
+				.chip {
+					display: inline-flex;
+					align-items: center;
+					gap: 6px;
+					font-weight: 700;
+					font-size: 11px;
+					padding: 4px 11px;
+					border-radius: 100px;
+					white-space: nowrap;
+				}
+				.chip .cdot {
+					width: 6px;
+					height: 6px;
+					border-radius: 50%;
+					background: currentColor;
+				}
+				.chip.green { background: #E7F7EE; color: #1F8A4D; }
+				.chip.amber { background: #FEF3E0; color: #C77E12; }
+				.chip.grey { background: #EEF1F5; color: #697789; }
+				.tag-mini {
+					display: inline-block;
+					font-weight: 600;
+					font-size: 10px;
+					padding: 2px 7px;
+					border-radius: 5px;
+					background: #EEF1F5;
+					color: #5A6675;
+					margin-right: 4px;
+					margin-bottom: 2px;
+				}
+			`}</style>
+
+			{/* Header */}
+			<div style={{
+				display: 'flex',
+				alignItems: 'center',
+				marginBottom: '24px'
+			}}>
+				<div style={{ flex: 1 }}>
+					<h1 style={{
+						margin: 0,
+						fontWeight: 800,
+						fontSize: '24px',
+						color: 'var(--dark)'
+					}}>
+						Blogs
+					</h1>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)',
+						marginTop: '4px'
+					}}>
+						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
-					<button
-						onClick={() =>
-							router.push('/blogs/new')
-						}
-						className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-					>
-						+ Tambah Blog
-					</button>
 				</div>
+				<button
+					onClick={() => router.push('/blogs/new')}
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: '8px',
+						height: '38px',
+						padding: '0 18px',
+						border: 'none',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						color: '#fff',
+						background: 'var(--grad)',
+						transition: '0.18s'
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.filter = 'brightness(1.07)';
+						e.currentTarget.style.transform = 'translateY(-1px)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.filter = 'none';
+						e.currentTarget.style.transform = 'none';
+					}}
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+						<path d="M12 5v14M5 12h14"/>
+					</svg>
+					Tulis Blog
+				</button>
+			</div>
 
-				{error && (
-					<div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-						<div className="text-sm text-red-600 font-medium">
-							{error}
+			{/* Tabs */}
+			<div style={{
+				display: 'flex',
+				gap: '8px',
+				marginBottom: '24px'
+			}}>
+				<button
+					onClick={() => handleTabChange('all')}
+					style={{
+						height: '38px',
+						padding: '0 18px',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						background: activeTab === 'all' ? 'var(--grad)' : '#fff',
+						color: activeTab === 'all' ? '#fff' : 'var(--text)',
+						transition: '0.18s',
+						boxShadow: activeTab === 'all' ? '0 2px 8px rgba(28, 167, 236, 0.3)' : 'none',
+						border: activeTab === 'all' ? 'none' : '1px solid var(--border)'
+					}}
+					onMouseEnter={(e) => {
+						if (activeTab !== 'all') {
+							e.currentTarget.style.borderColor = 'var(--blue)';
+							e.currentTarget.style.color = 'var(--blue)';
+						}
+					}}
+					onMouseLeave={(e) => {
+						if (activeTab !== 'all') {
+							e.currentTarget.style.borderColor = 'var(--border)';
+							e.currentTarget.style.color = 'var(--text)';
+						}
+					}}
+				>
+					Semua ({allBlogsCount.all})
+				</button>
+				<button
+					onClick={() => handleTabChange('pending')}
+					style={{
+						height: '38px',
+						padding: '0 18px',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						background: activeTab === 'pending' ? 'var(--grad)' : '#fff',
+						color: activeTab === 'pending' ? '#fff' : 'var(--text)',
+						transition: '0.18s',
+						boxShadow: activeTab === 'pending' ? '0 2px 8px rgba(28, 167, 236, 0.3)' : 'none',
+						border: activeTab === 'pending' ? 'none' : '1px solid var(--border)'
+					}}
+					onMouseEnter={(e) => {
+						if (activeTab !== 'pending') {
+							e.currentTarget.style.borderColor = 'var(--blue)';
+							e.currentTarget.style.color = 'var(--blue)';
+						}
+					}}
+					onMouseLeave={(e) => {
+						if (activeTab !== 'pending') {
+							e.currentTarget.style.borderColor = 'var(--border)';
+							e.currentTarget.style.color = 'var(--text)';
+						}
+					}}
+				>
+					Waiting For Review ({allBlogsCount.pending})
+				</button>
+				<button
+					onClick={() => handleTabChange('approved')}
+					style={{
+						height: '38px',
+						padding: '0 18px',
+						borderRadius: '9px',
+						cursor: 'pointer',
+						fontFamily: "'Montserrat', sans-serif",
+						fontWeight: 700,
+						fontSize: '13px',
+						background: activeTab === 'approved' ? 'var(--grad)' : '#fff',
+						color: activeTab === 'approved' ? '#fff' : 'var(--text)',
+						transition: '0.18s',
+						boxShadow: activeTab === 'approved' ? '0 2px 8px rgba(28, 167, 236, 0.3)' : 'none',
+						border: activeTab === 'approved' ? 'none' : '1px solid var(--border)'
+					}}
+					onMouseEnter={(e) => {
+						if (activeTab !== 'approved') {
+							e.currentTarget.style.borderColor = 'var(--blue)';
+							e.currentTarget.style.color = 'var(--blue)';
+						}
+					}}
+					onMouseLeave={(e) => {
+						if (activeTab !== 'approved') {
+							e.currentTarget.style.borderColor = 'var(--border)';
+							e.currentTarget.style.color = 'var(--text)';
+						}
+					}}
+				>
+					Approved ({allBlogsCount.approved})
+				</button>
+			</div>
+
+			{error && (
+				<div style={{
+					background: '#FDECEA',
+					border: '1px solid #FE2C23',
+					borderRadius: '9px',
+					padding: '12px 16px',
+					marginBottom: '18px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: '#FE2C23',
+						fontWeight: 600
+					}}>
+						{error}
+					</div>
+				</div>
+			)}
+
+			{/* Main Card */}
+			<div style={{
+				background: 'white',
+				border: '1px solid var(--border)',
+				borderRadius: '12px',
+				padding: '24px 28px',
+				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+			}}>
+				{/* Table */}
+				{loading ? (
+					<div style={{
+						display: 'flex',
+						justifyContent: 'center',
+						padding: '48px 20px',
+						color: 'var(--muted)'
+					}}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<div style={{
+								width: '32px',
+								height: '32px',
+								border: '4px solid rgba(28, 167, 236, 0.3)',
+								borderTopColor: '#1ca7ec',
+								borderRadius: '50%',
+								animation: 'spin 1s linear infinite'
+							}}></div>
+							<span>Memuat blogs...</span>
 						</div>
 					</div>
-				)}
-
-				{/* Blogs Grid */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-					{loading ? (
-						<div className="p-8 text-center">
-							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat blogs...
-								</span>
-							</div>
-						</div>
-					) : blogs.length === 0 ? (
-						<div className="p-8 text-center text-gray-500">
-							Tidak ada blog yang
-							ditemukan
-						</div>
-					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+				) : blogs.length === 0 ? (
+					<div style={{
+						textAlign: 'center',
+						color: 'var(--muted)',
+						padding: '48px 20px'
+					}}>
+						Tidak ada blog yang ditemukan
+					</div>
+				) : (
+					<table style={{
+						width: '100%',
+						borderCollapse: 'collapse'
+					}}>
+						<thead>
+							<tr>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Judul
+								</th>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Penulis
+								</th>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Tags
+								</th>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Produk Terkait
+								</th>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Tanggal
+								</th>
+								<th style={{
+									textAlign: 'left',
+									fontWeight: 600,
+									fontSize: '11px',
+									textTransform: 'uppercase',
+									letterSpacing: '0.04em',
+									color: 'var(--muted)',
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)',
+									whiteSpace: 'nowrap'
+								}}>
+									Status
+								</th>
+								<th style={{
+									padding: '0 14px 12px',
+									borderBottom: '1px solid var(--border)'
+								}}></th>
+							</tr>
+						</thead>
+						<tbody>
 							{blogs.map((blog) => (
-								<div
+								<tr
 									key={blog._id}
-									className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+									style={{
+										transition: 'background 0.15s ease'
+									}}
+									onMouseEnter={(e) => e.currentTarget.style.background = '#F8FBFF'}
+									onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
 								>
-									{/* eslint-disable-next-line @next/next/no-img-element */}
-									<img
-										src={blog.image}
-										alt={blog.title}
-										className="w-full h-48 object-cover"
-									/>
-									<div className="p-4">
-										<div className="flex items-center justify-between mb-2">
-											<span className="px-2 py-1 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full">
-												{blog.category}
-											</span>
-											{blog.isApproved ? (
-												<span className="px-2 py-1 bg-green-100 text-green-600 text-xs font-semibold rounded-full">
-													✓ Approved
-												</span>
-											) : (
-												<span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
-													Pending
-												</span>
-											)}
-										</div>
-										<h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										color: 'var(--text)',
+										verticalAlign: 'middle',
+										fontWeight: 600,
+										maxWidth: '250px'
+									}}>
+										<div style={{
+											overflow: 'hidden',
+											textOverflow: 'ellipsis',
+											whiteSpace: 'nowrap'
+										}}>
 											{blog.title}
-										</h3>
-										<p className="text-sm text-gray-600 mb-3 line-clamp-2">
-											{blog.description}
-										</p>
-										<div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-											<span>
-												{blog.author}
-											</span>
-											<span>
-												{formatDate(
-													blog.publishDate,
-												)}
-											</span>
 										</div>
-										<div className="flex flex-wrap gap-1 mb-4">
-											{blog.tags
-												.slice(0, 3)
-												.map(
-													(
-														tag,
-														index,
-													) => (
-														<span
-															key={
-																index
-															}
-															className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
-														>
-															{tag}
-														</span>
-													),
-												)}
-											{blog.tags
-												.length > 3 && (
-												<span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-													+
-													{blog.tags
-														.length - 3}
-												</span>
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										color: 'var(--muted)',
+										verticalAlign: 'middle'
+									}}>
+										{blog.author}
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										verticalAlign: 'middle'
+									}}>
+										<div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxWidth: '200px' }}>
+											{blog.tags && blog.tags.slice(0, 3).map((tag, index) => (
+												<span key={index} className="tag-mini">{tag}</span>
+											))}
+											{blog.tags && blog.tags.length > 3 && (
+												<span className="tag-mini">+{blog.tags.length - 3}</span>
 											)}
 										</div>
-										<div className="flex flex-col space-y-2">
-											<div className="flex space-x-2">
-												<button
-													onClick={() =>
-														router.push(
-															`/blogs/edit/${blog._id}`,
-														)
-													}
-													className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-												>
-													Edit
-												</button>
-												<button
-													onClick={() =>
-														handleDelete(
-															blog._id,
-														)
-													}
-													disabled={
-														deleteLoading ===
-														blog._id
-													}
-													className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors text-sm font-medium"
-												>
-													{deleteLoading ===
-													blog._id
-														? 'Deleting...'
-														: 'Delete'}
-												</button>
-											</div>
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										color: 'var(--muted)',
+										verticalAlign: 'middle'
+									}}>
+										{blog.relatedProducts && blog.relatedProducts.length > 0
+											? blog.relatedProducts.length + ' produk'
+											: '—'}
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										color: 'var(--muted)',
+										verticalAlign: 'middle',
+										whiteSpace: 'nowrap'
+									}}>
+										{formatDate(blog.publishDate)}
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										verticalAlign: 'middle'
+									}}>
+										<span className={`chip ${blog.isApproved ? 'green' : 'grey'}`}>
+											<span className="cdot"></span>
+											{blog.isApproved ? 'Published' : 'Draft'}
+										</span>
+									</td>
+									<td style={{
+										padding: '14px',
+										borderBottom: '1px solid #F1F4F8',
+										fontSize: '13px',
+										color: 'var(--text)',
+										verticalAlign: 'middle',
+										textAlign: 'right'
+									}}>
+										<div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
+											<button
+												onClick={() => router.push(`/blogs/edit/${blog._id}`)}
+												style={{
+													width: '30px',
+													height: '30px',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													border: '1px solid var(--border)',
+													borderRadius: '7px',
+													background: '#fff',
+													color: 'var(--muted)',
+													cursor: 'pointer',
+													transition: '0.18s'
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.borderColor = 'var(--blue)';
+													e.currentTarget.style.color = 'var(--blue)';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.borderColor = 'var(--border)';
+													e.currentTarget.style.color = 'var(--muted)';
+												}}
+											>
+												<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+													<path d="M12 20h9"/>
+													<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+												</svg>
+											</button>
 											{canApproveBlog && (
 												<button
-													onClick={() => {
-														console.log(
-															'Blog object:',
-															blog,
-														);
-														console.log(
-															'blog.isApproved:',
-															blog.isApproved,
-														);
-														console.log(
-															'Passing to handleApprove:',
-															blog.isApproved ||
-																false,
-														);
-														handleApprove(
-															blog._id,
-															blog.isApproved ||
-																false,
-														);
+													onClick={() => handleApprove(blog._id, blog.isApproved || false)}
+													disabled={approveLoading === blog._id}
+													style={{
+														width: '30px',
+														height: '30px',
+														display: 'inline-flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														border: '1px solid var(--border)',
+														borderRadius: '7px',
+														background: '#fff',
+														color: 'var(--muted)',
+														cursor: approveLoading === blog._id ? 'not-allowed' : 'pointer',
+														transition: '0.18s',
+														opacity: approveLoading === blog._id ? 0.5 : 1
 													}}
-													disabled={
-														approveLoading ===
-														blog._id
-													}
-													className={`w-full px-4 py-2 ${
-														blog.isApproved
-															? 'bg-yellow-600 hover:bg-yellow-700'
-															: 'bg-green-600 hover:bg-green-700'
-													} text-white rounded-lg disabled:opacity-50 transition-colors text-sm font-medium`}
+													onMouseEnter={(e) => {
+														if (approveLoading !== blog._id) {
+															e.currentTarget.style.borderColor = blog.isApproved ? 'var(--amber)' : '#1F8A4D';
+															e.currentTarget.style.color = blog.isApproved ? 'var(--amber)' : '#1F8A4D';
+														}
+													}}
+													onMouseLeave={(e) => {
+														if (approveLoading !== blog._id) {
+															e.currentTarget.style.borderColor = 'var(--border)';
+															e.currentTarget.style.color = 'var(--muted)';
+														}
+													}}
+													title={blog.isApproved ? 'Unapprove' : 'Approve'}
 												>
-													{approveLoading ===
-													blog._id
-														? 'Loading...'
-														: blog.isApproved
-															? 'Unapprove'
-															: 'Approve'}
+													{blog.isApproved ? (
+														<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+															<path d="M18 6L6 18M6 6l12 12"/>
+														</svg>
+													) : (
+														<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+															<polyline points="20 6 9 17 4 12"/>
+														</svg>
+													)}
 												</button>
 											)}
+											<button
+												onClick={() => handleDelete(blog._id)}
+												disabled={deleteLoading === blog._id}
+												style={{
+													width: '30px',
+													height: '30px',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													border: '1px solid var(--border)',
+													borderRadius: '7px',
+													background: '#fff',
+													color: 'var(--muted)',
+													cursor: deleteLoading === blog._id ? 'not-allowed' : 'pointer',
+													transition: '0.18s',
+													opacity: deleteLoading === blog._id ? 0.5 : 1
+												}}
+												onMouseEnter={(e) => {
+													if (deleteLoading !== blog._id) {
+														e.currentTarget.style.borderColor = 'var(--red)';
+														e.currentTarget.style.color = 'var(--red)';
+													}
+												}}
+												onMouseLeave={(e) => {
+													if (deleteLoading !== blog._id) {
+														e.currentTarget.style.borderColor = 'var(--border)';
+														e.currentTarget.style.color = 'var(--muted)';
+													}
+												}}
+											>
+												<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+													<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+												</svg>
+											</button>
 										</div>
-									</div>
-								</div>
+									</td>
+								</tr>
 							))}
-						</div>
-					)}
-				</div>
-
-				{/* Summary */}
-				{!loading &&
-					blogs.length > 0 && (
-						<div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20">
-							<div className="text-sm text-gray-600">
-								Total blogs:{' '}
-								<span className="font-semibold text-gray-900">
-									{blogs.length}
-								</span>
-							</div>
-						</div>
-					)}
+						</tbody>
+					</table>
+				)}
 			</div>
+
+			{/* Pagination */}
+			{!loading && blogs.length > 0 && totalPages > 1 && (
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					marginTop: '20px'
+				}}>
+					<div style={{
+						fontSize: '13px',
+						color: 'var(--muted)'
+					}}>
+						Showing <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+							{startIndex + 1}
+						</span> to <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+							{Math.min(endIndex, totalItems)}
+						</span> of <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+							{totalItems}
+						</span> results
+					</div>
+					<div style={{ display: 'flex', gap: '8px' }}>
+						<button
+							onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+							disabled={currentPage === 1}
+							style={{
+								height: '30px',
+								padding: '0 14px',
+								border: '1px solid var(--border)',
+								background: '#fff',
+								borderRadius: '6px',
+								cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+								fontFamily: "'Montserrat', sans-serif",
+								fontWeight: 500,
+								fontSize: '13px',
+								color: 'var(--muted)',
+								transition: '0.2s',
+								opacity: currentPage === 1 ? 0.5 : 1
+							}}
+							onMouseEnter={(e) => {
+								if (currentPage !== 1) {
+									e.currentTarget.style.borderColor = 'var(--blue)';
+									e.currentTarget.style.color = 'var(--blue)';
+								}
+							}}
+							onMouseLeave={(e) => {
+								if (currentPage !== 1) {
+									e.currentTarget.style.borderColor = 'var(--border)';
+									e.currentTarget.style.color = 'var(--muted)';
+								}
+							}}
+						>
+							Previous
+						</button>
+
+						{/* Page numbers */}
+						{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+							let pageNum;
+							if (totalPages <= 5) {
+								pageNum = i + 1;
+							} else if (currentPage <= 3) {
+								pageNum = i + 1;
+							} else if (currentPage >= totalPages - 2) {
+								pageNum = totalPages - 4 + i;
+							} else {
+								pageNum = currentPage - 2 + i;
+							}
+
+							const isActive = pageNum === currentPage;
+
+							return (
+								<button
+									key={pageNum}
+									onClick={() => setCurrentPage(pageNum)}
+									style={{
+										height: '30px',
+										padding: '0 14px',
+										border: isActive ? 'none' : '1px solid var(--border)',
+										background: isActive ? 'var(--grad)' : '#fff',
+										borderRadius: '6px',
+										cursor: 'pointer',
+										fontFamily: "'Montserrat', sans-serif",
+										fontWeight: 500,
+										fontSize: '13px',
+										color: isActive ? '#fff' : 'var(--muted)',
+										transition: '0.2s'
+									}}
+									onMouseEnter={(e) => {
+										if (!isActive) {
+											e.currentTarget.style.borderColor = 'var(--blue)';
+											e.currentTarget.style.color = 'var(--blue)';
+										}
+									}}
+									onMouseLeave={(e) => {
+										if (!isActive) {
+											e.currentTarget.style.borderColor = 'var(--border)';
+											e.currentTarget.style.color = 'var(--muted)';
+										}
+									}}
+								>
+									{pageNum}
+								</button>
+							);
+						})}
+
+						<button
+							onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+							disabled={currentPage === totalPages}
+							style={{
+								height: '30px',
+								padding: '0 14px',
+								border: '1px solid var(--border)',
+								background: '#fff',
+								borderRadius: '6px',
+								cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+								fontFamily: "'Montserrat', sans-serif",
+								fontWeight: 500,
+								fontSize: '13px',
+								color: 'var(--muted)',
+								transition: '0.2s',
+								opacity: currentPage === totalPages ? 0.5 : 1
+							}}
+							onMouseEnter={(e) => {
+								if (currentPage !== totalPages) {
+									e.currentTarget.style.borderColor = 'var(--blue)';
+									e.currentTarget.style.color = 'var(--blue)';
+								}
+							}}
+							onMouseLeave={(e) => {
+								if (currentPage !== totalPages) {
+									e.currentTarget.style.borderColor = 'var(--border)';
+									e.currentTarget.style.color = 'var(--muted)';
+								}
+							}}
+						>
+							Next
+						</button>
+					</div>
+				</div>
+			)}
+
+			{/* Summary */}
+			{!loading && blogs.length > 0 && (
+				<div style={{
+					marginTop: '16px',
+					fontSize: '13px',
+					color: 'var(--muted)',
+					textAlign: 'right'
+				}}>
+					Total blog: <span style={{ fontWeight: 700, color: 'var(--text)' }}>
+						{totalItems}
+					</span>
+				</div>
+			)}
 		</MainLayout>
 	);
 }
