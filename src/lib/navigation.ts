@@ -180,6 +180,11 @@ export const NAV_ITEMS: NavItem[] = [
 				href: '/kolektor/visits',
 				defaultRoles: [5, 6, 11],
 			},
+			{
+				name: 'Schedule',
+				href: '/schedule',
+				defaultRoles: [5, 6, 11],
+			},
 		],
 	},
 

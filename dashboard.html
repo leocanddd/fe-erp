@@ -1,0 +1,1509 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"
+		/>
+		<title>DKI ERP — Dashboard</title>
+		<link
+			rel="preconnect"
+			href="https://fonts.googleapis.com"
+		/>
+		<link
+			rel="preconnect"
+			href="https://fonts.gstatic.com"
+			crossorigin
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap"
+			rel="stylesheet"
+		/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+		<link
+			rel="stylesheet"
+			href="shell.css"
+		/>
+		<script src="auth.js"></script>
+	</head>
+	<body>
+		<!-- ====================== SIDEBAR ====================== -->
+		<aside class="sidebar" id="sidebar">
+			<div class="sidebar-logo">
+				<img
+					class="logo-img"
+					src="assets/Logo_DKI.png"
+					alt="PT Duta Kencana Indah"
+				/>
+			</div>
+
+			<nav class="nav" id="nav"></nav>
+
+			<div class="sidebar-bottom">
+				<div class="user-row">
+					<div class="avatar">R</div>
+					<div class="user-meta">
+						<div class="nm">Rayvin</div>
+						<div class="rl">
+							Superadmin
+						</div>
+					</div>
+				</div>
+				<a
+					class="logout-row"
+					href="index.html"
+					title="Log Out"
+				>
+					<svg
+						class="ic"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path
+							d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+						/>
+						<polyline
+							points="16 17 21 12 16 7"
+						/>
+						<line
+							x1="21"
+							y1="12"
+							x2="9"
+							y2="12"
+						/>
+					</svg>
+					<span class="label"
+						>LOG OUT</span
+					>
+				</a>
+			</div>
+		</aside>
+
+		<!-- ====================== HEADER ====================== -->
+		<header class="header">
+			<button
+				class="collapse-toggle"
+				id="collapseToggle"
+			>
+				«
+			</button>
+			<div
+				class="breadcrumb"
+				id="breadcrumb"
+			></div>
+			<div class="company">
+				PT. DUTA KENCANA INDAH
+			</div>
+		</header>
+
+		<!-- ====================== MAIN ====================== -->
+		<main class="main">
+			<div class="welcome">
+				<div>
+					<h1>
+						Selamat Datang Kembali,
+						<span data-greet-name
+							>Rayvin</span
+						>
+					</h1>
+					<div class="date">
+						05 Jun 2026
+					</div>
+				</div>
+				<div class="role">
+					Superadmin
+				</div>
+			</div>
+
+			<div
+				class="viewtabs"
+				id="viewtabs"
+			>
+				<span class="vt-label"
+					>Tampilkan:</span
+				>
+				<button
+					class="vtab active"
+					data-tab="retail"
+				>
+					Retail
+				</button>
+				<button
+					class="vtab active"
+					data-tab="project"
+				>
+					Project
+				</button>
+				<button
+					class="vtab active"
+					data-tab="kolektor"
+				>
+					Collection
+				</button>
+				<button
+					class="vtab active"
+					data-tab="inventory"
+				>
+					Inventory
+				</button>
+				<button
+					class="vtab active"
+					data-tab="website"
+				>
+					Website
+				</button>
+				<button
+					class="vtab active"
+					data-tab="rockwoolindo"
+				>
+					Rockwoolindo
+				</button>
+			</div>
+
+			<div class="grid">
+				<!-- LEFT COLUMN -->
+				<div class="col">
+					<!-- WIDGET 1 : RETAIL OVERVIEW -->
+					<section
+						class="widget"
+						data-card
+						data-view="retail"
+					>
+						<h2 class="widget-title">
+							Retail Overview
+						</h2>
+						<div class="progress-track">
+							<div
+								class="progress-fill"
+								data-progress="33"
+							>
+								<span
+									>Rp
+									1,190,000,000</span
+								>
+							</div>
+						</div>
+						<div class="target-line">
+							Target Rp 3,600,000,000
+							(33%)
+						</div>
+
+						<div class="section-label">
+							Performa Salesperson Bulan
+							Ini
+						</div>
+						<div
+							class="saleschart"
+							data-barchart
+						>
+							<div class="sc-row">
+								<span class="sc-name"
+									>Andi</span
+								>
+								<div class="sc-bars">
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Kunjungan</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #1ca7ec;
+												"
+												data-w="60"
+											></div>
+											<div
+												class="bcval"
+											>
+												60
+											</div>
+										</div>
+									</div>
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Sales</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #27ae60;
+												"
+												data-w="72"
+											></div>
+											<div
+												class="bcval"
+											>
+												Rp 360,000,000
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="sc-row">
+								<span class="sc-name"
+									>Budi</span
+								>
+								<div class="sc-bars">
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Kunjungan</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #1ca7ec;
+												"
+												data-w="45"
+											></div>
+											<div
+												class="bcval"
+											>
+												45
+											</div>
+										</div>
+									</div>
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Sales</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #27ae60;
+												"
+												data-w="58"
+											></div>
+											<div
+												class="bcval"
+											>
+												Rp 290,000,000
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="sc-row">
+								<span class="sc-name"
+									>Citra</span
+								>
+								<div class="sc-bars">
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Kunjungan</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #1ca7ec;
+												"
+												data-w="55"
+											></div>
+											<div
+												class="bcval"
+											>
+												55
+											</div>
+										</div>
+									</div>
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Sales</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #27ae60;
+												"
+												data-w="64"
+											></div>
+											<div
+												class="bcval"
+											>
+												Rp 320,000,000
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="sc-row">
+								<span class="sc-name"
+									>Dewi</span
+								>
+								<div class="sc-bars">
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Kunjungan</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #1ca7ec;
+												"
+												data-w="35"
+											></div>
+											<div
+												class="bcval"
+											>
+												35
+											</div>
+										</div>
+									</div>
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Sales</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #27ae60;
+												"
+												data-w="41"
+											></div>
+											<div
+												class="bcval"
+											>
+												Rp 205,000,000
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="stats-block">
+							<div class="statrow">
+								<span
+									class="stat-num grad"
+									style="
+										font-size: 20px;
+									"
+									data-count="20"
+									>0</span
+								><span
+									class="stat-label"
+									>Toko Baru</span
+								><span
+									class="stat-num grad"
+									style="
+										font-size: 20px;
+										margin-left: 28px;
+									"
+									data-count="86"
+									>0</span
+								><span
+									class="stat-label"
+									>Active Toko</span
+								>
+							</div>
+							<div class="statrow">
+								<span
+									class="stat-num red"
+									style="
+										font-size: 20px;
+									"
+									data-count="150"
+									>0</span
+								><span
+									class="stat-label"
+									>Ongoing Order</span
+								>
+							</div>
+						</div>
+
+						<div class="section-label">
+							Recent Orders
+						</div>
+						<div
+							class="divider-bar"
+						></div>
+						<div
+							class="drow drow-head has-meta"
+						>
+							<span>Order ID</span
+							><span>Salesperson</span
+							><span>Nilai Order</span
+							><span>Tanggal</span
+							><span>Status</span>
+						</div>
+						<div
+							class="dtable"
+							data-table='[
+          {"id":"DKI20034","sales":"Andi","value":"Rp 45,000,000","date":"5/5/2026","status":"Diproses","cls":"diproses"},
+          {"id":"DKI20034","sales":"Budi","value":"Rp 62,000,000","date":"5/5/2026","status":"Pending","cls":"pending"},
+          {"id":"DKI20034","sales":"Citra","value":"Rp 38,000,000","date":"5/5/2026","status":"Selesai","cls":"selesai"},
+          {"id":"DKI20034","sales":"Dewi","value":"Rp 51,000,000","date":"5/5/2026","status":"Rejected","cls":"rejected"}
+        ]'
+						></div>
+						<a class="lihat"
+							>Lihat Semua →</a
+						>
+					</section>
+
+					<!-- WIDGET 3 : COLLECTION OVERVIEW -->
+					<section
+						class="widget"
+						data-card
+						data-view="kolektor"
+					>
+						<h2 class="widget-title">
+							Collection Overview
+						</h2>
+						<div class="subcards">
+							<div class="subcard due">
+								<span class="amt"
+									>Rp
+									1,190,000,000</span
+								><span class="tag"
+									>Due</span
+								>
+							</div>
+							<div
+								class="subcard weeks"
+							>
+								<span class="amt"
+									>Rp
+									1,190,000,000</span
+								><span class="tag"
+									>in 2 weeks</span
+								>
+							</div>
+						</div>
+						<div class="dual-tables">
+							<div>
+								<div
+									class="divider-bar"
+								></div>
+								<div
+									class="dtable"
+									data-table='[
+              {"id":"DKI20034","store":"Toko Sinar","due":"28/5/2026","date":"Rp 320,000,000","status":"Assigned","cls":"assigned"},
+              {"id":"DKI20034","store":"Toko Makmur","due":"30/5/2026","date":"Rp 280,000,000","status":"Assigned","cls":"assigned"},
+              {"id":"DKI20034","store":"Toko Berkah","due":"1/6/2026","date":"Rp 410,000,000","status":"Finished","cls":"finished"},
+              {"id":"DKI20034","store":"Toko Mandiri","due":"2/6/2026","date":"Rp 180,000,000","status":"Action","cls":"action"}
+            ]'
+								></div>
+								<a class="lihat"
+									>Lihat Semua →</a
+								>
+							</div>
+							<div>
+								<div
+									class="divider-bar"
+								></div>
+								<div
+									class="dtable"
+									data-table='[
+              {"id":"DKI20034","store":"Toko Harapan","due":"12/6/2026","date":"Rp 350,000,000","status":"Reminded","cls":"reminded"},
+              {"id":"DKI20034","store":"Toko Sentosa","due":"14/6/2026","date":"Rp 295,000,000","status":"Reminded","cls":"remin"},
+              {"id":"DKI20034","store":"Toko Cahaya","due":"15/6/2026","date":"Rp 265,000,000","status":"Finished","cls":"finished"},
+              {"id":"DKI20034","store":"Toko Subur","due":"18/6/2026","date":"Rp 280,000,000","status":"Action","cls":"action"}
+            ]'
+								></div>
+								<a class="lihat"
+									>Lihat Semua →</a
+								>
+							</div>
+						</div>
+					</section>
+
+					<!-- WIDGET 6 : INVENTORY -->
+					<section
+						class="widget"
+						data-card
+						data-view="inventory"
+					>
+						<h2 class="widget-title">
+							Inventory
+						</h2>
+						<div class="inv-banner">
+							<span class="inv-count"
+								>30</span
+							>
+							<span class="inv-label"
+								>New Activity</span
+							>
+						</div>
+						<div
+							class="dtable inv-table"
+						>
+							<div
+								class="drow drow-head inv-cols"
+							>
+								<span>Palet ID</span
+								><span>Produk</span
+								><span>Qty</span
+								><span>Tanggal</span
+								><span>Activity</span>
+							</div>
+							<div
+								class="drow inv-cols"
+							>
+								<span class="oid inv-id"
+									>Palet 11A</span
+								><span class="inv-prod"
+									>Rockwool RW80</span
+								><span class="inv-qty"
+									>120</span
+								><span class="date"
+									>5/5/2026</span
+								><span
+									class="inv-stat in"
+									>In</span
+								>
+							</div>
+							<div
+								class="drow inv-cols"
+							>
+								<span class="oid inv-id"
+									>Palet 1A</span
+								><span class="inv-prod"
+									>Glasswool GW24</span
+								><span class="inv-qty"
+									>80</span
+								><span class="date"
+									>5/5/2026</span
+								><span
+									class="inv-stat out"
+									>Out</span
+								>
+							</div>
+							<div
+								class="drow inv-cols"
+							>
+								<span class="oid inv-id"
+									>Palet 2D</span
+								><span class="inv-prod"
+									>Rockwool RW100</span
+								><span class="inv-qty"
+									>60</span
+								><span class="date"
+									>5/5/2026</span
+								><span
+									class="inv-stat in"
+									>In</span
+								>
+							</div>
+							<div
+								class="drow inv-cols"
+							>
+								<span class="oid inv-id"
+									>Palet 3C</span
+								><span class="inv-prod"
+									>PU Panel 50mm</span
+								><span class="inv-qty"
+									>45</span
+								><span class="date"
+									>5/5/2026</span
+								><span
+									class="inv-stat out"
+									>Out</span
+								>
+							</div>
+						</div>
+						<a class="lihat"
+							>Lihat Semua →</a
+						>
+					</section>
+				</div>
+
+				<!-- RIGHT COLUMN -->
+				<div class="col">
+					<!-- WIDGET 2 : PROJECT OVERVIEW -->
+					<section
+						class="widget"
+						data-card
+						data-view="project"
+					>
+						<h2 class="widget-title">
+							Project Overview
+						</h2>
+						<div class="stats-list">
+							<div class="statrow">
+								<span
+									class="stat-num grad"
+									style="
+										font-size: 22px;
+									"
+									data-count="8"
+									>0</span
+								><span
+									class="stat-label"
+									>Prospects</span
+								>
+							</div>
+							<div class="statrow">
+								<span
+									class="stat-num grad"
+									style="
+										font-size: 22px;
+									"
+									data-count="20"
+									>0</span
+								><span
+									class="stat-label"
+									>Quotations</span
+								>
+							</div>
+							<div class="statrow">
+								<span
+									class="stat-num grad"
+									style="
+										font-size: 22px;
+									"
+									data-count="5"
+									>0</span
+								><span
+									class="stat-label"
+									>Ongoing
+									projects</span
+								>
+							</div>
+						</div>
+
+						<div class="section-label">
+							Performa Sales Bulan Ini
+						</div>
+						<div class="projlegend">
+							<span
+								><i
+									style="
+										background: #1ca7ec;
+									"
+								></i
+								>New Prospects</span
+							>
+							<span
+								><i
+									style="
+										background: #8e44ad;
+									"
+								></i
+								>Tender Projects</span
+							>
+							<span
+								><i
+									style="
+										background: #27ae60;
+									"
+								></i
+								>Ongoing</span
+							>
+							<span
+								><i
+									style="
+										background: #fe2c23;
+									"
+								></i
+								>Missed Projects</span
+							>
+						</div>
+						<div
+							class="saleschart"
+							data-barchart
+						>
+							<div class="sc-row">
+								<span class="sc-name"
+									>Eko</span
+								>
+								<div class="sc-bars">
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Kunjungan</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #1ca7ec;
+												"
+												data-w="70"
+											></div>
+											<div
+												class="bcval"
+											>
+												70
+											</div>
+										</div>
+									</div>
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Projects</span
+										>
+										<div
+											class="stackbar"
+										>
+											<div
+												class="seg"
+												style="
+													background: #1ca7ec;
+													flex: 5;
+												"
+											>
+												<span>5</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #8e44ad;
+													flex: 3;
+												"
+											>
+												<span>3</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #27ae60;
+													flex: 4;
+												"
+											>
+												<span>4</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #fe2c23;
+													flex: 1;
+												"
+											>
+												<span>1</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="sc-row">
+								<span class="sc-name"
+									>Fitri</span
+								>
+								<div class="sc-bars">
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Kunjungan</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #1ca7ec;
+												"
+												data-w="55"
+											></div>
+											<div
+												class="bcval"
+											>
+												55
+											</div>
+										</div>
+									</div>
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Projects</span
+										>
+										<div
+											class="stackbar"
+										>
+											<div
+												class="seg"
+												style="
+													background: #1ca7ec;
+													flex: 4;
+												"
+											>
+												<span>4</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #8e44ad;
+													flex: 2;
+												"
+											>
+												<span>2</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #27ae60;
+													flex: 3;
+												"
+											>
+												<span>3</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #fe2c23;
+													flex: 2;
+												"
+											>
+												<span>2</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="sc-row">
+								<span class="sc-name"
+									>Gilang</span
+								>
+								<div class="sc-bars">
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Kunjungan</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #1ca7ec;
+												"
+												data-w="80"
+											></div>
+											<div
+												class="bcval"
+											>
+												80
+											</div>
+										</div>
+									</div>
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Projects</span
+										>
+										<div
+											class="stackbar"
+										>
+											<div
+												class="seg"
+												style="
+													background: #1ca7ec;
+													flex: 6;
+												"
+											>
+												<span>6</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #8e44ad;
+													flex: 4;
+												"
+											>
+												<span>4</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #27ae60;
+													flex: 5;
+												"
+											>
+												<span>5</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #fe2c23;
+													flex: 1;
+												"
+											>
+												<span>1</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="sc-row">
+								<span class="sc-name"
+									>Hana</span
+								>
+								<div class="sc-bars">
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Kunjungan</span
+										>
+										<div
+											class="bctrack"
+										>
+											<div
+												class="bcbar"
+												style="
+													background: #1ca7ec;
+												"
+												data-w="40"
+											></div>
+											<div
+												class="bcval"
+											>
+												40
+											</div>
+										</div>
+									</div>
+									<div
+										class="sc-metric"
+									>
+										<span class="sc-cap"
+											>Projects</span
+										>
+										<div
+											class="stackbar"
+										>
+											<div
+												class="seg"
+												style="
+													background: #1ca7ec;
+													flex: 3;
+												"
+											>
+												<span>3</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #8e44ad;
+													flex: 1;
+												"
+											>
+												<span>1</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #27ae60;
+													flex: 2;
+												"
+											>
+												<span>2</span>
+											</div>
+											<div
+												class="seg"
+												style="
+													background: #fe2c23;
+													flex: 3;
+												"
+											>
+												<span>3</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-label">
+							Recent Quotations
+						</div>
+						<div
+							class="divider-bar"
+						></div>
+						<div
+							class="drow drow-head has-meta proj-cols"
+						>
+							<span>Quotation ID</span
+							><span>Salesperson</span
+							><span>Project</span
+							><span>Tanggal</span
+							><span>Status</span>
+						</div>
+						<div
+							class="dtable proj-cols"
+							data-table='[
+          {"id":"DKI20034","sales":"Eko","value":"Gedung Wijaya Tower","date":"5/5/2026","status":"Approved","cls":"approved"},
+          {"id":"DKI20034","sales":"Fitri","value":"Apartemen Serpong","date":"5/5/2026","status":"Pending","cls":"pending"},
+          {"id":"DKI20034","sales":"Gilang","value":"Pabrik Cikupa","date":"5/5/2026","status":"Terkirim","cls":"terkirim"},
+          {"id":"DKI20034","sales":"Hana","value":"Ruko Bali Square","date":"5/5/2026","status":"Rejected","cls":"rejected"},
+          {"id":"DKI20034","sales":"Eko","value":"Hotel Sentul City","date":"5/5/2026","status":"Rejected","cls":"rejected"}
+        ]'
+						></div>
+						<a class="lihat"
+							>Lihat Semua →</a
+						>
+					</section>
+
+					<!-- WIDGET 4 : WEBSITE ACTIVITY -->
+					<section
+						class="widget"
+						data-card
+						data-view="website"
+					>
+						<h2 class="widget-title">
+							Dutakencanaindah.id
+						</h2>
+						<div class="inv-banner">
+							<span class="inv-count"
+								>30</span
+							>
+							<span class="inv-label"
+								>New Activity</span
+							>
+						</div>
+						<div
+							class="divider-bar"
+						></div>
+						<div
+							class="drow drow-head has-meta web-cols"
+						>
+							<span>Activity ID</span
+							><span>Contact</span
+							><span>Kontak Detail</span
+							><span>Tanggal</span
+							><span>Activity</span>
+						</div>
+						<div
+							class="dtable web-cols"
+							data-table='[
+          {"id":"DKI20034","contact":"Budi Santoso","detail":"+62 812-3456-7890","date":"5/5/2026","status":"Inquiry","cls":"inquiry"},
+          {"id":"DKI20034","contact":"PT Maju Jaya","detail":"majujaya.co.id","date":"5/5/2026","status":"Quotation","cls":"quotation"},
+          {"id":"DKI20034","contact":"Sari Dewi","detail":"+62 813-9988-1122","date":"5/5/2026","status":"Application","cls":"application"},
+          {"id":"DKI20034","contact":"Website Visitor","detail":"Unavailable","date":"5/5/2026","status":"Product Inq","cls":"product"}
+        ]'
+						></div>
+						<a class="lihat"
+							>Lihat Semua →</a
+						>
+					</section>
+
+					<!-- WIDGET 5 : ROCKWOOLINDO -->
+					<section
+						class="widget"
+						data-card
+						data-view="rockwoolindo"
+					>
+						<h2 class="widget-title">
+							Rockwoolindo
+						</h2>
+						<div class="inv-banner">
+							<span class="inv-count"
+								>30</span
+							>
+							<span class="inv-label"
+								>New Activity</span
+							>
+						</div>
+						<div
+							class="divider-bar"
+						></div>
+						<div
+							class="drow drow-head has-meta web-cols"
+						>
+							<span>Activity ID</span
+							><span>Contact</span
+							><span>Kontak Detail</span
+							><span>Tanggal</span
+							><span>Activity</span>
+						</div>
+						<div
+							class="dtable web-cols"
+							data-table='[
+          {"id":"DKI20034","contact":"Andre Wijaya","detail":"+62 811-2233-4455","date":"5/5/2026","status":"Inquiry","cls":"inquiry"},
+          {"id":"DKI20034","contact":"PT Insulasi Prima","detail":"insulasiprima.com","date":"5/5/2026","status":"Quotation","cls":"quotation"},
+          {"id":"DKI20034","contact":"Rudi Hartono","detail":"+62 856-7788-9900","date":"5/5/2026","status":"Application","cls":"application"},
+          {"id":"DKI20034","contact":"Website Visitor","detail":"Unavailable","date":"5/5/2026","status":"Product Inq","cls":"product"}
+        ]'
+						></div>
+						<a class="lihat"
+							>Lihat Semua →</a
+						>
+					</section>
+				</div>
+			</div>
+		</main>
+
+		<style>
+			.grad-bar {
+				background: var(--grad);
+			}
+		</style>
+		<script>
+			window.ACTIVE_KEY = 'home';
+		</script>
+		<script src="shell.js"></script>
+		<script>
+			/* cross-page navigation: Retail -> Dashboard submenu opens retail.html */
+			(function () {
+				const retailItem =
+					document.querySelector(
+						'.nav-item[data-key="retail"]',
+					);
+				if (retailItem) {
+					const sm =
+						retailItem.nextElementSibling;
+					if (
+						sm &&
+						sm.classList.contains(
+							'submenu',
+						)
+					) {
+						const dash =
+							sm.querySelector('a');
+						if (dash)
+							dash.addEventListener(
+								'click',
+								(e) => {
+									e.stopPropagation();
+									location.href =
+										'retail.html';
+								},
+							);
+					}
+				}
+			})();
+
+			/* ====================== TABLE RENDER ====================== */
+			document
+				.querySelectorAll(
+					'[data-table]',
+				)
+				.forEach((t) => {
+					const rows = JSON.parse(
+						t.dataset.table,
+					);
+					t.innerHTML = rows
+						.map(
+							(r) =>
+								'<div class="drow' +
+								(r.due
+									? ' has-due'
+									: '') +
+								(r.sales || r.contact
+									? ' has-meta'
+									: '') +
+								(t.classList.contains(
+									'web-cols',
+								)
+									? ' web-cols'
+									: '') +
+								'">' +
+								'<span class="oid">' +
+								r.id +
+								(r.store
+									? '<span class="storeline">' +
+										r.store +
+										'</span>'
+									: '') +
+								(r.due
+									? '<span class="duedate">Jatuh tempo ' +
+										r.due +
+										'</span>'
+									: '') +
+								'</span>' +
+								(r.sales
+									? '<span class="sales">' +
+										r.sales +
+										'</span>'
+									: '') +
+								(r.contact
+									? '<span class="contact' +
+										(r.contact ===
+										'Website Visitor'
+											? ' anon'
+											: '') +
+										'">' +
+										r.contact +
+										'</span>'
+									: '') +
+								(r.detail
+									? '<span class="cdetail' +
+										(r.detail ===
+										'Unavailable'
+											? ' anon'
+											: '') +
+										'">' +
+										r.detail +
+										'</span>'
+									: '') +
+								(r.value
+									? '<span class="value">' +
+										r.value +
+										'</span>'
+									: '') +
+								'<span class="date">' +
+								r.date +
+								'</span>' +
+								'<span class="pillwrap"><span class="pill ' +
+								r.cls +
+								'">' +
+								r.status +
+								'</span></span></div>',
+						)
+						.join('');
+				});
+
+			/* ====================== VIEW TABS (multi-select show/hide) ====================== */
+			const viewtabs =
+				document.getElementById(
+					'viewtabs',
+				);
+			const cards = [
+				...document.querySelectorAll(
+					'[data-view]',
+				),
+			];
+
+			// role gating: drop widgets/tabs this role cannot access
+			if (
+				window.DKI &&
+				DKI.role() !== 'superadmin'
+			) {
+				const allow = (v) =>
+					DKI.levelFor(v) !== 'none';
+				viewtabs
+					.querySelectorAll('.vtab')
+					.forEach((b) => {
+						if (!allow(b.dataset.tab))
+							b.remove();
+					});
+				for (
+					let i = cards.length - 1;
+					i >= 0;
+					i--
+				) {
+					if (
+						!allow(
+							cards[i].dataset.view,
+						)
+					) {
+						cards[i].remove();
+						cards.splice(i, 1);
+					}
+				}
+			}
+
+			// stack cards to match the left-to-right order of the toggle buttons
+			function applyCardOrder() {
+				const tabOrder = [
+					...viewtabs.querySelectorAll(
+						'.vtab',
+					),
+				].map((b) => b.dataset.tab);
+				cards.forEach((card) => {
+					const idx = tabOrder.indexOf(
+						card.dataset.view,
+					);
+					card.style.order =
+						idx === -1 ? 99 : idx;
+				});
+			}
+
+			function applyVisibility(
+				animate,
+			) {
+				const activeViews = [
+					...viewtabs.querySelectorAll(
+						'.vtab.active',
+					),
+				].map((b) => b.dataset.tab);
+				cards.forEach((card) => {
+					const show =
+						activeViews.includes(
+							card.dataset.view,
+						);
+					gsap.killTweensOf(card);
+					if (show) {
+						const wasHidden =
+							card.style.display ===
+							'none';
+						card.style.display = '';
+						gsap.set(card, {
+							clearProps: 'opacity',
+						});
+						if (animate && wasHidden)
+							gsap.fromTo(
+								card,
+								{ y: 14 },
+								{
+									y: 0,
+									duration: 0.4,
+									ease: 'power2.out',
+									overwrite: true,
+									clearProps:
+										'transform,translate,rotate,scale',
+								},
+							);
+					} else {
+						card.style.display = 'none';
+					}
+				});
+			}
+			applyCardOrder();
+
+			viewtabs.addEventListener(
+				'click',
+				(e) => {
+					const btn =
+						e.target.closest('.vtab');
+					if (!btn) return;
+					btn.classList.toggle(
+						'active',
+					);
+					applyVisibility(true);
+				},
+			);
+
+			/* ====================== LOAD ANIMATIONS ====================== */
+			window.addEventListener(
+				'load',
+				() => {
+					// active nav gradient fade in
+					const active =
+						document.querySelector(
+							'.nav-item.active',
+						);
+					if (active)
+						gsap.from(active, {
+							opacity: 0,
+							duration: 0.5,
+							ease: 'power2.out',
+						});
+
+					// cards fade up stagger
+					gsap.from('[data-card]', {
+						y: 20,
+						opacity: 0,
+						duration: 0.5,
+						stagger: 0.07,
+						ease: 'power2.out',
+						clearProps:
+							'opacity,transform',
+					});
+
+					// progress bar fill
+					document
+						.querySelectorAll(
+							'.progress-fill',
+						)
+						.forEach((p) => {
+							gsap.to(p, {
+								width:
+									p.dataset.progress +
+									'%',
+								duration: 1.2,
+								ease: 'power2.out',
+								delay: 0.3,
+							});
+						});
+
+					// bar chart bars grow
+					document
+						.querySelectorAll(
+							'[data-barchart]',
+						)
+						.forEach((chart) => {
+							const bars =
+								chart.querySelectorAll(
+									'.bcbar',
+								);
+							gsap.to(bars, {
+								width: (i, el) =>
+									el.dataset.w + '%',
+								duration: 0.9,
+								stagger: 0.1,
+								ease: 'power2.out',
+								delay: 0.4,
+							});
+						});
+
+					// stacked project bars grow from the left
+					gsap.from('.stackbar', {
+						scaleX: 0,
+						transformOrigin:
+							'left center',
+						duration: 0.9,
+						stagger: 0.1,
+						ease: 'power2.out',
+						delay: 0.5,
+						clearProps: 'transform',
+					});
+
+					// count up stats
+					document
+						.querySelectorAll(
+							'[data-count]',
+						)
+						.forEach((s) => {
+							const end =
+								+s.dataset.count;
+							const obj = { v: 0 };
+							gsap.to(obj, {
+								v: end,
+								duration: 1.2,
+								ease: 'power2.out',
+								delay: 0.4,
+								onUpdate: () => {
+									s.textContent =
+										Math.round(obj.v);
+								},
+							});
+						});
+				},
+			);
+		</script>
+		<script src="quickactions.js"></script>
+	</body>
+</html>
