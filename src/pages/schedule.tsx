@@ -1,6 +1,9 @@
 import MainLayout from '@/components/MainLayout';
 import { getStoredUser } from '@/lib/auth';
-import { useEffect, useState } from 'react';
+import {
+	useEffect,
+	useState,
+} from 'react';
 
 interface User {
 	username: string;
@@ -57,16 +60,45 @@ interface ScheduleData {
 	unassignedARs: ARItem[] | null;
 }
 
-const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const DAYS = [
+	'Senin',
+	'Selasa',
+	'Rabu',
+	'Kamis',
+	'Jumat',
+	'Sabtu',
+];
 
 export default function Schedule() {
-	const [user, setUser] = useState<User | null>(null);
-	const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [weekIndex, setWeekIndex] = useState(1);
-	const [showAssignModal, setShowAssignModal] = useState(false);
-	const [selectedCell, setSelectedCell] = useState<{ ci: number; di: number } | null>(null);
-	const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
+	const [user, setUser] =
+		useState<User | null>(null);
+	const [
+		scheduleData,
+		setScheduleData,
+	] = useState<ScheduleData | null>(
+		null,
+	);
+	const [loading, setLoading] =
+		useState(true);
+	const [weekIndex, setWeekIndex] =
+		useState(1);
+	const [
+		showAssignModal,
+		setShowAssignModal,
+	] = useState(false);
+	const [
+		selectedCell,
+		setSelectedCell,
+	] = useState<{
+		ci: number;
+		di: number;
+	} | null>(null);
+	const [
+		selectedItems,
+		setSelectedItems,
+	] = useState<Record<string, boolean>>(
+		{},
+	);
 
 	const WEEKS = [
 		'02 – 07 Jun 2026',
@@ -88,109 +120,195 @@ export default function Schedule() {
 	const loadSchedule = async () => {
 		setLoading(true);
 		try {
-			const response = await fetch('http://localhost:8080/api/collection/schedule');
-			const result = await response.json();
+			const response = await fetch(
+				'https://be-tracker-production.up.railway.app/api/collection/schedule',
+			);
+			const result =
+				await response.json();
 
 			if (result.status === 'success') {
 				const data = result.data;
 				setScheduleData({
-					collectors: data.collectors || [],
-					assignments: data.assignments || [],
-					unassignedARs: data.unassignedARs || [],
+					collectors:
+						data.collectors || [],
+					assignments:
+						data.assignments || [],
+					unassignedARs:
+						data.unassignedARs || [],
 				});
 			}
 		} catch (error) {
-			console.error('Failed to load schedule:', error);
+			console.error(
+				'Failed to load schedule:',
+				error,
+			);
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	const rupiah = (n: number) => {
-		return 'Rp ' + (n || 0).toLocaleString('id-ID');
+		return (
+			'Rp ' +
+			(n || 0).toLocaleString('id-ID')
+		);
 	};
 
 	const handlePrevWeek = () => {
-		setWeekIndex((weekIndex + WEEKS.length - 1) % WEEKS.length);
+		setWeekIndex(
+			(weekIndex + WEEKS.length - 1) %
+				WEEKS.length,
+		);
 	};
 
 	const handleNextWeek = () => {
-		setWeekIndex((weekIndex + 1) % WEEKS.length);
+		setWeekIndex(
+			(weekIndex + 1) % WEEKS.length,
+		);
 	};
 
-	const openAssignModal = (ci: number, di: number) => {
+	const openAssignModal = (
+		ci: number,
+		di: number,
+	) => {
 		setSelectedCell({ ci, di });
-		const currentAssignments = getAssignmentsForCell(ci, di);
-		const selected: Record<string, boolean> = {};
-		currentAssignments.forEach((assignment) => {
-			selected[assignment.arDetails._id] = true;
-		});
+		const currentAssignments =
+			getAssignmentsForCell(ci, di);
+		const selected: Record<
+			string,
+			boolean
+		> = {};
+		currentAssignments.forEach(
+			(assignment) => {
+				selected[
+					assignment.arDetails._id
+				] = true;
+			},
+		);
 		setSelectedItems(selected);
 		setShowAssignModal(true);
 	};
 
-	const getAssignmentsForCell = (ci: number, di: number): Assignment[] => {
+	const getAssignmentsForCell = (
+		ci: number,
+		di: number,
+	): Assignment[] => {
 		if (!scheduleData) return [];
-		const collector = scheduleData.collectors[ci];
+		const collector =
+			scheduleData.collectors[ci];
 		if (!collector) return [];
 
-		const cellDate = calculateScheduledDate(weekIndex, di);
+		const cellDate =
+			calculateScheduledDate(
+				weekIndex,
+				di,
+			);
 
-		return scheduleData.assignments.filter((assignment) => {
-			if (assignment.collectorName !== collector.name) return false;
+		return scheduleData.assignments.filter(
+			(assignment) => {
+				if (
+					assignment.collectorName !==
+					collector.name
+				)
+					return false;
 
-			const assignmentDate = new Date(assignment.scheduledDate);
-			const isSameDay =
-				assignmentDate.getFullYear() === cellDate.getFullYear() &&
-				assignmentDate.getMonth() === cellDate.getMonth() &&
-				assignmentDate.getDate() === cellDate.getDate();
+				const assignmentDate = new Date(
+					assignment.scheduledDate,
+				);
+				const isSameDay =
+					assignmentDate.getFullYear() ===
+						cellDate.getFullYear() &&
+					assignmentDate.getMonth() ===
+						cellDate.getMonth() &&
+					assignmentDate.getDate() ===
+						cellDate.getDate();
 
-			return isSameDay;
-		});
+				return isSameDay;
+			},
+		);
 	};
 
 	const getAllARs = (): ARItem[] => {
 		if (!scheduleData) return [];
-		const assignedARs = scheduleData.assignments.map((a) => a.arDetails);
-		const unassignedARs = scheduleData.unassignedARs || [];
-		return [...assignedARs, ...unassignedARs];
+		const assignedARs =
+			scheduleData.assignments.map(
+				(a) => a.arDetails,
+			);
+		const unassignedARs =
+			scheduleData.unassignedARs || [];
+		return [
+			...assignedARs,
+			...unassignedARs,
+		];
 	};
 
-	const getARById = (id: string): ARItem | undefined => {
-		return getAllARs().find((ar) => ar._id === id);
+	const getARById = (
+		id: string,
+	): ARItem | undefined => {
+		return getAllARs().find(
+			(ar) => ar._id === id,
+		);
 	};
 
-	const removeAssignment = async (assignmentId: string) => {
+	const removeAssignment = async (
+		assignmentId: string,
+	) => {
 		if (!scheduleData) return;
 
 		// Update local state immediately
-		const newAssignments = scheduleData.assignments.filter((a) => a._id !== assignmentId);
-		setScheduleData({ ...scheduleData, assignments: newAssignments });
+		const newAssignments =
+			scheduleData.assignments.filter(
+				(a) => a._id !== assignmentId,
+			);
+		setScheduleData({
+			...scheduleData,
+			assignments: newAssignments,
+		});
 
 		// TODO: Call DELETE API to remove assignment from backend
 		try {
-			await fetch(`http://localhost:8080/api/ar-collection-assignments/${assignmentId}`, {
-				method: 'DELETE',
-			});
+			await fetch(
+				`http://localhost:8080/api/ar-collection-assignments/${assignmentId}`,
+				{
+					method: 'DELETE',
+				},
+			);
 		} catch (error) {
-			console.error('Failed to remove assignment:', error);
+			console.error(
+				'Failed to remove assignment:',
+				error,
+			);
 			// Reload on error to restore correct state
 			loadSchedule();
 		}
 	};
 
 	const saveAssignments = async () => {
-		if (!selectedCell || !scheduleData || !user) return;
+		if (
+			!selectedCell ||
+			!scheduleData ||
+			!user
+		)
+			return;
 		const { ci, di } = selectedCell;
-		const collector = scheduleData.collectors[ci];
+		const collector =
+			scheduleData.collectors[ci];
 		if (!collector) return;
 
-		const newIds = Object.keys(selectedItems).filter((id) => selectedItems[id]);
-		const currentAssignments = getAssignmentsForCell(ci, di);
-		const currentIds = currentAssignments.map((a) => a.arDetails._id);
+		const newIds = Object.keys(
+			selectedItems,
+		).filter((id) => selectedItems[id]);
+		const currentAssignments =
+			getAssignmentsForCell(ci, di);
+		const currentIds =
+			currentAssignments.map(
+				(a) => a.arDetails._id,
+			);
 
 		// Calculate which ARs to add
-		const toAdd = newIds.filter((id) => !currentIds.includes(id));
+		const toAdd = newIds.filter(
+			(id) => !currentIds.includes(id),
+		);
 
 		try {
 			// Add new assignments
@@ -198,19 +316,31 @@ export default function Schedule() {
 				const ar = getARById(arId);
 				if (!ar) continue;
 
-				const scheduledDate = calculateScheduledDate(weekIndex, di);
+				const scheduledDate =
+					calculateScheduledDate(
+						weekIndex,
+						di,
+					);
 
-				await fetch('http://localhost:8080/api/ar-collection-assignments', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						arItemId: ar.arItemId,
-						scheduledDate: scheduledDate.toISOString(),
-						collectorName: collector.name,
-						notes: '',
-						createdBy: user.username,
-					}),
-				});
+				await fetch(
+					'http://localhost:8080/api/ar-collection-assignments',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type':
+								'application/json',
+						},
+						body: JSON.stringify({
+							arItemId: ar.arItemId,
+							scheduledDate:
+								scheduledDate.toISOString(),
+							collectorName:
+								collector.name,
+							notes: '',
+							createdBy: user.username,
+						}),
+					},
+				);
 			}
 
 			setShowAssignModal(false);
@@ -218,19 +348,34 @@ export default function Schedule() {
 			// Reload data from server to get fresh assignments
 			await loadSchedule();
 		} catch (error) {
-			console.error('Failed to save assignments:', error);
-			alert('Failed to save assignments. Please try again.');
+			console.error(
+				'Failed to save assignments:',
+				error,
+			);
+			alert(
+				'Failed to save assignments. Please try again.',
+			);
 		}
 	};
 
-	const calculateScheduledDate = (weekIndex: number, dayIndex: number): Date => {
+	const calculateScheduledDate = (
+		weekIndex: number,
+		dayIndex: number,
+	): Date => {
 		// Base date for week 0 (02 Jun 2026)
-		const baseDate = new Date('2026-06-02');
+		const baseDate = new Date(
+			'2026-06-02',
+		);
 
 		// Calculate the date based on week and day
-		const daysToAdd = weekIndex * 7 + dayIndex;
-		const scheduledDate = new Date(baseDate);
-		scheduledDate.setDate(baseDate.getDate() + daysToAdd);
+		const daysToAdd =
+			weekIndex * 7 + dayIndex;
+		const scheduledDate = new Date(
+			baseDate,
+		);
+		scheduledDate.setDate(
+			baseDate.getDate() + daysToAdd,
+		);
 		scheduledDate.setHours(9, 0, 0, 0); // Set to 9:00 AM
 
 		return scheduledDate;
@@ -239,9 +384,12 @@ export default function Schedule() {
 	const handleAutoAssign = async () => {
 		if (!scheduleData || !user) return;
 
-		const unassignedARs = scheduleData.unassignedARs || [];
+		const unassignedARs =
+			scheduleData.unassignedARs || [];
 		if (unassignedARs.length === 0) {
-			alert('No unassigned ARs to auto-assign');
+			alert(
+				'No unassigned ARs to auto-assign',
+			);
 			return;
 		}
 
@@ -250,49 +398,96 @@ export default function Schedule() {
 
 		try {
 			for (const ar of unassignedARs) {
-				const collector = scheduleData.collectors[collectorIndex];
-				const scheduledDate = calculateScheduledDate(weekIndex, dayIndex);
+				const collector =
+					scheduleData.collectors[
+						collectorIndex
+					];
+				const scheduledDate =
+					calculateScheduledDate(
+						weekIndex,
+						dayIndex,
+					);
 
-				await fetch('http://localhost:8080/api/ar-collection-assignments', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						arItemId: ar.arItemId,
-						scheduledDate: scheduledDate.toISOString(),
-						collectorName: collector.name,
-						notes: 'Auto-assigned',
-						createdBy: user.username,
-					}),
-				});
+				await fetch(
+					'http://localhost:8080/api/ar-collection-assignments',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type':
+								'application/json',
+						},
+						body: JSON.stringify({
+							arItemId: ar.arItemId,
+							scheduledDate:
+								scheduledDate.toISOString(),
+							collectorName:
+								collector.name,
+							notes: 'Auto-assigned',
+							createdBy: user.username,
+						}),
+					},
+				);
 
 				// Move to next day
 				dayIndex++;
 				if (dayIndex >= DAYS.length) {
 					dayIndex = 0;
-					collectorIndex = (collectorIndex + 1) % scheduleData.collectors.length;
+					collectorIndex =
+						(collectorIndex + 1) %
+						scheduleData.collectors
+							.length;
 				}
 			}
 
 			// Reload data
 			await loadSchedule();
-			alert('Auto-assign completed successfully!');
+			alert(
+				'Auto-assign completed successfully!',
+			);
 		} catch (error) {
-			console.error('Auto-assign failed:', error);
-			alert('Auto-assign failed. Please try again.');
+			console.error(
+				'Auto-assign failed:',
+				error,
+			);
+			alert(
+				'Auto-assign failed. Please try again.',
+			);
 		}
 	};
 
-	const isAssignedInCurrentSelection = (arId: string): boolean => {
-		if (!scheduleData || !selectedCell) return false;
+	const isAssignedInCurrentSelection = (
+		arId: string,
+	): boolean => {
+		if (!scheduleData || !selectedCell)
+			return false;
 
 		// Check if this AR is already assigned to another cell in this week
-		for (let ci = 0; ci < scheduleData.collectors.length; ci++) {
-			for (let di = 0; di < DAYS.length; di++) {
+		for (
+			let ci = 0;
+			ci <
+			scheduleData.collectors.length;
+			ci++
+		) {
+			for (
+				let di = 0;
+				di < DAYS.length;
+				di++
+			) {
 				// Skip the currently selected cell
-				if (ci === selectedCell.ci && di === selectedCell.di) continue;
+				if (
+					ci === selectedCell.ci &&
+					di === selectedCell.di
+				)
+					continue;
 
-				const assignments = getAssignmentsForCell(ci, di);
-				if (assignments.some((a) => a.arDetails._id === arId)) {
+				const assignments =
+					getAssignmentsForCell(ci, di);
+				if (
+					assignments.some(
+						(a) =>
+							a.arDetails._id === arId,
+					)
+				) {
 					return true;
 				}
 			}
@@ -301,8 +496,11 @@ export default function Schedule() {
 		return false;
 	};
 
-	const getStatusClass = (ar: ARItem) => {
-		if (ar.substatus === 'overdue') return 'ov';
+	const getStatusClass = (
+		ar: ARItem,
+	) => {
+		if (ar.substatus === 'overdue')
+			return 'ov';
 		return 'due';
 	};
 
@@ -313,14 +511,23 @@ export default function Schedule() {
 			<div className="welcome">
 				<div>
 					<h1>Schedule — Penagihan</h1>
-					<div className="date">{new Date().toLocaleDateString('id-ID')}</div>
+					<div className="date">
+						{new Date().toLocaleDateString(
+							'id-ID',
+						)}
+					</div>
 				</div>
-				<div className="role">{user.firstName}</div>
+				<div className="role">
+					{user.firstName}
+				</div>
 			</div>
 
 			<section className="vcard">
 				<div className="toolbar">
-					<button className="iconbtn" onClick={handlePrevWeek}>
+					<button
+						className="iconbtn"
+						onClick={handlePrevWeek}
+					>
 						‹
 					</button>
 					<div
@@ -332,7 +539,10 @@ export default function Schedule() {
 					>
 						{WEEKS[weekIndex]}
 					</div>
-					<button className="iconbtn" onClick={handleNextWeek}>
+					<button
+						className="iconbtn"
+						onClick={handleNextWeek}
+					>
 						›
 					</button>
 					<div className="spacer"></div>
@@ -344,7 +554,8 @@ export default function Schedule() {
 							gap: '6px',
 						}}
 					>
-						<span className="sc-dot ov"></span>Overdue
+						<span className="sc-dot ov"></span>
+						Overdue
 					</span>
 					<span
 						className="pill-note"
@@ -354,153 +565,312 @@ export default function Schedule() {
 							gap: '6px',
 						}}
 					>
-						<span className="sc-dot due"></span>Due 2 minggu
+						<span className="sc-dot due"></span>
+						Due 2 minggu
 					</span>
-					<button className="btn ghost sm" onClick={handleAutoAssign}>
+					<button
+						className="btn ghost sm"
+						onClick={handleAutoAssign}
+					>
 						Auto-assign
 					</button>
 				</div>
 
 				{loading ? (
-					<div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>
+					<div
+						style={{
+							padding: '40px',
+							textAlign: 'center',
+						}}
+					>
+						Loading...
+					</div>
 				) : (
 					<div className="sched-wrap">
-						<div className="sched" id="schedGrid">
-							<div className="sc-head">Kolektor</div>
+						<div
+							className="sched"
+							id="schedGrid"
+						>
+							<div className="sc-head">
+								Kolektor
+							</div>
 							{DAYS.map((day) => (
-								<div className="sc-head" key={day}>
+								<div
+									className="sc-head"
+									key={day}
+								>
 									{day}
 								</div>
 							))}
 
-							{scheduleData?.collectors.map((collector, ci) => (
-								<>
-									<div key={`collector-${ci}`} className="sc-cell sc-staff">
-										<span className="sc-av">{collector.firstName.charAt(0)}</span>
-										<div>
-											<div className="sc-nm">{collector.firstName}</div>
-											<div className="sc-ar">@{collector.username}</div>
-										</div>
-									</div>
-									{DAYS.map((_, di) => {
-										const assignments = getAssignmentsForCell(ci, di);
-										return (
-											<div key={`cell-${ci}-${di}`} className="sc-cell">
-												<div className="sc-day">
-													<div className="sc-cnt">{assignments.length} tagihan</div>
-													{assignments.map((assignment) => {
-														const ar = assignment.arDetails;
-														return (
-															<div
-																key={assignment._id}
-																className="sc-store"
-																title={`${ar.client} · ${ar.subject} · ${rupiah(ar.total)}`}
-															>
-																<span className="sc-doc">
-																	<span className={`sc-dot ${getStatusClass(ar)}`}></span>
-																	<span className="sc-source">
-																		{ar.source === 'Project' ? 'P' : 'R'}
-																	</span>
-																	{ar.arItemId}
-																</span>
-																<span
-																	className="x"
-																	onClick={() => removeAssignment(assignment._id)}
-																>
-																	×
-																</span>
-															</div>
-														);
-													})}
-													<button
-														className="sc-add"
-														onClick={() => openAssignModal(ci, di)}
-													>
-														+ Assign
-													</button>
+							{scheduleData?.collectors.map(
+								(collector, ci) => (
+									<>
+										<div
+											key={`collector-${ci}`}
+											className="sc-cell sc-staff"
+										>
+											<span className="sc-av">
+												{collector.firstName.charAt(
+													0,
+												)}
+											</span>
+											<div>
+												<div className="sc-nm">
+													{
+														collector.firstName
+													}
+												</div>
+												<div className="sc-ar">
+													@
+													{
+														collector.username
+													}
 												</div>
 											</div>
-										);
-									})}
-								</>
-							))}
+										</div>
+										{DAYS.map(
+											(_, di) => {
+												const assignments =
+													getAssignmentsForCell(
+														ci,
+														di,
+													);
+												return (
+													<div
+														key={`cell-${ci}-${di}`}
+														className="sc-cell"
+													>
+														<div className="sc-day">
+															<div className="sc-cnt">
+																{
+																	assignments.length
+																}{' '}
+																tagihan
+															</div>
+															{assignments.map(
+																(
+																	assignment,
+																) => {
+																	const ar =
+																		assignment.arDetails;
+																	return (
+																		<div
+																			key={
+																				assignment._id
+																			}
+																			className="sc-store"
+																			title={`${ar.client} · ${ar.subject} · ${rupiah(ar.total)}`}
+																		>
+																			<span className="sc-doc">
+																				<span
+																					className={`sc-dot ${getStatusClass(ar)}`}
+																				></span>
+																				<span className="sc-source">
+																					{ar.source ===
+																					'Project'
+																						? 'P'
+																						: 'R'}
+																				</span>
+																				{
+																					ar.arItemId
+																				}
+																			</span>
+																			<span
+																				className="x"
+																				onClick={() =>
+																					removeAssignment(
+																						assignment._id,
+																					)
+																				}
+																			>
+																				×
+																			</span>
+																		</div>
+																	);
+																},
+															)}
+															<button
+																className="sc-add"
+																onClick={() =>
+																	openAssignModal(
+																		ci,
+																		di,
+																	)
+																}
+															>
+																+ Assign
+															</button>
+														</div>
+													</div>
+												);
+											},
+										)}
+									</>
+								),
+							)}
 						</div>
 					</div>
 				)}
 			</section>
 
 			{/* Assign Modal */}
-			{showAssignModal && selectedCell && scheduleData && (
-				<div
-					className="amodal-overlay open"
-					onClick={(e) => {
-						if (e.target === e.currentTarget) setShowAssignModal(false);
-					}}
-				>
-					<div className="amodal">
-						<div className="amodal-head">
-							<h3>
-								Assign Penagihan —{' '}
-								{scheduleData.collectors[selectedCell.ci]?.firstName} · {DAYS[selectedCell.di]}
-							</h3>
-							<button className="amodal-x" onClick={() => setShowAssignModal(false)}>
-								×
-							</button>
-						</div>
-						<div className="amodal-sub">
-							Pilih PO / Order penagihan untuk ditugaskan ke kolektor ini.
-						</div>
-						<div className="amodal-list">
-							{getAllARs().map((ar) => {
-								const isAssigned = isAssignedInCurrentSelection(ar._id);
-								const isSelected = selectedItems[ar._id];
-								const isDisabled = isAssigned && !isSelected;
-
-								return (
-									<label
-										key={ar._id}
-										className={`asg-item ${isSelected ? 'on' : ''} ${
-											isDisabled ? 'disabled' : ''
-										}`}
-									>
-										<input
-											type="checkbox"
-											checked={isSelected || false}
-											disabled={isDisabled}
-											onChange={(e) => {
-												setSelectedItems({
-													...selectedItems,
-													[ar._id]: e.target.checked,
-												});
-											}}
-										/>
-										<span className={`sc-dot ${getStatusClass(ar)}`}></span>
-										<span className="asg-source">{ar.source === 'Project' ? 'P' : 'R'}</span>
-										<span className="asg-id">{ar.arItemId}</span>
-										<span className="asg-client">{ar.client}</span>
-										<span className="asg-val">{rupiah(ar.total)}</span>
-										{isDisabled ? (
-											<span className="asg-note">Assigned</span>
-										) : (
-											<span className={`asg-status ${getStatusClass(ar)}`}>
-												{ar.substatus || ar.status}
-											</span>
-										)}
-									</label>
+			{showAssignModal &&
+				selectedCell &&
+				scheduleData && (
+					<div
+						className="amodal-overlay open"
+						onClick={(e) => {
+							if (
+								e.target ===
+								e.currentTarget
+							)
+								setShowAssignModal(
+									false,
 								);
-							})}
-						</div>
-						<div className="amodal-foot">
-							<button className="btn ghost" onClick={() => setShowAssignModal(false)}>
-								Batal
-							</button>
-							<button className="btn" onClick={saveAssignments}>
-								Simpan
-							</button>
+						}}
+					>
+						<div className="amodal">
+							<div className="amodal-head">
+								<h3>
+									Assign Penagihan —{' '}
+									{
+										scheduleData
+											.collectors[
+											selectedCell.ci
+										]?.firstName
+									}{' '}
+									·{' '}
+									{
+										DAYS[
+											selectedCell.di
+										]
+									}
+								</h3>
+								<button
+									className="amodal-x"
+									onClick={() =>
+										setShowAssignModal(
+											false,
+										)
+									}
+								>
+									×
+								</button>
+							</div>
+							<div className="amodal-sub">
+								Pilih PO / Order
+								penagihan untuk
+								ditugaskan ke kolektor
+								ini.
+							</div>
+							<div className="amodal-list">
+								{getAllARs().map(
+									(ar) => {
+										const isAssigned =
+											isAssignedInCurrentSelection(
+												ar._id,
+											);
+										const isSelected =
+											selectedItems[
+												ar._id
+											];
+										const isDisabled =
+											isAssigned &&
+											!isSelected;
+
+										return (
+											<label
+												key={ar._id}
+												className={`asg-item ${isSelected ? 'on' : ''} ${
+													isDisabled
+														? 'disabled'
+														: ''
+												}`}
+											>
+												<input
+													type="checkbox"
+													checked={
+														isSelected ||
+														false
+													}
+													disabled={
+														isDisabled
+													}
+													onChange={(
+														e,
+													) => {
+														setSelectedItems(
+															{
+																...selectedItems,
+																[ar._id]:
+																	e
+																		.target
+																		.checked,
+															},
+														);
+													}}
+												/>
+												<span
+													className={`sc-dot ${getStatusClass(ar)}`}
+												></span>
+												<span className="asg-source">
+													{ar.source ===
+													'Project'
+														? 'P'
+														: 'R'}
+												</span>
+												<span className="asg-id">
+													{ar.arItemId}
+												</span>
+												<span className="asg-client">
+													{ar.client}
+												</span>
+												<span className="asg-val">
+													{rupiah(
+														ar.total,
+													)}
+												</span>
+												{isDisabled ? (
+													<span className="asg-note">
+														Assigned
+													</span>
+												) : (
+													<span
+														className={`asg-status ${getStatusClass(ar)}`}
+													>
+														{ar.substatus ||
+															ar.status}
+													</span>
+												)}
+											</label>
+										);
+									},
+								)}
+							</div>
+							<div className="amodal-foot">
+								<button
+									className="btn ghost"
+									onClick={() =>
+										setShowAssignModal(
+											false,
+										)
+									}
+								>
+									Batal
+								</button>
+								<button
+									className="btn"
+									onClick={
+										saveAssignments
+									}
+								>
+									Simpan
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
-			)}
+				)}
 
 			<style jsx>{`
 				.welcome {
@@ -530,10 +900,12 @@ export default function Schedule() {
 
 				.vcard {
 					background: var(--card, #fff);
-					border: 1px solid var(--border);
+					border: 1px solid
+						var(--border);
 					border-radius: 12px;
 					padding: 24px 28px;
-					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+					box-shadow: 0 2px 8px
+						rgba(0, 0, 0, 0.04);
 				}
 
 				.toolbar {
@@ -552,7 +924,10 @@ export default function Schedule() {
 					display: inline-block;
 					font-size: 12px;
 					color: var(--muted);
-					background: var(--bg, #f5f5f5);
+					background: var(
+						--bg,
+						#f5f5f5
+					);
 					border-radius: 100px;
 					padding: 5px 12px;
 				}
@@ -563,7 +938,8 @@ export default function Schedule() {
 					display: inline-flex;
 					align-items: center;
 					justify-content: center;
-					border: 1px solid var(--border);
+					border: 1px solid
+						var(--border);
 					border-radius: 7px;
 					background: #fff;
 					color: var(--muted);
@@ -586,7 +962,8 @@ export default function Schedule() {
 					border: none;
 					border-radius: 9px;
 					cursor: pointer;
-					font-family: 'Montserrat', sans-serif;
+					font-family:
+						'Montserrat', sans-serif;
 					font-weight: 700;
 					font-size: 13px;
 					color: #fff;
@@ -597,7 +974,8 @@ export default function Schedule() {
 
 				.btn.ghost {
 					background: #fff;
-					border: 1px solid var(--border);
+					border: 1px solid
+						var(--border);
 					color: var(--text);
 				}
 
@@ -610,19 +988,25 @@ export default function Schedule() {
 
 				.sched-wrap {
 					overflow-x: auto;
-					border: 1px solid var(--border);
+					border: 1px solid
+						var(--border);
 					border-radius: 12px;
 				}
 
 				.sched {
 					display: grid;
-					grid-template-columns: 170px repeat(6, minmax(150px, 1fr));
+					grid-template-columns: 170px repeat(
+							6,
+							minmax(150px, 1fr)
+						);
 					min-width: 1000px;
 				}
 
 				.sc-cell {
-					border-right: 1px solid var(--border);
-					border-bottom: 1px solid var(--border);
+					border-right: 1px solid
+						var(--border);
+					border-bottom: 1px solid
+						var(--border);
 					padding: 9px;
 				}
 
@@ -635,8 +1019,10 @@ export default function Schedule() {
 					letter-spacing: 0.03em;
 					text-align: center;
 					padding: 12px 8px;
-					border-bottom: 1px solid var(--border);
-					border-right: 1px solid var(--border);
+					border-bottom: 1px solid
+						var(--border);
+					border-right: 1px solid
+						var(--border);
 				}
 
 				.sc-staff {
@@ -695,7 +1081,8 @@ export default function Schedule() {
 					justify-content: space-between;
 					gap: 6px;
 					background: #fff;
-					border: 1px solid var(--border);
+					border: 1px solid
+						var(--border);
 					border-radius: 7px;
 					padding: 5px 8px;
 					font-size: 11px;
@@ -755,7 +1142,8 @@ export default function Schedule() {
 					background: none;
 					border-radius: 7px;
 					color: var(--muted);
-					font-family: 'Montserrat', sans-serif;
+					font-family:
+						'Montserrat', sans-serif;
 					font-weight: 700;
 					font-size: 11px;
 					padding: 5px;
@@ -770,7 +1158,12 @@ export default function Schedule() {
 				.amodal-overlay {
 					position: fixed;
 					inset: 0;
-					background: rgba(18, 21, 103, 0.34);
+					background: rgba(
+						18,
+						21,
+						103,
+						0.34
+					);
 					display: none;
 					align-items: flex-start;
 					justify-content: center;
@@ -788,7 +1181,8 @@ export default function Schedule() {
 					border-radius: 14px;
 					width: 100%;
 					max-width: 620px;
-					box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+					box-shadow: 0 24px 60px
+						rgba(0, 0, 0, 0.25);
 					margin: auto;
 					overflow: hidden;
 				}
@@ -820,7 +1214,8 @@ export default function Schedule() {
 					padding: 0 24px 14px;
 					font-size: 12.5px;
 					color: var(--muted);
-					border-bottom: 1px solid var(--border);
+					border-bottom: 1px solid
+						var(--border);
 				}
 
 				.amodal-list {
@@ -926,7 +1321,8 @@ export default function Schedule() {
 					justify-content: flex-end;
 					gap: 10px;
 					padding: 16px 24px;
-					border-top: 1px solid var(--border);
+					border-top: 1px solid
+						var(--border);
 					background: #f8fbff;
 				}
 			`}</style>
