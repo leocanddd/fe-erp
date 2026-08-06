@@ -137,6 +137,11 @@ export const NAV_ITEMS: NavItem[] = [
 				defaultRoles: [5],
 			},
 			{
+				name: 'Telegram Bots',
+				href: '/telebots',
+				defaultRoles: [5],
+			},
+			{
 				name: 'History',
 				href: '/history',
 				defaultRoles: [5],

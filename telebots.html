@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"
+		/>
+		<title>DKI ERP — Telegram Bot Users</title>
+		<link
+			rel="preconnect"
+			href="https://fonts.googleapis.com"
+		/>
+		<link
+			rel="preconnect"
+			href="https://fonts.gstatic.com"
+			crossorigin
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&display=swap"
+			rel="stylesheet"
+		/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+		<link
+			rel="stylesheet"
+			href="shell.css"
+		/>
+		<script src="auth.js"></script>
+		<script src="api.js"></script>
+	</head>
+	<body>
+		<!-- ====================== SIDEBAR ====================== -->
+		<aside class="sidebar" id="sidebar">
+			<div class="sidebar-logo">
+				<img
+					class="logo-img"
+					src="assets/Logo_DKI.png"
+					alt="PT Duta Kencana Indah"
+				/>
+			</div>
+
+			<nav class="nav" id="nav"></nav>
+
+			<div class="sidebar-bottom">
+				<div class="user-row">
+					<div class="avatar">R</div>
+					<div class="user-meta">
+						<div class="nm">Rayvin</div>
+						<div class="rl">
+							Superadmin
+						</div>
+					</div>
+				</div>
+				<a
+					class="logout-row"
+					href="index.html"
+					title="Log Out"
+				>
+					<svg
+						class="ic"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path
+							d="M9 21 H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+						/>
+						<polyline
+							points="16 17 21 12 16 7"
+						/>
+						<line
+							x1="21"
+							y1="12"
+							x2="9"
+							y2="12"
+						/>
+					</svg>
+					<span class="label"
+						>LOG OUT</span
+					>
+				</a>
+			</div>
+		</aside>
+
+		<!-- ====================== HEADER ====================== -->
+		<header class="header">
+			<button
+				class="collapse-toggle"
+				id="collapseToggle"
+			>
+				«
+			</button>
+			<div
+				class="breadcrumb"
+				id="breadcrumb"
+			></div>
+			<div class="company">
+				PT. DUTA KENCANA INDAH
+			</div>
+		</header>
+
+		<!-- ====================== MAIN ====================== -->
+		<main class="main">
+			<div class="welcome">
+				<div>
+					<h1>Telegram Bot Users</h1>
+					<div class="date" id="currentDate">
+						05 Jun 2026
+					</div>
+				</div>
+				<div class="role">
+					Superadmin
+				</div>
+			</div>
+
+			<div class="export-row">
+				<button
+					class="btn-export"
+					onclick="openCreateModal()"
+				>
+					+ Add Bot User
+				</button>
+			</div>
+
+			<section class="vcard">
+				<div class="toolbar">
+					<div class="search">
+						<svg
+							width="18"
+							height="18"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<circle cx="11" cy="11" r="8" />
+							<path d="m21 21-4.35-4.35" />
+						</svg>
+						<input
+							type="text"
+							placeholder="Search by name, employee number, or telegram username..."
+							id="searchInput"
+						/>
+					</div>
+				</div>
+
+				<div class="table-wrap">
+					<table class="dtable">
+						<thead>
+							<tr>
+								<th>EMPLOYEE NO.</th>
+								<th>NAME</th>
+								<th>TELEGRAM ID</th>
+								<th>USERNAME</th>
+								<th>ROLE</th>
+								<th>STATUS</th>
+								<th class="t-center">ACTIONS</th>
+							</tr>
+						</thead>
+						<tbody id="tableBody">
+							<!-- Data will be populated here -->
+						</tbody>
+					</table>
+				</div>
+
+				<div class="empty" id="emptyState" style="display: none;">
+					<svg
+						width="48"
+						height="48"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+						<circle cx="12" cy="7" r="4" />
+					</svg>
+					<div class="et">No Telegram Bot Users Found</div>
+					<div>Click "Add Bot User" to create a new user</div>
+				</div>
+			</section>
+		</main>
+
+		<!-- ====================== CREATE/EDIT MODAL ====================== -->
+		<div class="modal-overlay" id="formModal">
+			<div class="modal">
+				<div class="modal-head">
+					<h3 id="modalTitle">Add Telegram Bot User</h3>
+					<button class="modal-x" onclick="closeFormModal()">×</button>
+				</div>
+				<div class="modal-body">
+					<form id="botUserForm">
+						<div class="fgrid">
+							<div class="field">
+								<label>Employee Number <span style="color: #fe2c23;">*</span></label>
+								<input
+									type="text"
+									class="input"
+									id="employeeNumber"
+									required
+									placeholder="e.g., EMP001"
+								/>
+							</div>
+							<div class="field">
+								<label>Name <span style="color: #fe2c23;">*</span></label>
+								<input
+									type="text"
+									class="input"
+									id="name"
+									required
+									placeholder="Full name"
+								/>
+							</div>
+							<div class="field">
+								<label>Telegram ID <span style="color: #fe2c23;">*</span></label>
+								<input
+									type="number"
+									class="input"
+									id="telegramId"
+									required
+									placeholder="e.g., 123456789"
+								/>
+							</div>
+							<div class="field">
+								<label>Telegram Username <span style="color: #fe2c23;">*</span></label>
+								<input
+									type="text"
+									class="input"
+									id="telegramUsername"
+									required
+									placeholder="@username"
+								/>
+							</div>
+							<div class="field full">
+								<label>Role <span style="color: #fe2c23;">*</span></label>
+								<select class="selectbox" id="role" required>
+									<option value="">Select role...</option>
+									<option value="admin">Admin</option>
+									<option value="user">User</option>
+									<option value="collector">Collector</option>
+									<option value="salesperson">Salesperson</option>
+								</select>
+							</div>
+							<div class="field full">
+								<label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+									<input
+										type="checkbox"
+										id="active"
+										checked
+										style="width: 18px; height: 18px; cursor: pointer;"
+									/>
+									<span>Active</span>
+								</label>
+								<div class="hint">Inactive users cannot access the bot</div>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-foot">
+					<button class="btn ghost" onclick="closeFormModal()">Cancel</button>
+					<button class="btn" onclick="saveBot()">Save</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ====================== DELETE CONFIRMATION MODAL ====================== -->
+		<div class="modal-overlay" id="deleteModal">
+			<div class="modal" style="max-width: 420px;">
+				<div class="modal-head">
+					<h3>Delete Telegram Bot User</h3>
+					<button class="modal-x" onclick="closeDeleteModal()">×</button>
+				</div>
+				<div class="modal-body">
+					<p style="margin: 0; color: var(--text); line-height: 1.6;">
+						Are you sure you want to delete <strong id="deleteName"></strong>? This action cannot be undone.
+					</p>
+				</div>
+				<div class="modal-foot">
+					<button class="btn ghost" onclick="closeDeleteModal()">Cancel</button>
+					<button class="btn" style="background: #fe2c23;" onclick="confirmDelete()">Delete</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ====================== TOAST NOTIFICATION ====================== -->
+		<div class="toast" id="toast">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M20 6L9 17l-5-5" />
+			</svg>
+			<span id="toastMessage"></span>
+		</div>
+
+		<style>
+			/* ===== export buttons ===== */
+			.export-row {
+				display: flex;
+				justify-content: flex-end;
+				gap: 10px;
+				margin: -8px 0 16px;
+			}
+			.btn-export {
+				height: 34px;
+				padding: 0 20px;
+				border: none;
+				border-radius: 8px;
+				cursor: pointer;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 700;
+				font-size: 13px;
+				color: #fff;
+				transition: filter 0.2s ease;
+				background: var(--grad);
+			}
+			.btn-export:hover {
+				filter: brightness(1.08);
+			}
+
+			/* ===== main card ===== */
+			.vcard {
+				background: var(--card);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 24px 28px;
+				box-shadow: 0 2px 8px
+					rgba(0, 0, 0, 0.04);
+			}
+
+			/* ===== table ===== */
+			.table-wrap {
+				overflow-x: auto;
+			}
+
+			/* ===== modals ===== */
+			.modal-overlay {
+				position: fixed;
+				inset: 0;
+				background: rgba(18, 21, 103, 0.34);
+				display: none;
+				align-items: flex-start;
+				justify-content: center;
+				z-index: 2000;
+				padding: 40px 20px;
+				overflow: auto;
+			}
+			.modal-overlay.open {
+				display: flex;
+			}
+			.modal {
+				background: #fff;
+				border-radius: 14px;
+				width: 100%;
+				max-width: 680px;
+				box-shadow: 0 24px 60px
+					rgba(0, 0, 0, 0.25);
+				margin: auto;
+				overflow: hidden;
+			}
+			.modal-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 20px 24px 14px;
+				border-bottom: 1px solid var(--border);
+			}
+			.modal-head h3 {
+				margin: 0;
+				font-weight: 800;
+				font-size: 17px;
+				color: var(--dark);
+			}
+			.modal-x {
+				border: none;
+				background: none;
+				font-size: 24px;
+				line-height: 1;
+				color: var(--muted);
+				cursor: pointer;
+				transition: 0.18s;
+			}
+			.modal-x:hover {
+				color: var(--dark);
+			}
+			.modal-body {
+				padding: 24px;
+			}
+			.modal-foot {
+				display: flex;
+				justify-content: flex-end;
+				gap: 10px;
+				padding: 16px 24px;
+				border-top: 1px solid
+					var(--border);
+				background: #f8fbff;
+			}
+
+			/* ===== toast ===== */
+			.toast {
+				position: fixed;
+				left: 50%;
+				bottom: 30px;
+				transform: translate(-50%, 20px);
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				background: var(--dark);
+				color: #fff;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 600;
+				font-size: 13px;
+				padding: 12px 18px;
+				border-radius: 10px;
+				box-shadow: 0 10px 30px
+					rgba(18, 21, 103, 0.32);
+				opacity: 0;
+				pointer-events: none;
+				transition:
+					opacity 0.25s,
+					transform 0.25s;
+				z-index: 3000;
+			}
+			.toast.show {
+				opacity: 1;
+				transform: translate(-50%, 0);
+			}
+			.toast svg {
+				flex: 0 0 auto;
+				color: #25d366;
+			}
+		</style>
+
+		<style>
+			/* ====================== SCAFFOLD UTILITIES (shared across pages) ====================== */
+			.welcome h1 {
+				margin: 0;
+				font-weight: 800;
+				font-size: 24px;
+				color: var(--dark);
+			}
+
+			/* toolbar */
+			.toolbar {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				flex-wrap: wrap;
+				margin-bottom: 18px;
+			}
+			.search {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				height: 38px;
+				padding: 0 14px;
+				background: #fff;
+				border: 1px solid var(--border);
+				border-radius: 9px;
+				min-width: 320px;
+				flex: 1;
+				color: var(--muted);
+			}
+			.search input {
+				border: none;
+				outline: none;
+				font-family:
+					'Montserrat', sans-serif;
+				font-size: 13px;
+				color: var(--text);
+				width: 100%;
+				background: transparent;
+			}
+			.search svg {
+				flex: 0 0 auto;
+			}
+
+			/* buttons */
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				height: 38px;
+				padding: 0 18px;
+				border: none;
+				border-radius: 9px;
+				cursor: pointer;
+				font-family:
+					'Montserrat', sans-serif;
+				font-weight: 700;
+				font-size: 13px;
+				color: #fff;
+				background: var(--grad);
+				transition: 0.18s;
+				white-space: nowrap;
+			}
+			.btn:hover {
+				filter: brightness(1.07);
+				transform: translateY(-1px);
+			}
+			.btn.ghost {
+				background: #fff;
+				border: 1px solid var(--border);
+				color: var(--text);
+			}
+			.btn.ghost:hover {
+				border-color: var(--blue);
+				color: var(--blue);
+				transform: none;
+				filter: none;
+			}
+
+			/* generic data table */
+			.dtable {
+				width: 100%;
+				border-collapse: collapse;
+			}
+			.dtable thead th {
+				text-align: left;
+				font-weight: 600;
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				color: var(--muted);
+				padding: 0 14px 12px;
+				border-bottom: 1px solid
+					var(--border);
+				white-space: nowrap;
+			}
+			.dtable tbody td {
+				padding: 14px;
+				border-bottom: 1px solid #f1f4f8;
+				font-size: 13px;
+				color: var(--text);
+				vertical-align: middle;
+			}
+			.dtable tbody tr {
+				transition: background 0.15s
+					ease;
+			}
+			.dtable tbody tr:hover {
+				background: #f8fbff;
+			}
+			.dtable .t-id {
+				font-weight: 700;
+				color: var(--dark);
+				white-space: nowrap;
+			}
+			.dtable .t-strong {
+				font-weight: 600;
+				color: var(--text);
+			}
+			.dtable .t-center {
+				text-align: center;
+			}
+			.row-actions {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				justify-content: center;
+			}
+			.iconbtn {
+				width: 30px;
+				height: 30px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				border: 1px solid var(--border);
+				border-radius: 7px;
+				background: #fff;
+				color: var(--muted);
+				cursor: pointer;
+				transition: 0.18s;
+			}
+			.iconbtn:hover {
+				border-color: var(--blue);
+				color: var(--blue);
+			}
+			.iconbtn.red:hover {
+				border-color: #fe2c23;
+				color: #fe2c23;
+			}
+
+			/* status chips */
+			.chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-weight: 700;
+				font-size: 11px;
+				padding: 4px 11px;
+				border-radius: 100px;
+				white-space: nowrap;
+			}
+			.chip .cdot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: currentColor;
+			}
+			.chip.green {
+				background: #e7f7ee;
+				color: #1f8a4d;
+			}
+			.chip.grey {
+				background: #eef1f5;
+				color: #697789;
+			}
+
+			/* forms */
+			.fgrid {
+				display: grid;
+				grid-template-columns: repeat(
+					2,
+					1fr
+				);
+				gap: 18px 22px;
+			}
+			.field {
+				display: flex;
+				flex-direction: column;
+				gap: 7px;
+				min-width: 0;
+			}
+			.field.full {
+				grid-column: 1 / -1;
+			}
+			.field label {
+				font-weight: 600;
+				font-size: 12px;
+				color: var(--dark);
+			}
+			.field .hint {
+				font-weight: 400;
+				font-size: 11px;
+				color: var(--muted);
+			}
+			.input,
+			.selectbox {
+				font-family:
+					'Montserrat', sans-serif;
+				font-size: 13px;
+				color: var(--text);
+				border: 1px solid var(--border);
+				border-radius: 9px;
+				padding: 10px 13px;
+				background: #fff;
+				outline: none;
+				transition: border-color 0.18s;
+				width: 100%;
+			}
+			.input:focus,
+			.selectbox:focus {
+				border-color: var(--blue);
+			}
+
+			/* empty state */
+			.empty {
+				text-align: center;
+				color: var(--muted);
+				padding: 48px 20px;
+			}
+			.empty svg {
+				opacity: 0.5;
+				margin-bottom: 12px;
+			}
+			.empty .et {
+				font-weight: 700;
+				font-size: 15px;
+				color: var(--text);
+				margin-bottom: 4px;
+			}
+		</style>
+
+		<script>
+			window.ACTIVE_KEY = 'admin';
+			window.SELECTED_IDX = 1; // Adjust based on sidebar position
+		</script>
+		<script src="shell.js"></script>
+		<script>
+			/* ====================== PAGE SCRIPT ====================== */
+
+			let BOTS = [];
+			let EDIT_ID = null;
+			let DELETE_ID = null;
+
+			// Helper functions
+			function $(id) {
+				return document.getElementById(id);
+			}
+
+			function showToast(message) {
+				const toast = $('toast');
+				$('toastMessage').textContent = message;
+				toast.classList.add('show');
+				setTimeout(() => toast.classList.remove('show'), 3000);
+			}
+
+			function formatDate(dateString) {
+				if (!dateString) return '-';
+				const date = new Date(dateString);
+				return date.toLocaleDateString('id-ID', {
+					day: '2-digit',
+					month: 'short',
+					year: 'numeric'
+				});
+			}
+
+			// Load data
+			async function loadBots() {
+				try {
+					const response = await fetch(API_BASE_URL + '/api/telebots', {
+						headers: {
+							'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+						}
+					});
+					const result = await response.json();
+
+					if (result.status === 'success') {
+						BOTS = result.data || [];
+						renderTable();
+					} else {
+						showToast('Failed to load data');
+					}
+				} catch (err) {
+					console.error('Failed to load bots:', err);
+					showToast('Error loading data');
+					BOTS = [];
+					renderTable();
+				}
+			}
+
+			// Render table
+			function renderTable() {
+				const tbody = $('tableBody');
+				const emptyState = $('emptyState');
+				const searchTerm = $('searchInput').value.toLowerCase();
+
+				let filtered = BOTS.filter(bot => {
+					if (!searchTerm) return true;
+					return (
+						bot.name.toLowerCase().includes(searchTerm) ||
+						bot.employee_number.toLowerCase().includes(searchTerm) ||
+						(bot.telegram_username && bot.telegram_username.toLowerCase().includes(searchTerm))
+					);
+				});
+
+				if (filtered.length === 0) {
+					tbody.innerHTML = '';
+					emptyState.style.display = 'block';
+					return;
+				}
+
+				emptyState.style.display = 'none';
+				tbody.innerHTML = filtered.map(bot => `
+					<tr>
+						<td class="t-id">${bot.employee_number}</td>
+						<td class="t-strong">${bot.name}</td>
+						<td>${bot.telegram_id}</td>
+						<td>${bot.telegram_username || '-'}</td>
+						<td>${bot.role}</td>
+						<td>
+							<span class="chip ${bot.active ? 'green' : 'grey'}">
+								<span class="cdot"></span>
+								${bot.active ? 'Active' : 'Inactive'}
+							</span>
+						</td>
+						<td class="t-center">
+							<div class="row-actions">
+								<button class="iconbtn" onclick="openEditModal('${bot.id}')" title="Edit">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+										<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+									</svg>
+								</button>
+								<button class="iconbtn red" onclick="openDeleteModal('${bot.id}')" title="Delete">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<polyline points="3 6 5 6 21 6" />
+										<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+									</svg>
+								</button>
+							</div>
+						</td>
+					</tr>
+				`).join('');
+			}
+
+			// Modal functions
+			window.openCreateModal = function() {
+				EDIT_ID = null;
+				$('modalTitle').textContent = 'Add Telegram Bot User';
+				$('botUserForm').reset();
+				$('active').checked = true;
+				$('formModal').classList.add('open');
+			};
+
+			window.openEditModal = function(id) {
+				const bot = BOTS.find(b => b.id === id);
+				if (!bot) return;
+
+				EDIT_ID = id;
+				$('modalTitle').textContent = 'Edit Telegram Bot User';
+				$('employeeNumber').value = bot.employee_number;
+				$('name').value = bot.name;
+				$('telegramId').value = bot.telegram_id;
+				$('telegramUsername').value = bot.telegram_username || '';
+				$('role').value = bot.role;
+				$('active').checked = bot.active;
+				$('formModal').classList.add('open');
+			};
+
+			window.closeFormModal = function() {
+				$('formModal').classList.remove('open');
+				$('botUserForm').reset();
+				EDIT_ID = null;
+			};
+
+			window.openDeleteModal = function(id) {
+				const bot = BOTS.find(b => b.id === id);
+				if (!bot) return;
+
+				DELETE_ID = id;
+				$('deleteName').textContent = bot.name;
+				$('deleteModal').classList.add('open');
+			};
+
+			window.closeDeleteModal = function() {
+				$('deleteModal').classList.remove('open');
+				DELETE_ID = null;
+			};
+
+			// Save bot
+			window.saveBot = async function() {
+				const form = $('botUserForm');
+				if (!form.checkValidity()) {
+					form.reportValidity();
+					return;
+				}
+
+				const data = {
+					employee_number: $('employeeNumber').value.trim(),
+					name: $('name').value.trim(),
+					telegram_id: parseInt($('telegramId').value),
+					telegram_username: $('telegramUsername').value.trim(),
+					role: $('role').value,
+					active: $('active').checked
+				};
+
+				try {
+					const url = EDIT_ID
+						? `${API_BASE_URL}/api/telebots/${EDIT_ID}`
+						: `${API_BASE_URL}/api/telebots`;
+
+					const response = await fetch(url, {
+						method: EDIT_ID ? 'PUT' : 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+						},
+						body: JSON.stringify(data)
+					});
+
+					const result = await response.json();
+
+					if (result.status === 'success') {
+						showToast(result.message || (EDIT_ID ? 'Bot user updated successfully' : 'Bot user created successfully'));
+						closeFormModal();
+						loadBots();
+					} else {
+						showToast('Failed to save bot user');
+					}
+				} catch (err) {
+					console.error('Failed to save bot:', err);
+					showToast('Error saving bot user');
+				}
+			};
+
+			// Delete bot
+			window.confirmDelete = async function() {
+				if (!DELETE_ID) return;
+
+				try {
+					const response = await fetch(`${API_BASE_URL}/api/telebots/${DELETE_ID}`, {
+						method: 'DELETE',
+						headers: {
+							'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+						}
+					});
+
+					const result = await response.json();
+
+					if (result.status === 'success') {
+						showToast(result.message || 'Bot user deleted successfully');
+						closeDeleteModal();
+						loadBots();
+					} else {
+						showToast('Failed to delete bot user');
+					}
+				} catch (err) {
+					console.error('Failed to delete bot:', err);
+					showToast('Error deleting bot user');
+				}
+			};
+
+			// Search
+			$('searchInput').addEventListener('input', () => {
+				renderTable();
+			});
+
+			// Close modals on overlay click
+			$('formModal').addEventListener('click', (e) => {
+				if (e.target === $('formModal')) closeFormModal();
+			});
+			$('deleteModal').addEventListener('click', (e) => {
+				if (e.target === $('deleteModal')) closeDeleteModal();
+			});
+
+			// Set current date
+			const now = new Date();
+			$('currentDate').textContent = now.toLocaleDateString('id-ID', {
+				day: '2-digit',
+				month: 'short',
+				year: 'numeric'
+			});
+
+			// Initialize
+			loadBots();
+		</script>
+	</body>
+</html>
