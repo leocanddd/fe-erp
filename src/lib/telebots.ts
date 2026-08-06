@@ -3,7 +3,8 @@ const API_BASE_URL =
 	'http://localhost:3001';
 
 export interface TeleBot {
-	id: string;
+	id?: string;
+	_id?: string; // MongoDB uses _id
 	employee_number: string;
 	name: string;
 	telegram_id: number;

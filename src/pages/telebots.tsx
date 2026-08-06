@@ -100,6 +100,13 @@ export default function TeleBots() {
 	};
 
 	const handleEditBot = (bot: TeleBot) => {
+		console.log('Editing bot:', bot); // Debug log
+		const botId = bot.id || bot._id;
+		if (!botId) {
+			console.error('Bot ID is missing:', bot);
+			setError('Cannot edit: Bot ID is missing');
+			return;
+		}
 		setEditingBot(bot);
 		setNewBotData({
 			employee_number: bot.employee_number,
@@ -116,10 +123,16 @@ export default function TeleBots() {
 		e.preventDefault();
 		if (!editingBot) return;
 
+		const botId = editingBot.id || editingBot._id;
+		if (!botId) {
+			setError('Cannot update: Bot ID is missing');
+			return;
+		}
+
 		setSubmitting(true);
 
 		try {
-			const result = await updateTeleBot(editingBot.id, newBotData);
+			const result = await updateTeleBot(botId, newBotData);
 			if (result.statusCode === 200) {
 				setShowEditModal(false);
 				setEditingBot(null);
@@ -152,10 +165,16 @@ export default function TeleBots() {
 	const confirmDelete = async () => {
 		if (!deletingBot) return;
 
+		const botId = deletingBot.id || deletingBot._id;
+		if (!botId) {
+			setError('Cannot delete: Bot ID is missing');
+			return;
+		}
+
 		setSubmitting(true);
 
 		try {
-			const result = await deleteTeleBot(deletingBot.id);
+			const result = await deleteTeleBot(botId);
 			if (result.statusCode === 200) {
 				setShowDeleteModal(false);
 				setDeletingBot(null);
@@ -495,7 +514,7 @@ export default function TeleBots() {
 							<tbody>
 								{filteredBots.map((bot) => (
 									<tr
-										key={bot.id}
+										key={bot.id || bot._id}
 										style={{
 											transition: 'background 0.15s ease'
 										}}
