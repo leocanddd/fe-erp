@@ -748,6 +748,152 @@ export default function Products() {
 						</tbody>
 					</table>
 				)}
+
+				{/* Pagination */}
+				{!loading && products.length > 0 && totalPages > 1 && (
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+						marginTop: '20px',
+						paddingTop: '20px',
+						borderTop: '1px solid var(--border)'
+					}}>
+						<div style={{
+							fontSize: '13px',
+							color: 'var(--muted)'
+						}}>
+							Menampilkan halaman {currentPage} dari {totalPages} ({totalItems} total produk)
+						</div>
+						<div style={{
+							display: 'flex',
+							gap: '8px',
+							alignItems: 'center'
+						}}>
+							<button
+								onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+								disabled={currentPage === 1}
+								style={{
+									width: '32px',
+									height: '32px',
+									display: 'inline-flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									border: '1px solid var(--border)',
+									borderRadius: '7px',
+									background: currentPage === 1 ? '#f5f5f5' : '#fff',
+									color: currentPage === 1 ? 'var(--muted)' : 'var(--text)',
+									cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+									transition: '0.18s'
+								}}
+								onMouseEnter={(e) => {
+									if (currentPage !== 1) {
+										e.currentTarget.style.borderColor = 'var(--blue)';
+										e.currentTarget.style.color = 'var(--blue)';
+									}
+								}}
+								onMouseLeave={(e) => {
+									if (currentPage !== 1) {
+										e.currentTarget.style.borderColor = 'var(--border)';
+										e.currentTarget.style.color = 'var(--text)';
+									}
+								}}
+							>
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<path d="M15 18l-6-6 6-6"/>
+								</svg>
+							</button>
+
+							{Array.from({ length: totalPages }, (_, i) => i + 1)
+								.filter(page => {
+									// Show first page, last page, current page, and pages around current
+									return page === 1 ||
+										page === totalPages ||
+										Math.abs(page - currentPage) <= 1;
+								})
+								.map((page, idx, arr) => {
+									// Add ellipsis
+									const prevPage = arr[idx - 1];
+									const showEllipsis = prevPage && page - prevPage > 1;
+
+									return (
+										<div key={page} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+											{showEllipsis && (
+												<span style={{ color: 'var(--muted)', fontSize: '13px' }}>...</span>
+											)}
+											<button
+												onClick={() => setCurrentPage(page)}
+												style={{
+													minWidth: '32px',
+													height: '32px',
+													padding: '0 8px',
+													display: 'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													border: '1px solid var(--border)',
+													borderRadius: '7px',
+													background: currentPage === page ? 'var(--grad)' : '#fff',
+													color: currentPage === page ? '#fff' : 'var(--text)',
+													cursor: 'pointer',
+													transition: '0.18s',
+													fontWeight: currentPage === page ? 600 : 400,
+													fontSize: '13px'
+												}}
+												onMouseEnter={(e) => {
+													if (currentPage !== page) {
+														e.currentTarget.style.borderColor = 'var(--blue)';
+														e.currentTarget.style.color = 'var(--blue)';
+													}
+												}}
+												onMouseLeave={(e) => {
+													if (currentPage !== page) {
+														e.currentTarget.style.borderColor = 'var(--border)';
+														e.currentTarget.style.color = 'var(--text)';
+													}
+												}}
+											>
+												{page}
+											</button>
+										</div>
+									);
+								})}
+
+							<button
+								onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+								disabled={currentPage === totalPages}
+								style={{
+									width: '32px',
+									height: '32px',
+									display: 'inline-flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									border: '1px solid var(--border)',
+									borderRadius: '7px',
+									background: currentPage === totalPages ? '#f5f5f5' : '#fff',
+									color: currentPage === totalPages ? 'var(--muted)' : 'var(--text)',
+									cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+									transition: '0.18s'
+								}}
+								onMouseEnter={(e) => {
+									if (currentPage !== totalPages) {
+										e.currentTarget.style.borderColor = 'var(--blue)';
+										e.currentTarget.style.color = 'var(--blue)';
+									}
+								}}
+								onMouseLeave={(e) => {
+									if (currentPage !== totalPages) {
+										e.currentTarget.style.borderColor = 'var(--border)';
+										e.currentTarget.style.color = 'var(--text)';
+									}
+								}}
+							>
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<path d="M9 18l6-6-6-6"/>
+								</svg>
+							</button>
+						</div>
+					</div>
+				)}
 			</section>
 
 			{/* Add Product Modal */}
