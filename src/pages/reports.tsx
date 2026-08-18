@@ -1252,19 +1252,24 @@ export default function Reports() {
 										),
 									},
 									(_, i) => {
+										const maxStart =
+											Math.max(
+												1,
+												totalPages - 4,
+											);
 										const startPage =
 											Math.max(
 												1,
-												currentPage -
-													Math.floor(
-														5 / 2,
-													),
+												Math.min(
+													currentPage -
+														Math.floor(
+															5 / 2,
+														),
+													maxStart,
+												),
 											);
 										const page =
-											Math.min(
-												startPage + i,
-												totalPages,
-											);
+											startPage + i;
 										return (
 											<button
 												key={page}
