@@ -840,9 +840,15 @@ export default function TeleBots() {
 										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
 									>
 										<option value="admin">Admin</option>
-										<option value="user">User</option>
-										<option value="collector">Collector</option>
-										<option value="salesperson">Salesperson</option>
+										<option value="warehouse">Warehouse</option>
+										<option value="retail_staff">Retail Staff</option>
+										<option value="retail_manager">Retail Manager</option>
+										<option value="project_staff">Project Staff</option>
+										<option value="project_manager">Project Manager</option>
+										<option value="collection_staff">Collection Staff</option>
+										<option value="collection_manager">Collection Manager</option>
+										<option value="viewer">Viewer</option>
+										<option value="hr">HR</option>
 									</select>
 								</div>
 								<div style={{ display: 'flex', alignItems: 'center', paddingTop: '28px' }}>
@@ -1108,9 +1114,15 @@ export default function TeleBots() {
 										onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
 									>
 										<option value="admin">Admin</option>
-										<option value="user">User</option>
-										<option value="collector">Collector</option>
-										<option value="salesperson">Salesperson</option>
+										<option value="warehouse">Warehouse</option>
+										<option value="retail_staff">Retail Staff</option>
+										<option value="retail_manager">Retail Manager</option>
+										<option value="project_staff">Project Staff</option>
+										<option value="project_manager">Project Manager</option>
+										<option value="collection_staff">Collection Staff</option>
+										<option value="collection_manager">Collection Manager</option>
+										<option value="viewer">Viewer</option>
+										<option value="hr">HR</option>
 									</select>
 								</div>
 								<div style={{ display: 'flex', alignItems: 'center', paddingTop: '28px' }}>
