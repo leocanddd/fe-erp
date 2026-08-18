@@ -849,6 +849,8 @@ export default function TeleBots() {
 										<option value="collection_manager">Collection Manager</option>
 										<option value="viewer">Viewer</option>
 										<option value="hr">HR</option>
+										<option value="office">Office</option>
+										<option value="pricing">Pricing</option>
 									</select>
 								</div>
 								<div style={{ display: 'flex', alignItems: 'center', paddingTop: '28px' }}>
@@ -1123,6 +1125,8 @@ export default function TeleBots() {
 										<option value="collection_manager">Collection Manager</option>
 										<option value="viewer">Viewer</option>
 										<option value="hr">HR</option>
+										<option value="office">Office</option>
+										<option value="pricing">Pricing</option>
 									</select>
 								</div>
 								<div style={{ display: 'flex', alignItems: 'center', paddingTop: '28px' }}>
