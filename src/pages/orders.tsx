@@ -87,6 +87,7 @@ export default function Orders() {
 			contact: '',
 			shipmentTime: '',
 			store: '',
+			type: 'retail' as 'retail' | 'project',
 			products: [
 				{
 					product: '',
@@ -428,6 +429,7 @@ export default function Orders() {
 		e: React.ChangeEvent<
 			| HTMLInputElement
 			| HTMLTextAreaElement
+			| HTMLSelectElement
 		>,
 	) => {
 		const { name, value } = e.target;
@@ -594,6 +596,7 @@ export default function Orders() {
 			contact: '',
 			shipmentTime: '',
 			store: '',
+			type: 'retail' as 'retail' | 'project',
 			products: [
 				{
 					product: '',
@@ -622,6 +625,7 @@ export default function Orders() {
 					new Date().toISOString(),
 				shipmentTime:
 					formData.shipmentTime,
+				type: (formData.type.charAt(0).toUpperCase() + formData.type.slice(1)) as 'Retail' | 'Project',
 				...(formData.store && {
 					store: formData.store.trim(),
 				}),
@@ -2019,17 +2023,17 @@ export default function Orders() {
 
 			{/* Add Order Modal */}
 			{showAddModal && (
-				<div className="fixed inset-0 z-[60] overflow-y-auto">
+				<div className="fixed inset-0 z-[9999] overflow-y-auto">
 					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 						<div
-							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[9998]"
 							onClick={() => {
 								setShowAddModal(false);
 								resetForm();
 								setError('');
 							}}
 						></div>
-						<div className="relative inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+						<div className="relative inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full z-[9999]">
 							<form
 								onSubmit={
 									handleAddOrder
@@ -2465,6 +2469,34 @@ export default function Orders() {
 														</div>
 													)}
 												</div>
+
+												<div>
+													<label
+														htmlFor="type"
+														className="block text-sm font-semibold text-gray-700 mb-2"
+													>
+														Tipe Order *
+													</label>
+													<select
+														id="type"
+														name="type"
+														required
+														value={
+															formData.type
+														}
+														onChange={
+															handleInputChange
+														}
+														className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+													>
+														<option value="retail">
+															Retail
+														</option>
+														<option value="project">
+															Project
+														</option>
+													</select>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -2512,7 +2544,7 @@ export default function Orders() {
 					<div className="fixed inset-0 z-[60] overflow-y-auto">
 						<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 							<div
-								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[9998]"
 								onClick={() => {
 									setShowEditModal(
 										false,
@@ -2522,7 +2554,7 @@ export default function Orders() {
 									setError('');
 								}}
 							></div>
-							<div className="relative inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+							<div className="relative inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full z-[9999]">
 								<form
 									onSubmit={
 										handleUpdateOrder
@@ -2916,7 +2948,7 @@ export default function Orders() {
 				<div className="fixed inset-0 z-[60] overflow-y-auto">
 					<div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 						<div
-							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[9998]"
 							onClick={() => {
 								setShowDeleteModal(
 									false,
@@ -2999,7 +3031,7 @@ export default function Orders() {
 					<div className="fixed inset-0 z-[60] overflow-y-auto">
 						<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 							<div
-								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+								className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[9998]"
 								onClick={() => {
 									setShowDescModal(
 										false,
@@ -3151,7 +3183,7 @@ export default function Orders() {
 				<div className="fixed inset-0 z-[60] overflow-y-auto">
 					<div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 						<div
-							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+							className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[9998]"
 							onClick={() => {
 								setShowBarcodeScanModal(
 									false,
