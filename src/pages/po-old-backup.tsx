@@ -87,7 +87,7 @@ export default function PO() {
 			contact: '',
 			shipmentTime: '',
 			store: '',
-			type: 'Project' as 'Retail' | 'Project' | 'Order',
+			type: 'project' as 'retail' | 'project' | 'order',
 			paymentDueDate: '',
 			termin: 0, // Payment terms in days for project orders
 			products: [
@@ -601,7 +601,7 @@ export default function PO() {
 			contact: '',
 			shipmentTime: '',
 			store: '',
-			type: 'Project' as 'Retail' | 'Project' | 'Order',
+			type: 'project' as 'retail' | 'project' | 'order',
 			paymentDueDate: '',
 			termin: 0,
 			products: [
