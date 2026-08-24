@@ -637,10 +637,10 @@ export default function PO() {
 				}),
 				type: formData.type,
 				// For project orders, include termin; for retail, include paymentDueDate
-				...(formData.type === 'Project' && formData.termin > 0 && {
+				...(formData.type === 'project' && formData.termin > 0 && {
 					termin: formData.termin,
 				}),
-				...(formData.type !== 'Project' && formData.paymentDueDate && {
+				...(formData.type !== 'project' && formData.paymentDueDate && {
 					paymentDueDate: new Date(formData.paymentDueDate + 'T00:00:00Z').toISOString(),
 				}),
 				products: formData.products.map(
@@ -715,10 +715,10 @@ export default function PO() {
 					store: formData.store.trim(),
 				}),
 				// For project orders, include termin; for retail, include paymentDueDate
-				...(formData.type === 'Project' && formData.termin > 0 && {
+				...(formData.type === 'project' && formData.termin > 0 && {
 					termin: formData.termin,
 				}),
-				...(formData.type !== 'Project' && formData.paymentDueDate && {
+				...(formData.type !== 'project' && formData.paymentDueDate && {
 					paymentDueDate: new Date(formData.paymentDueDate + 'T00:00:00Z').toISOString(),
 				}),
 				products: formData.products.map(
@@ -2526,7 +2526,7 @@ export default function PO() {
 												</div>
 
 												{/* For Project Orders: Show Termin */}
-												{formData.type === 'Project' && (
+												{formData.type === 'project' && (
 													<div>
 														<label
 															htmlFor="termin"
@@ -2556,7 +2556,7 @@ export default function PO() {
 												)}
 
 												{/* For Non-Project Orders: Show Payment Due Date */}
-												{formData.type !== 'Project' && (
+												{formData.type !== 'project' && (
 													<div>
 														<label
 															htmlFor="paymentDueDate"
