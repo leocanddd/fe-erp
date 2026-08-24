@@ -35,7 +35,7 @@ interface Order {
 	collector?: string;
 	paymentDueDate?: string;
 	termin?: number; // Payment terms in days
-	type?: 'Retail' | 'Project' | 'Order';
+	type?: 'retail' | 'project' | 'order';
 	store?: string;
 	// Legacy fields for backward compatibility
 	isProcessed?: boolean;
@@ -54,7 +54,7 @@ interface OrderCreateRequest {
 	orderDate: string;
 	shipmentTime: string;
 	createdBy: string;
-	type?: 'Retail' | 'Project' | 'Order';
+	type?: 'retail' | 'project' | 'order';
 	termin?: number; // Payment terms in days (for project orders)
 	store?: string; // Optional for project orders, required for retail
 	paymentDueDate?: string; // Required for retail, auto-calculated for project

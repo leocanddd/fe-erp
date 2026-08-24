@@ -625,7 +625,7 @@ export default function Orders() {
 					new Date().toISOString(),
 				shipmentTime:
 					formData.shipmentTime,
-				type: (formData.type.charAt(0).toUpperCase() + formData.type.slice(1)) as 'Retail' | 'Project',
+				type: formData.type,
 				...(formData.store && {
 					store: formData.store.trim(),
 				}),
