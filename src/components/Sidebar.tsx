@@ -26,6 +26,8 @@ interface SidebarProps {
 	setCollapsed: (
 		collapsed: boolean,
 	) => void;
+	mobileMenuOpen?: boolean;
+	setMobileMenuOpen?: (open: boolean) => void;
 }
 
 const ICONS: Record<
@@ -475,6 +477,8 @@ export default function Sidebar({
 	onLogout,
 	collapsed,
 	setCollapsed,
+	mobileMenuOpen = false,
+	setMobileMenuOpen,
 }: SidebarProps) {
 	const router = useRouter();
 	const [
@@ -578,24 +582,37 @@ export default function Sidebar({
 					--sidebar-w: 220px;
 				}
 			`}</style>
+
+			{/* Mobile overlay - separate from sidebar */}
+			{mobileMenuOpen && (
+				<div
+					className="sm:hidden"
+					style={{
+						position: 'fixed',
+						inset: 0,
+						background: 'rgba(0, 0, 0, 0.5)',
+						zIndex: 200,
+					}}
+					onClick={() => setMobileMenuOpen?.(false)}
+				/>
+			)}
+
 			<div
-				className={`sidebar ${collapsed ? 'collapsed' : ''}`}
+				className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}
 				style={{
 					position: 'fixed',
-					left: 0,
+					left: mobileMenuOpen ? 0 : '-100%',
 					top: 0,
 					height: '100vh',
-					width: collapsed
-						? '64px'
-						: '220px',
+					width: '220px',
 					background: 'white',
 					borderRight:
 						'1px solid var(--border)',
-					zIndex: 200,
+					zIndex: 201,
 					display: 'flex',
 					flexDirection: 'column',
 					overflow: 'hidden',
-					transition: 'width 0.3s ease',
+					transition: 'left 0.3s ease, width 0.3s ease',
 					fontFamily:
 						"'Montserrat', sans-serif",
 				}}
@@ -1413,6 +1430,14 @@ export default function Sidebar({
 				.nav-group:has(.submenu-flyout)
 					.tooltip {
 					display: none !important;
+				}
+
+				/* Desktop sidebar always visible */
+				@media (min-width: 640px) {
+					.sidebar {
+						left: 0 !important;
+						width: ${collapsed ? '64px' : '220px'} !important;
+					}
 				}
 			`}</style>
 		</>

@@ -455,25 +455,36 @@ export default function Reports() {
 				.welcome h1 {
 					margin: 0;
 					font-weight: 700;
-					font-size: 20px;
+					font-size: 18px;
 					color: #111111;
+				}
+				@media (min-width: 640px) {
+					.welcome h1 {
+						font-size: 20px;
+					}
 				}
 				.welcome .date {
 					margin-top: 4px;
 					font-weight: 400;
-					font-size: 13px;
+					font-size: 12px;
 					color: #9a9a9a;
+				}
+				@media (min-width: 640px) {
+					.welcome .date {
+						font-size: 13px;
+					}
 				}
 				.export-row {
 					display: flex;
 					justify-content: flex-end;
-					gap: 10px;
+					gap: 8px;
 					margin: -8px 0 16px;
+					flex-wrap: wrap;
 				}
 				.btn-export,
 				.btn-excel {
-					height: 34px;
-					padding: 0 20px;
+					height: 32px;
+					padding: 0 14px;
 					border: none;
 					border-radius: 8px;
 					cursor: pointer;
@@ -484,9 +495,18 @@ export default function Reports() {
 						'Segoe UI',
 						sans-serif;
 					font-weight: 700;
-					font-size: 13px;
+					font-size: 11px;
 					color: #fff;
 					transition: filter 0.2s ease;
+					white-space: nowrap;
+				}
+				@media (min-width: 640px) {
+					.btn-export,
+					.btn-excel {
+						height: 34px;
+						padding: 0 20px;
+						font-size: 13px;
+					}
 				}
 				.btn-export {
 					background: linear-gradient(
@@ -512,41 +532,87 @@ export default function Reports() {
 					background: #ffffff;
 					border: 1px solid #e0e0e0;
 					border-radius: 12px;
-					padding: 24px 28px;
+					padding: 16px;
 					box-shadow: 0 2px 8px
 						rgba(0, 0, 0, 0.04);
 					margin-bottom: 16px;
 				}
+				@media (min-width: 640px) {
+					.vcard {
+						padding: 20px 24px;
+					}
+				}
+				@media (min-width: 768px) {
+					.vcard {
+						padding: 24px 28px;
+					}
+				}
 				.controls-row {
 					display: flex;
-					align-items: center;
-					gap: 16px;
+					align-items: flex-start;
+					gap: 12px;
 					flex-wrap: wrap;
 					margin-bottom: 14px;
+				}
+				@media (min-width: 768px) {
+					.controls-row {
+						align-items: center;
+						gap: 16px;
+					}
 				}
 				.vcard-title {
 					margin: 0;
 					font-weight: 700;
-					font-size: 16px;
+					font-size: 14px;
 					color: #111111;
+					width: 100%;
+					margin-bottom: 8px;
+				}
+				@media (min-width: 768px) {
+					.vcard-title {
+						font-size: 16px;
+						width: auto;
+						margin-bottom: 0;
+					}
 				}
 				.filter-group {
 					display: flex;
 					align-items: center;
-					gap: 12px;
+					gap: 8px;
 					flex-wrap: wrap;
 					flex: 1;
+					width: 100%;
+				}
+				@media (min-width: 768px) {
+					.filter-group {
+						gap: 12px;
+						width: auto;
+					}
 				}
 				.filter-label {
 					font-weight: 500;
-					font-size: 13px;
+					font-size: 11px;
 					color: #9a9a9a;
 				}
+				@media (min-width: 640px) {
+					.filter-label {
+						font-size: 13px;
+					}
+				}
 				.filter-select {
-					height: 30px;
-					padding: 0 14px;
+					height: 32px;
+					padding: 0 10px;
 					border: 1px solid #e0e0e0;
 					border-radius: 8px;
+					font-size: 12px;
+				}
+				@media (min-width: 640px) {
+					.filter-select {
+						height: 30px;
+						padding: 0 14px;
+						font-size: 13px;
+					}
+				}
 					background: #fff;
 					font-family:
 						'Montserrat',
@@ -678,9 +744,26 @@ export default function Reports() {
 					margin-top: 4px;
 					overflow-x: auto;
 					-webkit-overflow-scrolling: touch;
+					margin-left: -16px;
+					margin-right: -16px;
+					padding-left: 16px;
+					padding-right: 16px;
+				}
+				@media (min-width: 640px) {
+					.visit-table {
+						margin-left: 0;
+						margin-right: 0;
+						padding-left: 0;
+						padding-right: 0;
+					}
 				}
 				.visit-table-inner {
-					min-width: 1300px;
+					min-width: 800px;
+				}
+				@media (min-width: 1024px) {
+					.visit-table-inner {
+						min-width: 1300px;
+					}
 				}
 				.v-header {
 					display: flex;

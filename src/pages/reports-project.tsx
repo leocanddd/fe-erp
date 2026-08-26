@@ -300,9 +300,9 @@ export default function ReportsProject() {
 		}
 
 		return (
-			<div className="flex items-center justify-between mt-6">
-				<div className="text-sm text-gray-600">
-					Menampilkan{' '}
+			<div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6">
+				<div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+					<span className="hidden sm:inline">Menampilkan </span>
 					{Math.min(
 						(currentPage - 1) *
 							itemsPerPage +
@@ -314,10 +314,10 @@ export default function ReportsProject() {
 						currentPage * itemsPerPage,
 						totalItems,
 					)}{' '}
-					dari {totalItems} kunjungan
-					project
+					dari {totalItems}
+					<span className="hidden sm:inline"> kunjungan project</span>
 				</div>
-				<div className="flex items-center space-x-2">
+				<div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
 					<button
 						onClick={() =>
 							handlePageChange(
@@ -325,9 +325,10 @@ export default function ReportsProject() {
 							)
 						}
 						disabled={currentPage === 1}
-						className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						className="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 					>
-						Previous
+						<span className="hidden sm:inline">Previous</span>
+						<span className="sm:hidden">Prev</span>
 					</button>
 					{pages}
 					<button
@@ -339,7 +340,7 @@ export default function ReportsProject() {
 						disabled={
 							currentPage === totalPages
 						}
-						className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						className="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 					>
 						Next
 					</button>
@@ -350,17 +351,15 @@ export default function ReportsProject() {
 
 	return (
 		<MainLayout title="Laporan Project">
-			<div className="max-w-7xl mx-auto">
+			<div>
 				{/* Header */}
-				<div className="mb-8 flex justify-between items-center">
+				<div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
 					<div>
-						<h2 className="text-2xl font-bold text-gray-900 mb-2">
+						<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
 							Laporan Project
 						</h2>
-						<p className="text-gray-600">
+						<p className="text-sm sm:text-base text-gray-600">
 							Data kunjungan project
-							dengan filter dan
-							pagination
 						</p>
 					</div>
 					<button
@@ -370,10 +369,10 @@ export default function ReportsProject() {
 						disabled={
 							projectVisits.length === 0
 						}
-						className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+						className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base"
 					>
 						<svg
-							className="w-5 h-5"
+							className="w-4 h-4 sm:w-5 sm:h-5"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
@@ -390,12 +389,12 @@ export default function ReportsProject() {
 				</div>
 
 				{/* Filters */}
-				<div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+				<div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
 					<form
 						onSubmit={handleSearch}
 						className="space-y-4"
 					>
-						<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 							<div>
 								<label
 									htmlFor="username"
@@ -481,17 +480,17 @@ export default function ReportsProject() {
 									className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
 								/>
 							</div>
-							<div className="flex items-end space-x-2">
+							<div className="sm:col-span-2 lg:col-span-1 flex items-end gap-2">
 								<button
 									type="submit"
-									className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+									className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm sm:text-base"
 								>
 									Filter
 								</button>
 								<button
 									type="button"
 									onClick={clearFilters}
-									className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200"
+									className="px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors duration-200 text-sm sm:text-base whitespace-nowrap"
 								>
 									Clear
 								</button>
@@ -546,65 +545,65 @@ export default function ReportsProject() {
 				)}
 
 				{/* Project Visits table */}
-				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
+				<div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 overflow-hidden">
 					{loading ? (
-						<div className="p-8 text-center">
+						<div className="p-6 sm:p-8 text-center">
 							<div className="inline-flex items-center space-x-3">
-								<div className="w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-								<span className="text-gray-600">
-									Memuat data kunjungan
-									project...
+								<div className="w-5 h-5 sm:w-6 sm:h-6 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+								<span className="text-sm sm:text-base text-gray-600">
+									Memuat data...
 								</span>
 							</div>
 						</div>
 					) : projectVisits.length ===
 					  0 ? (
-						<div className="p-8 text-center text-gray-500">
+						<div className="p-6 sm:p-8 text-center text-sm sm:text-base text-gray-500">
 							Tidak ada data kunjungan
 							project yang ditemukan
 						</div>
 					) : (
-						<div className="overflow-x-auto">
-							<table className="min-w-full divide-y divide-gray-200">
+						<div className="overflow-x-auto -mx-4 sm:mx-0">
+							<div className="inline-block min-w-full align-middle px-4 sm:px-0">
+								<table className="min-w-full divide-y divide-gray-200">
 								<thead className="bg-gray-50">
 									<tr>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Sales
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Project
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											PIC
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Customer
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Lokasi
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Tanggal
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Jam
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Product
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Volume
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Schedule Supply
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Uraian
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Proyek Baru
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Actions
 										</th>
 									</tr>
@@ -618,7 +617,7 @@ export default function ReportsProject() {
 												)}
 												className="hover:bg-gray-50"
 											>
-												<td className="px-6 py-4 whitespace-nowrap">
+												<td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
 													<div className="flex items-center">
 														<div className="w-8 h-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center">
 															<span className="text-white font-semibold text-xs">
@@ -643,20 +642,20 @@ export default function ReportsProject() {
 														</div>
 													</div>
 												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
+												<td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900 font-medium">
 														{
 															visit.projectName
 														}
 													</div>
 												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
+												<td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
 														{visit.pic ||
 															'-'}
 													</div>
 												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
+												<td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
 														{visit.customerName ||
 															'-'}
@@ -674,14 +673,14 @@ export default function ReportsProject() {
 														}
 													</div>
 												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
+												<td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
 														{formatProjectVisitDateOnly(
 															visit,
 														)}
 													</div>
 												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
+												<td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
 														{formatProjectVisitTimeOnly(
 															visit,
@@ -710,7 +709,7 @@ export default function ReportsProject() {
 															'-'}
 													</div>
 												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
+												<td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-900">
 														{visit.scheduleSupply ||
 															'-'}
@@ -779,6 +778,7 @@ export default function ReportsProject() {
 									)}
 								</tbody>
 							</table>
+							</div>
 						</div>
 					)}
 				</div>

@@ -249,9 +249,9 @@ export default function AdminDashboard() {
 				// Superadmin Dashboard matching screenshot EXACTLY
 				<>
 					{/* Welcome Section */}
-					<div className="mb-6 flex items-start justify-between">
+					<div className="mb-6 flex flex-col sm:flex-row items-start justify-between gap-3">
 						<div>
-							<h1 className="text-3xl font-bold text-gray-900">
+							<h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
 								Selamat Datang Kembali,{' '}
 								{user?.firstName ||
 									'User'}
@@ -276,14 +276,14 @@ export default function AdminDashboard() {
 
 					{/* View Tabs */}
 					<div className="mb-8 flex items-center gap-2 flex-wrap">
-						<span className="text-sm font-medium text-gray-900 mr-2">
+						<span className="text-xs sm:text-sm font-medium text-gray-900 mr-0 sm:mr-2 w-full sm:w-auto mb-2 sm:mb-0">
 							Tampilkan:
 						</span>
 						<button
 							onClick={() =>
 								setActiveTab('retail')
 							}
-							className={`px-6 py-2 ${activeTab === 'retail' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'retail' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
+							className={`px-4 sm:px-6 py-2 ${activeTab === 'retail' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'retail' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-xs sm:text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
 						>
 							<span
 								className={`w-2 h-2 ${activeTab === 'retail' ? 'bg-white' : 'bg-gray-500'} rounded-full`}
@@ -294,7 +294,7 @@ export default function AdminDashboard() {
 							onClick={() =>
 								setActiveTab('project')
 							}
-							className={`px-6 py-2 ${activeTab === 'project' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'project' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
+							className={`px-4 sm:px-6 py-2 ${activeTab === 'project' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'project' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-xs sm:text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
 						>
 							<span
 								className={`w-2 h-2 ${activeTab === 'project' ? 'bg-white' : 'bg-gray-500'} rounded-full`}
@@ -307,7 +307,7 @@ export default function AdminDashboard() {
 									'collection',
 								)
 							}
-							className={`px-6 py-2 ${activeTab === 'collection' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'collection' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
+							className={`px-4 sm:px-6 py-2 ${activeTab === 'collection' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'collection' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-xs sm:text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
 						>
 							<span
 								className={`w-2 h-2 ${activeTab === 'collection' ? 'bg-white' : 'bg-gray-500'} rounded-full`}
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
 									'inventory',
 								)
 							}
-							className={`px-6 py-2 ${activeTab === 'inventory' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'inventory' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
+							className={`px-4 sm:px-6 py-2 ${activeTab === 'inventory' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'inventory' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-xs sm:text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
 						>
 							<span
 								className={`w-2 h-2 ${activeTab === 'inventory' ? 'bg-white' : 'bg-gray-500'} rounded-full`}
@@ -331,7 +331,7 @@ export default function AdminDashboard() {
 							onClick={() =>
 								setActiveTab('website')
 							}
-							className={`px-6 py-2 ${activeTab === 'website' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'website' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
+							className={`px-4 sm:px-6 py-2 ${activeTab === 'website' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'website' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-xs sm:text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
 						>
 							<span
 								className={`w-2 h-2 ${activeTab === 'website' ? 'bg-white' : 'bg-gray-500'} rounded-full`}
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
 									'rockwoolindo',
 								)
 							}
-							className={`px-6 py-2 ${activeTab === 'rockwoolindo' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'rockwoolindo' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
+							className={`px-4 sm:px-6 py-2 ${activeTab === 'rockwoolindo' ? 'bg-[#4AADD6]' : 'bg-gray-200'} ${activeTab === 'rockwoolindo' ? 'text-white' : 'text-gray-700'} rounded-full font-medium text-xs sm:text-sm hover:bg-[#3A9DC6] hover:text-white transition-all flex items-center gap-2`}
 						>
 							<span
 								className={`w-2 h-2 ${activeTab === 'rockwoolindo' ? 'bg-white' : 'bg-gray-500'} rounded-full`}
@@ -370,21 +370,21 @@ export default function AdminDashboard() {
 							) : retailData ? (
 								<>
 									{/* RETAIL OVERVIEW WIDGET - Matching screenshot */}
-									<div className="bg-white rounded-2xl p-8 shadow-sm">
-										<h2 className="text-2xl font-bold text-gray-900 mb-6">
+									<div className="bg-white rounded-2xl p-4 sm:p-8 shadow-sm">
+										<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
 											Retail Overview
 										</h2>
 
 										{/* Progress Bar */}
 										<div className="mb-6">
-											<div className="relative h-14 bg-[#E8F4F8] rounded-lg overflow-hidden mb-2">
+											<div className="relative h-12 sm:h-14 bg-[#E8F4F8] rounded-lg overflow-hidden mb-2">
 												<div
-													className="absolute inset-0 bg-[#4AADD6] flex items-center pl-6 transition-all duration-1000"
+													className="absolute inset-0 bg-[#4AADD6] flex items-center pl-3 sm:pl-6 transition-all duration-1000"
 													style={{
 														width: `${retailData.totalTarget > 0 ? Math.min((retailData.totalOrderValue / retailData.totalTarget) * 100, 100) : 0}%`,
 													}}
 												>
-													<span className="text-white font-bold text-lg">
+													<span className="text-white font-bold text-sm sm:text-lg">
 														Rp{' '}
 														{retailData.totalOrderValue.toLocaleString(
 															'id-ID',
@@ -392,7 +392,7 @@ export default function AdminDashboard() {
 													</span>
 												</div>
 											</div>
-											<div className="text-sm text-red-500">
+											<div className="text-xs sm:text-sm text-red-500">
 												Target Rp{' '}
 												{retailData.totalTarget.toLocaleString(
 													'id-ID',
@@ -412,7 +412,7 @@ export default function AdminDashboard() {
 
 										{/* Salesperson Performance */}
 										<div className="mt-10">
-											<h3 className="text-base font-bold text-gray-900 mb-6">
+											<h3 className="text-sm sm:text-base font-bold text-gray-900 mb-6">
 												Performa
 												Salesperson
 												Bulan Ini
@@ -459,30 +459,30 @@ export default function AdminDashboard() {
 																	key={
 																		index
 																	}
-																	className="flex items-start gap-6"
+																	className="flex flex-col sm:flex-row items-start gap-3 sm:gap-6"
 																>
 																	{/* Salesperson Name on LEFT */}
-																	<div className="w-20 font-bold text-gray-900 pt-2 flex-shrink-0">
+																	<div className="w-full sm:w-20 font-bold text-gray-900 sm:pt-2 flex-shrink-0 text-sm sm:text-base">
 																		{
 																			sales.salesName
 																		}
 																	</div>
 
 																	{/* Bars on RIGHT */}
-																	<div className="flex-1 space-y-3">
+																	<div className="flex-1 space-y-3 w-full">
 																		{/* Kunjungan Bar */}
 																		<div className="space-y-1">
 																			<div className="text-xs text-gray-500 uppercase">
 																				Kunjungan
 																			</div>
-																			<div className="relative h-8 bg-[#E8F4F8] rounded overflow-hidden">
+																			<div className="relative h-7 sm:h-8 bg-[#E8F4F8] rounded overflow-hidden">
 																				<div
-																					className="absolute inset-0 bg-[#4AADD6] flex items-center justify-end pr-3"
+																					className="absolute inset-0 bg-[#4AADD6] flex items-center justify-end pr-2 sm:pr-3"
 																					style={{
 																						width: `${visitPercent}%`,
 																					}}
 																				>
-																					<span className="text-white font-bold text-sm">
+																					<span className="text-white font-bold text-xs sm:text-sm">
 																						{
 																							sales.totalVisits
 																						}
@@ -495,14 +495,14 @@ export default function AdminDashboard() {
 																			<div className="text-xs text-gray-500 uppercase">
 																				Sales
 																			</div>
-																			<div className="relative h-8 bg-[#E8F4F8] rounded overflow-hidden">
+																			<div className="relative h-7 sm:h-8 bg-[#E8F4F8] rounded overflow-hidden">
 																				<div
-																					className="absolute inset-0 bg-[#50C878] flex items-center justify-end pr-3"
+																					className="absolute inset-0 bg-[#50C878] flex items-center justify-end pr-2 sm:pr-3"
 																					style={{
 																						width: `${salesPercent}%`,
 																					}}
 																				>
-																					<span className="text-white font-bold text-sm">
+																					<span className="text-white font-bold text-xs sm:text-sm">
 																						Rp{' '}
 																						{sales.orderValue.toLocaleString(
 																							'id-ID',
@@ -520,49 +520,49 @@ export default function AdminDashboard() {
 										</div>
 
 										{/* Stats */}
-										<div className="mt-10 flex items-center gap-12">
+										<div className="mt-10 grid grid-cols-2 sm:flex sm:items-center gap-6 sm:gap-12">
 											<div>
-												<div className="text-4xl font-bold text-[#4AADD6]">
+												<div className="text-2xl sm:text-4xl font-bold text-[#4AADD6]">
 													{
 														retailData.tokoBaru
 													}
 												</div>
-												<div className="text-sm text-gray-900 font-medium">
+												<div className="text-xs sm:text-sm text-gray-900 font-medium">
 													Toko Baru
 												</div>
 											</div>
 											<div>
-												<div className="text-4xl font-bold text-[#4AADD6]">
+												<div className="text-2xl sm:text-4xl font-bold text-[#4AADD6]">
 													{
 														retailData.activeToko
 													}
 												</div>
-												<div className="text-sm text-gray-900 font-medium">
+												<div className="text-xs sm:text-sm text-gray-900 font-medium">
 													Active Toko
 												</div>
 											</div>
-										</div>
-										<div className="mt-4">
-											<div className="text-4xl font-bold text-[#FF6B6B]">
-												{
-													retailData.ongoingOrder
-												}
-											</div>
-											<div className="text-sm text-gray-900 font-medium">
-												Ongoing Order
+											<div className="col-span-2 sm:col-span-1">
+												<div className="text-2xl sm:text-4xl font-bold text-[#FF6B6B]">
+													{
+														retailData.ongoingOrder
+													}
+												</div>
+												<div className="text-xs sm:text-sm text-gray-900 font-medium">
+													Ongoing Order
+												</div>
 											</div>
 										</div>
 
 										{/* Recent Orders */}
 										<div className="mt-10">
-											<h3 className="text-base font-bold text-gray-900 mb-4">
+											<h3 className="text-sm sm:text-base font-bold text-gray-900 mb-4">
 												Recent Orders
 											</h3>
-											<div className="overflow-x-auto">
-												<table className="w-full text-sm">
+											<div className="overflow-x-auto -mx-4 sm:mx-0">
+												<table className="w-full text-xs sm:text-sm min-w-[600px]">
 													<thead className="border-b border-gray-200">
 														<tr className="text-left text-gray-600">
-															<th className="pb-3 font-semibold">
+															<th className="pb-3 font-semibold pl-4 sm:pl-0">
 																Order ID
 															</th>
 															<th className="pb-3 font-semibold">
@@ -575,7 +575,7 @@ export default function AdminDashboard() {
 															<th className="pb-3 font-semibold">
 																Tanggal
 															</th>
-															<th className="pb-3 font-semibold">
+															<th className="pb-3 font-semibold pr-4 sm:pr-0">
 																Status
 															</th>
 														</tr>
@@ -671,7 +671,7 @@ export default function AdminDashboard() {
 																			}
 																			className="border-b border-gray-100"
 																		>
-																			<td className="py-3 font-medium text-gray-900">
+																			<td className="py-3 font-medium text-gray-900 pl-4 sm:pl-0">
 																				{
 																					order.orderId
 																				}
@@ -697,9 +697,9 @@ export default function AdminDashboard() {
 																					orderDate
 																				}
 																			</td>
-																			<td className="py-3">
+																			<td className="py-3 pr-4 sm:pr-0">
 																				<span
-																					className={`inline-block px-3 py-1 rounded-full text-white text-xs font-medium ${status.color}`}
+																					className={`inline-block px-2 sm:px-3 py-1 rounded-full text-white text-xs font-medium ${status.color}`}
 																				>
 																					{
 																						status.text
@@ -722,54 +722,54 @@ export default function AdminDashboard() {
 
 					{/* Placeholder for other tabs */}
 					{activeTab === 'project' && (
-						<div className="bg-white rounded-2xl p-8 shadow-sm">
-							<h2 className="text-2xl font-bold text-gray-900 mb-4">
+						<div className="bg-white rounded-2xl p-4 sm:p-8 shadow-sm">
+							<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
 								Project Overview
 							</h2>
-							<p className="text-gray-600">
+							<p className="text-sm sm:text-base text-gray-600">
 								Coming soon...
 							</p>
 						</div>
 					)}
 					{activeTab ===
 						'collection' && (
-						<div className="bg-white rounded-2xl p-8 shadow-sm">
-							<h2 className="text-2xl font-bold text-gray-900 mb-4">
+						<div className="bg-white rounded-2xl p-4 sm:p-8 shadow-sm">
+							<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
 								Collection Overview
 							</h2>
-							<p className="text-gray-600">
+							<p className="text-sm sm:text-base text-gray-600">
 								Coming soon...
 							</p>
 						</div>
 					)}
 					{activeTab ===
 						'inventory' && (
-						<div className="bg-white rounded-2xl p-8 shadow-sm">
-							<h2 className="text-2xl font-bold text-gray-900 mb-4">
+						<div className="bg-white rounded-2xl p-4 sm:p-8 shadow-sm">
+							<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
 								Inventory
 							</h2>
-							<p className="text-gray-600">
+							<p className="text-sm sm:text-base text-gray-600">
 								Coming soon...
 							</p>
 						</div>
 					)}
 					{activeTab === 'website' && (
-						<div className="bg-white rounded-2xl p-8 shadow-sm">
-							<h2 className="text-2xl font-bold text-gray-900 mb-4">
+						<div className="bg-white rounded-2xl p-4 sm:p-8 shadow-sm">
+							<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
 								Website Activity
 							</h2>
-							<p className="text-gray-600">
+							<p className="text-sm sm:text-base text-gray-600">
 								Coming soon...
 							</p>
 						</div>
 					)}
 					{activeTab ===
 						'rockwoolindo' && (
-						<div className="bg-white rounded-2xl p-8 shadow-sm">
-							<h2 className="text-2xl font-bold text-gray-900 mb-4">
+						<div className="bg-white rounded-2xl p-4 sm:p-8 shadow-sm">
+							<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
 								Rockwoolindo
 							</h2>
-							<p className="text-gray-600">
+							<p className="text-sm sm:text-base text-gray-600">
 								Coming soon...
 							</p>
 						</div>

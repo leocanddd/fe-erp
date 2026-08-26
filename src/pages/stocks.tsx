@@ -329,45 +329,21 @@ export default function Stocks() {
 	return (
 		<MainLayout title="Manajemen Stok">
 			{/* Header */}
-			<div style={{
-				display: 'flex',
-				alignItems: 'center',
-				marginBottom: '24px'
-			}}>
-				<div style={{ flex: 1 }}>
-					<h1 style={{
-						margin: 0,
-						fontWeight: 800,
-						fontSize: '24px',
-						color: 'var(--dark)'
-					}}>
+			<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 mb-6">
+				<div className="flex-1">
+					<h1 className="m-0 font-extrabold text-xl sm:text-2xl text-[var(--dark)]">
 						Manajemen Stok
 					</h1>
-					<div style={{
-						fontSize: '13px',
-						color: 'var(--muted)',
-						marginTop: '4px'
-					}}>
+					<div className="text-xs sm:text-sm text-[var(--muted)] mt-1">
 						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
 				</div>
 				<button
 					onClick={() => setShowScannerModal(true)}
+					className="inline-flex items-center gap-2 h-9 sm:h-10 px-4 sm:px-5 border-0 rounded-lg cursor-pointer font-bold text-xs sm:text-sm text-white transition-all"
 					style={{
-						display: 'inline-flex',
-						alignItems: 'center',
-						gap: '8px',
-						height: '38px',
-						padding: '0 18px',
-						border: 'none',
-						borderRadius: '9px',
-						cursor: 'pointer',
 						fontFamily: "'Montserrat', sans-serif",
-						fontWeight: 700,
-						fontSize: '13px',
-						color: '#fff',
 						background: 'linear-gradient(135deg, #27ae60 0%, #10b981 100%)',
-						transition: '0.18s'
 					}}
 					onMouseEnter={(e) => {
 						e.currentTarget.style.filter = 'brightness(1.07)';
@@ -381,7 +357,8 @@ export default function Stocks() {
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
 						<path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
 					</svg>
-					Scan Barcode
+					<span className="hidden sm:inline">Scan Barcode</span>
+					<span className="sm:hidden">Scan</span>
 				</button>
 			</div>
 
@@ -404,35 +381,10 @@ export default function Stocks() {
 			)}
 
 			{/* Main Card */}
-			<section style={{
-				background: '#fff',
-				border: '1px solid var(--border)',
-				borderRadius: '12px',
-				padding: '24px 28px',
-				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-			}}>
+			<section className="bg-white border border-[var(--border)] rounded-xl p-4 sm:p-6 md:p-7 shadow-sm">
 				{/* Toolbar */}
-				<div style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: '12px',
-					flexWrap: 'wrap',
-					marginBottom: '18px',
-					justifyContent: 'space-between'
-				}}>
-					<div style={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: '8px',
-						height: '38px',
-						padding: '0 14px',
-						background: '#fff',
-						border: '1px solid var(--border)',
-						borderRadius: '9px',
-						minWidth: '300px',
-						color: 'var(--muted)',
-						flex: 1
-					}}>
+				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4 sm:mb-5">
+					<div className="flex items-center gap-2 h-9 sm:h-10 px-3 sm:px-4 bg-white border border-[var(--border)] rounded-lg flex-1 text-[var(--muted)]">
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
 							<circle cx="11" cy="11" r="7"/>
 							<path d="m21 21-4.3-4.3"/>
@@ -444,15 +396,10 @@ export default function Stocks() {
 								setSearchPalet(e.target.value);
 								setCurrentPaletPage(1);
 							}}
-							placeholder="Cari tempat penyimpanan..."
+							placeholder="Cari penyimpanan..."
+							className="border-0 outline-none text-xs sm:text-sm text-[var(--text)] w-full bg-transparent"
 							style={{
-								border: 'none',
-								outline: 'none',
 								fontFamily: "'Montserrat', sans-serif",
-								fontSize: '13px',
-								color: 'var(--text)',
-								width: '100%',
-								background: 'transparent'
 							}}
 						/>
 					</div>
@@ -462,21 +409,10 @@ export default function Stocks() {
 							resetPaletForm();
 							setShowPaletModal(true);
 						}}
+						className="inline-flex items-center justify-center gap-2 h-9 sm:h-10 px-4 sm:px-5 border-0 rounded-lg cursor-pointer font-bold text-xs sm:text-sm text-white transition-all"
 						style={{
-							display: 'inline-flex',
-							alignItems: 'center',
-							gap: '8px',
-							height: '38px',
-							padding: '0 18px',
-							border: 'none',
-							borderRadius: '9px',
-							cursor: 'pointer',
 							fontFamily: "'Montserrat', sans-serif",
-							fontWeight: 700,
-							fontSize: '13px',
-							color: '#fff',
 							background: 'var(--grad)',
-							transition: '0.18s'
 						}}
 						onMouseEnter={(e) => {
 							e.currentTarget.style.filter = 'brightness(1.07)';
@@ -523,11 +459,8 @@ export default function Stocks() {
 						Tidak ada tempat penyimpanan
 					</div>
 				) : (
-					<table style={{
-						width: '100%',
-						borderCollapse: 'collapse',
-						background: '#fff'
-					}}>
+					<div className="overflow-x-auto -mx-4 sm:mx-0">
+						<table className="w-full border-collapse bg-white" style={{ minWidth: '600px' }}>
 						<thead>
 							<tr style={{ background: '#fff' }}>
 								<th style={{
@@ -760,6 +693,7 @@ export default function Stocks() {
 							))}
 						</tbody>
 					</table>
+					</div>
 				)}
 			</section>
 

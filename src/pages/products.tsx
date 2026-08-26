@@ -367,45 +367,21 @@ export default function Products() {
 	return (
 		<MainLayout title="Produk">
 			{/* Header */}
-			<div style={{
-				display: 'flex',
-				alignItems: 'center',
-				marginBottom: '24px'
-			}}>
-				<div style={{ flex: 1 }}>
-					<h1 style={{
-						margin: 0,
-						fontWeight: 800,
-						fontSize: '24px',
-						color: 'var(--dark)'
-					}}>
+			<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 mb-6">
+				<div className="flex-1">
+					<h1 className="m-0 font-extrabold text-xl sm:text-2xl text-[var(--dark)]">
 						Produk
 					</h1>
-					<div style={{
-						fontSize: '13px',
-						color: 'var(--muted)',
-						marginTop: '4px'
-					}}>
+					<div className="text-xs sm:text-sm text-[var(--muted)] mt-1">
 						{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
 					</div>
 				</div>
 				<button
 					onClick={() => setShowAddModal(true)}
+					className="inline-flex items-center gap-2 h-9 sm:h-10 px-4 sm:px-5 border-0 rounded-lg cursor-pointer font-bold text-xs sm:text-sm text-white transition-all"
 					style={{
-						display: 'inline-flex',
-						alignItems: 'center',
-						gap: '8px',
-						height: '38px',
-						padding: '0 18px',
-						border: 'none',
-						borderRadius: '9px',
-						cursor: 'pointer',
 						fontFamily: "'Montserrat', sans-serif",
-						fontWeight: 700,
-						fontSize: '13px',
-						color: '#fff',
 						background: 'var(--grad)',
-						transition: '0.18s'
 					}}
 					onMouseEnter={(e) => {
 						e.currentTarget.style.filter = 'brightness(1.07)';
@@ -419,7 +395,8 @@ export default function Products() {
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
 						<path d="M12 5v14M5 12h14"/>
 					</svg>
-					Tambah Produk
+					<span className="hidden sm:inline">Tambah Produk</span>
+					<span className="sm:hidden">Tambah</span>
 				</button>
 			</div>
 
@@ -442,33 +419,10 @@ export default function Products() {
 			)}
 
 			{/* Main Card */}
-			<section style={{
-				background: '#fff',
-				border: '1px solid var(--border)',
-				borderRadius: '12px',
-				padding: '24px 28px',
-				boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-			}}>
+			<section className="bg-white border border-[var(--border)] rounded-xl p-4 sm:p-6 md:p-7 shadow-sm">
 				{/* Toolbar with search */}
-				<div style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: '12px',
-					flexWrap: 'wrap',
-					marginBottom: '18px'
-				}}>
-					<div style={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: '8px',
-						height: '38px',
-						padding: '0 14px',
-						background: '#fff',
-						border: '1px solid var(--border)',
-						borderRadius: '9px',
-						minWidth: '300px',
-						color: 'var(--muted)'
-					}}>
+				<div className="flex items-center gap-3 flex-wrap mb-4 sm:mb-5">
+					<div className="flex items-center gap-2 h-9 sm:h-10 px-3 sm:px-4 bg-white border border-[var(--border)] rounded-lg w-full sm:min-w-[300px] sm:w-auto text-[var(--muted)]">
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
 							<circle cx="11" cy="11" r="7"/>
 							<path d="m21 21-4.3-4.3"/>
@@ -480,15 +434,10 @@ export default function Products() {
 								setSearch(e.target.value);
 								setCurrentPage(1);
 							}}
-							placeholder="Cari produk berdasarkan nama, merek, atau kode..."
+							placeholder="Cari produk..."
+							className="border-0 outline-none text-xs sm:text-sm text-[var(--text)] w-full bg-transparent"
 							style={{
-								border: 'none',
-								outline: 'none',
 								fontFamily: "'Montserrat', sans-serif",
-								fontSize: '13px',
-								color: 'var(--text)',
-								width: '100%',
-								background: 'transparent'
 							}}
 						/>
 					</div>
@@ -523,11 +472,8 @@ export default function Products() {
 						Tidak ada produk yang ditemukan
 					</div>
 				) : (
-					<table style={{
-						width: '100%',
-						borderCollapse: 'collapse',
-						background: '#fff'
-					}}>
+					<div className="overflow-x-auto -mx-4 sm:mx-0">
+						<table className="w-full border-collapse bg-white" style={{ minWidth: '600px' }}>
 						<thead>
 							<tr style={{ background: '#fff' }}>
 								<th style={{
@@ -747,29 +693,16 @@ export default function Products() {
 							))}
 						</tbody>
 					</table>
+					</div>
 				)}
 
 				{/* Pagination */}
 				{!loading && products.length > 0 && totalPages > 1 && (
-					<div style={{
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'space-between',
-						marginTop: '20px',
-						paddingTop: '20px',
-						borderTop: '1px solid var(--border)'
-					}}>
-						<div style={{
-							fontSize: '13px',
-							color: 'var(--muted)'
-						}}>
-							Menampilkan halaman {currentPage} dari {totalPages} ({totalItems} total produk)
+					<div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-5 pt-5 border-t border-[var(--border)]">
+						<div className="text-xs sm:text-sm text-[var(--muted)] text-center sm:text-left">
+							Hal {currentPage} dari {totalPages} <span className="hidden sm:inline">({totalItems} total produk)</span>
 						</div>
-						<div style={{
-							display: 'flex',
-							gap: '8px',
-							alignItems: 'center'
-						}}>
+						<div className="flex gap-2 items-center flex-wrap justify-center">
 							<button
 								onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
 								disabled={currentPage === 1}
