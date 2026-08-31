@@ -23,6 +23,38 @@ interface NotificationsResponse {
 	error?: string;
 }
 
+// Chat ID to Name mapping
+const CHAT_ID_NAMES: Record<string, string> = {
+	// Group chats
+	'-1004315914844': 'Dwi - Visits',
+	'-1003946533225': 'Tono (C) - Visits',
+	'-1004321787688': 'Ardy - Visits',
+	'-1004408681789': 'Taufik - Visits',
+	'-1004379177862': 'Robby - Visits',
+	'-1004490330349': 'Tono - Visits',
+	'-1004466813961': 'Haikal - Visits',
+	'-1004490478993': 'Diana - Visits',
+	'-1004423713030': 'Sugito - Visits',
+	'-1004395912306': 'Ozi - Visits',
+	'-1004460743094': 'Test group',
+	// Individual users
+	'7598374093': 'Ana (Kolektor)',
+	'2053523881': 'Anita',
+	'5375633718': 'Taufik',
+	'6992477337': 'Tono',
+	'5873477125': 'Ana',
+	'5861262889': 'Robi',
+	'8816525552': 'Sugito',
+	'6708014759': 'Diana',
+	'5634128293': 'Ozi',
+	'7142339461': 'Haikal',
+	'5192043963': 'Rani',
+	'5208360934': 'Siti',
+	'8660639382': 'Clarissa',
+	'7648132521': 'Rayvin',
+	'5030056738': 'Leo',
+};
+
 const getApiUrl = () => {
 	return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 };
@@ -125,6 +157,10 @@ export default function NotificationsHistory() {
 			default:
 				return 'grey';
 		}
+	};
+
+	const getChatName = (chatId: string) => {
+		return CHAT_ID_NAMES[chatId] || chatId;
 	};
 
 	const handleFilterSubmit = (e: React.FormEvent) => {
@@ -390,7 +426,7 @@ export default function NotificationsHistory() {
 											borderBottom: '1px solid var(--border)',
 											whiteSpace: 'nowrap'
 										}}>
-											Chat ID
+											Recipient
 										</th>
 										<th style={{
 											textAlign: 'left',
@@ -457,10 +493,21 @@ export default function NotificationsHistory() {
 												borderBottom: '1px solid #F1F4F8',
 												fontSize: '13px',
 												color: 'var(--text)',
-												verticalAlign: 'middle',
-												fontFamily: 'monospace'
+												verticalAlign: 'middle'
 											}}>
-												{item.chatId}
+												<span style={{ fontWeight: 600 }}>
+													{getChatName(item.chatId)}
+												</span>
+												{CHAT_ID_NAMES[item.chatId] && (
+													<div style={{
+														fontSize: '11px',
+														color: 'var(--muted)',
+														marginTop: '2px',
+														fontFamily: 'monospace'
+													}}>
+														{item.chatId}
+													</div>
+												)}
 											</td>
 											<td style={{
 												padding: '14px',
