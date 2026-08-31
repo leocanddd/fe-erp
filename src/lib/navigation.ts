@@ -147,6 +147,11 @@ export const NAV_ITEMS: NavItem[] = [
 				defaultRoles: [5],
 			},
 			{
+				name: 'Notifications History',
+				href: '/notifications-history',
+				defaultRoles: [5],
+			},
+			{
 				name: 'Hak Akses Menu',
 				href: '/menu-permissions',
 				defaultRoles: [5],
