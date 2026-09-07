@@ -948,7 +948,7 @@
 
 .ar-table-head {
 	display: grid;
-	grid-template-columns: 140px 1fr 130px 130px 80px 130px 50px;
+	grid-template-columns: 140px 1fr 130px 110px 130px 80px 130px 50px;
 	gap: 16px;
 	padding: 12px 16px;
 	border-bottom: 2px solid var(--border);
@@ -966,7 +966,7 @@
 
 .ar-row {
 	display: grid;
-	grid-template-columns: 140px 1fr 130px 130px 80px 130px 50px;
+	grid-template-columns: 140px 1fr 130px 110px 130px 80px 130px 50px;
 	gap: 16px;
 	padding: 16px;
 	border-bottom: 1px solid var(--bg);
@@ -983,6 +983,7 @@
 .ar-col-id,
 .ar-col-client,
 .ar-col-date,
+.ar-col-due,
 .ar-col-value,
 .ar-col-sp,
 .ar-col-status,
@@ -1042,6 +1043,12 @@
 .ar-delivery {
 	font-size: 12px;
 	font-weight: 500;
+	color: #333;
+}
+
+.ar-col-due {
+	font-weight: 500;
+	font-size: 12px;
 	color: #333;
 }
 
@@ -1408,7 +1415,7 @@
 @media (max-width: 1200px) {
 	.ar-table-head,
 	.ar-row {
-		grid-template-columns: 120px 1fr 110px 110px 70px 110px 40px;
+		grid-template-columns: 120px 1fr 110px 100px 110px 70px 110px 40px;
 		gap: 12px;
 	}
 }

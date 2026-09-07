@@ -666,7 +666,10 @@ export default function ARPage() {
 								Client / Project
 							</div>
 							<div className="ar-col-date">
-								Date / Delivery
+								Date Created / Delivery
+							</div>
+							<div className="ar-col-due">
+								Due Date
 							</div>
 							<div className="ar-col-value">
 								Value
@@ -729,6 +732,10 @@ export default function ARPage() {
 											<div className="ar-delivery">
 												{item.delivery}
 											</div>
+										</div>
+										<div className="ar-col-due">
+											{item.dueDate ||
+												'-'}
 										</div>
 										<div className="ar-col-value">
 											{formatCurrency(

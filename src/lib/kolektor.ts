@@ -165,6 +165,7 @@ export interface ARItem {
 	subject?: string; // Project subject
 	date: string; // Invoice date
 	delivery: string; // Delivery date
+	dueDate?: string; // Due date
 	value: number; // Invoice amount
 	sp: string; // Salesperson ObjectID
 	status: 'outstanding' | 'due2w' | 'overdue' | 'paid';
